@@ -340,7 +340,7 @@ git commit -m "feat: core data models"
 
 ```yaml
 # name: headcount  (sums to 1200)
-Operations: 380
+Operations: 482
 Field Services: 210
 Customer Care: 140
 Engineering: 120
