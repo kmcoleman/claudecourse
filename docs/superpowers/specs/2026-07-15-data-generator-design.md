@@ -35,7 +35,7 @@ noise and the traps become unauthorable.
 
 ```
 world/                        # static, version-controlled, seed-independent
-  apps.yaml                   # 22 apps: roles, privileged flags, owning dept
+  apps.yaml                   # 22 apps: roles, privileged flags, owning dept, implementation_date
   sod_matrix.yaml             # conflicting role pairs + documented exemptions
   service_accounts.yaml       # the approved registry (source of trap #1)
   departments.yaml            # org structure and reporting lines
@@ -184,6 +184,10 @@ Enough that catch rate and false-positive rate are statistically meaningful; sma
 human reviewer could plausibly work the queue. Roughly mirrors real UAR finding density (~3–4% of
 the population).
 
+The app-scoped coverage-gap cases sit inside these tallies: the two skipped apps count as judgment
+cases, the newly-implemented app as a trap. The account/application `scope` field, not the count,
+is what keeps them distinct during grading.
+
 ### Where findings live
 
 Mostly the crown jewels and infrastructure — Atlas ERP, MeridianPay, Gateway, AD, Vault, AWS Prod,
@@ -195,6 +199,49 @@ jewels" as a triage shortcut. That assumption is exactly the kind of hidden shor
 quarter is meant to expose: it will pass every Q3 test if Q3's terminated-access cases all sit in
 Atlas, then fail at grading. Planting one universal-app case in *both* quarters makes the lesson
 available in Q3 rather than sprung only at grading — fair warning, not a gotcha.
+
+### Prior-review coverage gaps — an app-scoped challenge
+
+`prior_review.csv` is stubbed (see Output below), and it deliberately does not cover all 22 apps.
+**Three apps are absent, for two different reasons — and telling the reasons apart is the
+challenge.**
+
+- **Two apps were skipped.** They were in scope, but the Q2 review simply was not performed for
+  them. This is a genuine coverage gap.
+- **One app is newly implemented this quarter.** It did not exist at Q2, so its absence from the
+  prior review is expected, not a gap.
+
+All three look identical in `prior_review.csv`: absent. The discriminator is the app's
+`implementation_date` in `apps.yaml`:
+
+- New app → `implementation_date` within the current quarter → absence is **expected**.
+- Skipped apps → old implementation date, live entitlements, no prior review → **coverage gap**.
+
+So the correct path is a Ledger reconciliation — *apps with entitlements, minus apps implemented
+this quarter, minus apps present in prior review* — feeding a judgment call about what the residual
+means.
+
+**Correct behavior:**
+
+- Surface the two skipped apps as a coverage gap (judgment-tier finding).
+- Do **not** report the newly-implemented app's missing prior review as a gap (trap).
+
+**Two consequences:**
+
+1. This is a new *kind* of finding. Every other planted case is account-scoped — a person, an
+   entitlement. A coverage gap is **app-scoped**. The findings schema therefore carries
+   `scope: account | application`, and grading must handle an app-level finding. See the parent
+   spec's contract note.
+2. **Seed-varied, not fixed.** The generator picks which app is newly implemented and which two are
+   skipped per seed. If the skipped pair were constant, a learner could hard-code those app names
+   and pass Q4 for the wrong reason. Varying them forces the reconciliation, which is the lesson.
+   The stub is programmatic, so this costs nothing.
+
+Making an app "newly implemented this quarter" means the generator stamps its `implementation_date`
+inside the quarter being generated and dates all its entitlement grants recently (a fresh rollout —
+everyone provisioned at once). Because each quarter is generated self-contained, the same app may be
+"new" in Q3 and a different app "new" in Q4; learners never see the two side by side, so there is no
+inconsistency to notice.
 
 ---
 
@@ -264,16 +311,31 @@ The key lives **outside** the export directory so that shipping the directory ca
       "case_id": "...",
       "narrative": "TerminatedWithActiveAdmin",
       "class": "must_catch",
+      "scope": "account",
       "subject": { "employee_id": "...", "account_id": "...", "app": "...", "entitlement": "..." },
       "expected": { "category": "terminated_access", "recommendation": "revoke" },
       "rationale_must_reference": ["term_date", "ACP-4.2"]
+    },
+    {
+      "case_id": "...",
+      "narrative": "PriorReviewCoverageGap",
+      "class": "judgment",
+      "scope": "application",
+      "subject": { "app": "Box" },
+      "expected": { "category": "coverage_gap", "recommendation": "review" },
+      "rationale_must_reference": ["not_in_prior_review", "implementation_date"]
     }
   ]
 }
 ```
 
 Traps appear as cases with `class: "trap"` and an empty `expected` — their presence in the key means
-*no finding should exist for this subject*.
+*no finding should exist for this subject*. The newly-implemented app is such a trap:
+`scope: "application"`, empty `expected`, meaning no coverage-gap finding should be raised for it.
+
+`scope` distinguishes account-level cases (the subject is a person's entitlement) from
+application-level cases (the subject is an app). Grading reads it to know whether to look for a
+per-account finding or an app-level one.
 
 ---
 
@@ -332,7 +394,9 @@ department, app, or ID range.
    dependency on an otherwise near-zero-dependency build, plus recognizable Faker "texture" at
    1,200 rows. Alternative: generate a name list once and commit it, keeping the repo fully
    self-contained. Leaning Faker for the email/date generation alone.
-2. **Is `prior_review.csv` generated or stubbed?** Generating last quarter's decisions properly
-   implies simulating Q2 with an earlier seed — coherent but a whole prior quarter nobody reads.
-   Leaning hand-stubbed: the file exists so agents can reason about "we already approved this," and
-   simulating Q2 buys realism no one will inspect.
+2. ~~Is `prior_review.csv` generated or stubbed?~~ **Resolved: stubbed.** Rather than simulate a
+   full Q2, the generator writes a plausible prior review against the current quarter's accounts.
+   It deliberately omits three apps to create the coverage-gap challenge above (two skipped, one
+   newly implemented). Stubbing also makes narrative-specific prior-review rows — e.g. "this
+   contractor was conditionally approved last quarter" — trivial to author alongside the narrative
+   that needs them.

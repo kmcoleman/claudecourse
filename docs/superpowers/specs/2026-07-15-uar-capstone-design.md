@@ -191,9 +191,14 @@ the attestation.
 run_review(export_dir: Path, limit: int | None = None) -> findings.json
 ```
 
-Each finding carries: account, employee (nullable — orphans have none), app, entitlement, category,
-severity, recommendation (revoke / review / retain), rationale, evidence with source references,
-policy citations, and confidence.
+Each finding carries: `scope` (account or application), account, employee (nullable — orphans have
+none), app, entitlement, category, severity, recommendation (revoke / review / retain), rationale,
+evidence with source references, policy citations, and confidence.
+
+Most findings are account-scoped — a person holding an entitlement they shouldn't. A few are
+application-scoped: the prior-review coverage gap (see the generator spec) is a finding about an
+*app*, not an account, so `scope` tells the reviewer and the grader which they're looking at.
+Account-only fields are null on an application-scoped finding.
 
 **On `limit`.** It caps how many candidates reach the agent layer, and exists for the debugging
 loop. A full run is ~150 candidates fanned across two or three specialists each — several hundred
