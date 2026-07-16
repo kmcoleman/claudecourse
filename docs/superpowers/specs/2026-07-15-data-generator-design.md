@@ -178,15 +178,16 @@ storylines, mapping one-to-one onto the taxonomy in the parent spec.
 
 ### Case volume
 
-**~45 planted cases per quarter: 24 must-catch, 9 judgment, 12 traps.**
+**~46 planted cases per quarter: 24 must-catch, 9 judgment, 13 traps.**
 
 Enough that catch rate and false-positive rate are statistically meaningful; small enough that a
 human reviewer could plausibly work the queue. Roughly mirrors real UAR finding density (~3–4% of
 the population).
 
-The app-scoped coverage-gap cases sit inside these tallies: the two skipped apps count as judgment
-cases, the newly-implemented app as a trap. The account/application `scope` field, not the count,
-is what keeps them distinct during grading.
+The app-scoped coverage-gap cases sit inside these tallies: the two skipped apps count as two of the
+9 judgment cases (the other 7 are account-scoped), and the newly-implemented app is one of the 13
+traps (the other 12 are account-scoped). The account/application `scope` field, not the count, is
+what keeps them distinct during grading.
 
 ### Where findings live
 

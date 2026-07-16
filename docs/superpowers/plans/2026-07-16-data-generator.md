@@ -16,7 +16,7 @@
 - **The answer key must never lie.** Every case in the key must be genuinely derivable from the emitted artifacts. This is enforced by the coherence test (Task 18), which is the single most important test in the project.
 - **World is seed-independent.** Files under `world/` never vary by seed. Only the cast and what happens to them vary.
 - **Anti-leak:** account/employee IDs never encode narrative or class; all exported rows are shuffled; planted cases spread across departments/apps; incidental fields share distributions between clean and planted rows.
-- **Company facts (verbatim):** Meridian Regional Energy, ~1,200 employees, 22 apps, ~15,000 entitlements. Planted target: **24 must_catch, 9 judgment, 12 trap** per quarter.
+- **Company facts (verbatim):** Meridian Regional Energy, ~1,200 employees, 22 apps, ~15,000 entitlements. Planted target: **24 must_catch, 9 judgment, 13 trap** per quarter (46 total). The 13 traps = 12 account-scoped trap narratives + 1 application-scoped new-app trap. The 9 judgment = 7 account-scoped + 2 application-scoped coverage-gap cases.
 - **Package layout:** all importable code under `meridian/`; tests under `tests/`; world assets under `world/`.
 
 ---
@@ -1860,7 +1860,7 @@ git commit -m "feat: stubbed prior review honoring app omissions"
 **Interfaces:**
 - Consumes: `NARRATIVES`, all narrative modules (imported for their side-effect registration), `Person`.
 - Produces:
-  - `PLANTED_PLAN: dict[str, int]` — how many of each planted narrative to assign, summing to 24 must_catch + 9 judgment + 12 trap. The two skipped-app + one new-app coverage cases are added separately (Task 12), so account-scoped planted narratives total **43** (24 must_catch + 7 judgment account cases + 12 trap), with the 2 coverage-gap judgment cases making judgment 9.
+  - `PLANTED_PLAN: dict[str, int]` — how many of each **account-scoped** planted narrative to assign. It sums to **43**: 24 must_catch + 7 account-scoped judgment + 12 account-scoped trap. The application-scoped coverage cases (2 judgment skipped-apps + 1 trap new-app) are added separately in Task 12/18, bringing the quarter totals to 24 must_catch, 9 judgment, 13 trap (46 planted).
   - `assign_narratives(population, rng) -> list[tuple[Person, str]]` — returns each person paired with a narrative name. Exactly `PLANTED_PLAN` people (chosen at random, spread across departments) get planted narratives; the rest get a clean narrative sampled by weight.
 
 - [ ] **Step 1: Write the failing test** in `tests/test_cast.py`
@@ -2477,7 +2477,7 @@ if __name__ == "__main__":
 Run: `pytest tests/test_coherence.py::test_generate_writes_all_artifacts -v`
 Expected: PASS (1 passed).
 
-Note: the trap count is **13** (12 account-scoped trap narratives + 1 new-app application trap) and judgment is **9** (7 account + 2 coverage-gap). If the parent-spec headline "12 traps" needs to include the new-app trap, adjust `PLANTED_PLAN` trap counts down by one; the coherence test in Task 19 is the source of truth for what actually ships.
+Note: the trap count is **13** (locked) — 12 account-scoped trap narratives + 1 application-scoped new-app trap — and judgment is **9** (7 account + 2 coverage-gap). The counts test in Task 19 asserts exactly these.
 
 - [ ] **Step 5: Commit**
 
@@ -2626,6 +2626,6 @@ git commit -m "test: coherence, determinism, anti-leak, and counts acceptance ga
 ## Self-Review Notes
 
 - **Spec coverage:** fixed world (Task 3), narratives per class (Tasks 8–11), cast at target counts (Task 14), coverage-gap challenge + seed-varied app selection (Task 12), stubbed prior review with omissions (Task 13), deliberate messes (Task 15), CSV/JSON output + policies copy (Task 16), answer key with `scope` (Task 17), CLI + determinism (Task 18), the four required tests (Tasks 18–19). All spec sections map to a task.
-- **Count reconciliation:** the spec headline says "12 traps"; the build ships 12 account-scoped trap narratives **plus** 1 application-scoped new-app trap = 13, and judgment is 9 (7 account + 2 coverage-gap). Task 18/19 flag this explicitly. Decide during execution whether to keep 13 traps or drop one account trap to hold the headline at 12 — the coherence test is the source of truth either way.
+- **Count reconciliation (locked):** 13 traps = 12 account-scoped trap narratives + 1 application-scoped new-app trap; 9 judgment = 7 account-scoped + 2 coverage-gap; 24 must_catch. 46 planted total. Tasks 18/19 assert exactly these.
 - **Anti-leak caveat:** the plan enforces spread and shuffling. The `test_anti_leak_planted_ids_not_clustered` check is a coarse guard; a stronger statistical check can be added if a reviewer wants one.
 - **Open item still open:** Faker vs. committed name list — locked to Faker in Global Constraints; revisit only if determinism proves fragile across Faker versions (pin the version in `pyproject.toml` if so).
