@@ -388,12 +388,11 @@ department, app, or ID range.
 
 ## Open questions
 
-1. **Name/identity source — Faker vs. a committed `names.txt`.** Faker generates seedable names,
-   emails, dates, and titles, and makes the `Bob Smith` → `robert.smith` mismatch hazard a
-   two-liner; it only ever touches the *surface* of a person and never the answer key. Cost: a
-   dependency on an otherwise near-zero-dependency build, plus recognizable Faker "texture" at
-   1,200 rows. Alternative: generate a name list once and commit it, keeping the repo fully
-   self-contained. Leaning Faker for the email/date generation alone.
+1. ~~Name/identity source — Faker vs. a committed `names.txt`.~~ **Resolved: Faker**, seeded
+   deterministically from the run's RNG. It only ever touches the *surface* of a person (name,
+   email, title) and never the answer key, and it makes the `Bob Smith` → `robert.smith` mismatch
+   hazard trivial. The version is pinned in `pyproject.toml` so determinism cannot drift across
+   Faker releases.
 2. ~~Is `prior_review.csv` generated or stubbed?~~ **Resolved: stubbed.** Rather than simulate a
    full Q2, the generator writes a plausible prior review against the current quarter's accounts.
    It deliberately omits three apps to create the coverage-gap challenge above (two skipped, one
