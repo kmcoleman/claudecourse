@@ -8,3 +8,4 @@ build/
 dist/
 # generated datasets (regenerate from seed)
 /data/
+.superpowers/
