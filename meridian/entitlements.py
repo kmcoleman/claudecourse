@@ -50,9 +50,11 @@ def baseline_entitlements(person: Person, world: World, rng, faker, quarter_end:
                           account_id: str) -> list[Entitlement]:
     account_name = account_name_for(person)
     ents: list[Entitlement] = []
+    granted_apps: set[str] = set()
 
     def add(app, role):
         ents.append(_grant(app, role, person, rng, quarter_end, account_id, account_name))
+        granted_apps.add(app)
 
     # universal apps + core directory/IdP — everyone
     for app in _UNIVERSAL:
@@ -62,11 +64,28 @@ def baseline_entitlements(person: Person, world: World, rng, faker, quarter_end:
     # org-wide business tools — everyone
     for app in _COMMON_BUSINESS:
         add(app, world.apps[app].roles[0])
-    # department-appropriate apps
+    # department-appropriate apps — at most one grant per app per person, and
+    # baseline never hands out a privileged/SoD-relevant role (those come only
+    # from the narrative layer in later tasks).
     for app in _DEPT_APPS.get(person.department, []):
+        if app in granted_apps:
+            continue
         if rng.random() < 0.75:
-            add(app, rng.choice(world.apps[app].roles[:2]))   # low-privilege by default
-    # accumulated sprawl
-    for app in rng.sample(_EXTRA_POOL, rng.randint(0, 3)):
-        add(app, world.apps[app].roles[0])
+            spec = world.apps[app]
+            non_privileged = [r for r in spec.roles if r not in spec.privileged_roles]
+            if not non_privileged:
+                continue
+            add(app, rng.choice(non_privileged))
+    # accumulated sprawl — skip apps already held, and never sample more apps
+    # than are actually available to add
+    sprawl_candidates = [app for app in _EXTRA_POOL if app not in granted_apps]
+    sample_size = min(rng.randint(0, 3), len(sprawl_candidates))
+    for app in rng.sample(sprawl_candidates, sample_size):
+        role = world.apps[app].roles[0]
+        # defensive: sprawl/common-business pools are expected to use only the
+        # base (non-privileged) role — baseline must never grant privileged access
+        assert role not in world.apps[app].privileged_roles, (
+            f"sprawl base role {role!r} for {app!r} is privileged"
+        )
+        add(app, role)
     return ents
