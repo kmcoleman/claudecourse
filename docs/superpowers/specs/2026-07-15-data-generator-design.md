@@ -35,7 +35,7 @@ noise and the traps become unauthorable.
 
 ```
 world/                        # static, version-controlled, seed-independent
-  apps.yaml                   # 40 apps: roles, privileged flags, owning dept
+  apps.yaml                   # 22 apps: roles, privileged flags, owning dept
   sod_matrix.yaml             # conflicting role pairs + documented exemptions
   service_accounts.yaml       # the approved registry (source of trap #1)
   departments.yaml            # org structure and reporting lines
@@ -43,6 +43,90 @@ world/                        # static, version-controlled, seed-independent
 ```
 
 Only the people, and what happens to them, vary by seed.
+
+## The world
+
+**Meridian Regional Energy** — a regional gas and electric utility, ~1,200 employees, ~15,000
+entitlements across 22 apps. Roughly 12.5 entitlements per person, which is realistic for a company
+this size.
+
+### Departments (~1,200 heads)
+
+| Department | Heads | Role in the case study |
+|---|---:|---|
+| Operations | 380 | The bulk. Plant and dispatch. |
+| Field Services | 210 | Heavy contractor mix, mobile access, high turnover |
+| Customer Care | 140 | Call center — the churn engine |
+| Engineering | 120 | Prod access, deploy rights |
+| Information Technology | 60 | Infrastructure, Applications, Security, Service Desk |
+| Sales & Key Accounts | 60 | Commercial customers |
+| Finance & Accounting | 45 | Where SoD lives |
+| Marketing | 25 | |
+| Procurement | 20 | The other half of SoD |
+| Human Resources | 18 | |
+| Legal & Compliance | 12 | |
+| Executive | 8 | |
+
+Field Services and Customer Care carry the turnover that makes stale access plausible. Finance and
+Procurement are small enough that SoD conflicts are structurally unavoidable — which is the honest
+reason real companies carry compensating controls, and what makes the exemption trap fair rather
+than a gotcha.
+
+### App catalog — 22 apps, four tiers
+
+| Tier | Apps |
+|---|---|
+| **Crown jewels** (5) | Atlas ERP, MeridianPay (payroll), Gateway (IdP), Active Directory, Vault (secrets) |
+| **Business** (8) | Compass CRM, Helix ITSM, PeopleHub HRIS, Procure, Expense, Tableau, DocuSign, Box |
+| **Infrastructure** (5) | GitHub Enterprise, AWS Prod, AWS NonProd, Snowflake, Jenkins |
+| **Universal** (4) | Slack, Zoom, VPN, Badge access |
+
+Representative role models on the crown jewels (the apps the SoD matrix and findings depend on):
+
+- **Atlas ERP** — AP Clerk, AP Manager, Vendor Admin, GL Accountant, Controller, ERP Admin
+- **MeridianPay** — Payroll Clerk, Payroll Approver, Payroll Admin
+- **Gateway** — Help Desk, User Admin, App Admin, Super Admin
+- **Active Directory** — Standard, Account Operator, Domain Admin
+- **Vault** — Reader, Writer, Admin
+
+The universal apps plus AD and Gateway are held by nearly everyone — roughly half the 15,000
+entitlements are boring by construction. That is the volume the Ledger triages away, and the reason
+the context-economics lesson survives at 15k just as it would at 40k: candidate count, not row
+count, drives cost.
+
+### SoD matrix
+
+| Conflict | Why | Severity |
+|---|---|---|
+| Atlas: `Vendor Admin` ⊗ `AP Manager` | Create a vendor, then approve its payment | Critical |
+| Atlas: `AP Clerk` ⊗ `AP Manager` | Enter an invoice and approve it | High |
+| Procure: `Requisitioner` ⊗ `Buyer` ⊗ `Receiver` | Three-way procurement fraud | Critical |
+| MeridianPay: `Payroll Clerk` ⊗ `Payroll Approver` | Edit your own pay, approve it | Critical |
+| Gateway: `User Admin` ⊗ any app `Admin` | Grant yourself access, then use it | High |
+| Helix: `Change Approver` ⊗ AWS Prod `Admin` | Approve your own change, then deploy it | High |
+
+**The documented exemption** (and the SoD trap): Finance is 45 people, and the Controller's
+function genuinely requires both `AP Manager` and `Vendor Admin` at a company this size. The Access
+Control Policy carries a named exemption with a compensating control — quarterly manual payment
+review by the CFO, evidenced in Atlas. So the Controller *looks* like the single worst SoD violation
+in the dataset and is entirely correct. Any system that flags it has failed to read the policy it
+was given. This is the sharpest test of false-positive discipline in the world.
+
+### Personas
+
+Each persona is a narrative class with a face:
+
+| Persona | Narrative | Class |
+|---|---|---|
+| The lifer — 19 years, six role changes, sedimented access | `TransferKeptOldAccess` / creep | judgment |
+| The transfer — Operations → Finance in March, kept dispatch rights | `TransferKeptOldAccess` | judgment |
+| The contractor — SOW expired 3 weeks ago, manager vouched in a ticket | `ContractorOverstayWithVouch` | judgment |
+| The boomerang — left 2023, rehired 2025, old account reactivated + new one | duplicate hazard | mess |
+| The break-glass — `emergency.admin`, dormant by design, documented | `BreakGlassDormant` | trap |
+| The service account with a human name — in the approved registry | `ApprovedServiceAccount` | trap |
+| The vendor engineer — third-party, time-boxed prod access | supports must-catch cases | — |
+| The intern — 12 weeks, access that should have auto-expired | must-catch source | must_catch |
+| The employee on leave — no login in 4 months, not terminated | `EmployeeOnLeave` | trap |
 
 ---
 
@@ -99,6 +183,18 @@ storylines, mapping one-to-one onto the taxonomy in the parent spec.
 Enough that catch rate and false-positive rate are statistically meaningful; small enough that a
 human reviewer could plausibly work the queue. Roughly mirrors real UAR finding density (~3–4% of
 the population).
+
+### Where findings live
+
+Mostly the crown jewels and infrastructure — Atlas ERP, MeridianPay, Gateway, AD, Vault, AWS Prod,
+GitHub — because that is where risk concentrates in real access reviews. Business apps stay clean.
+
+**One deliberate exception:** at least one must-catch case lives in a universal app — a terminated
+employee whose Slack is still live. This punishes anyone who hard-codes "only audit the crown
+jewels" as a triage shortcut. That assumption is exactly the kind of hidden shortcut the unseen Q4
+quarter is meant to expose: it will pass every Q3 test if Q3's terminated-access cases all sit in
+Atlas, then fail at grading. Planting one universal-app case in *both* quarters makes the lesson
+available in Q3 rather than sprung only at grading — fair warning, not a gotcha.
 
 ---
 
@@ -230,8 +326,13 @@ department, app, or ID range.
 
 ## Open questions
 
-1. Employee name source — a names library, or a hand-curated list? A library adds a dependency;
-   a curated list risks visible repetition at 1,200 rows.
-2. Should `prior_review.csv` (last quarter's decisions) itself be generated from a prior seed, or
-   hand-stubbed? Generating it properly implies simulating Q2, which may be more machinery than the
-   case study needs.
+1. **Name/identity source — Faker vs. a committed `names.txt`.** Faker generates seedable names,
+   emails, dates, and titles, and makes the `Bob Smith` → `robert.smith` mismatch hazard a
+   two-liner; it only ever touches the *surface* of a person and never the answer key. Cost: a
+   dependency on an otherwise near-zero-dependency build, plus recognizable Faker "texture" at
+   1,200 rows. Alternative: generate a name list once and commit it, keeping the repo fully
+   self-contained. Leaning Faker for the email/date generation alone.
+2. **Is `prior_review.csv` generated or stubbed?** Generating last quarter's decisions properly
+   implies simulating Q2 with an earlier seed — coherent but a whole prior quarter nobody reads.
+   Leaning hand-stubbed: the file exists so agents can reason about "we already approved this," and
+   simulating Q2 buys realism no one will inspect.

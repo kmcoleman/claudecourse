@@ -57,12 +57,17 @@ and subagents are not on that list but are retained because they serve the capst
 
 ---
 
-## The case study — Meridian Regional
+## The case study — Meridian Regional Energy
 
-Roughly 1,200 employees, forty-odd business applications, a two-person IAM team, and a Q3 access
-review that is three weeks late. Mid-size, unglamorous, instantly recognizable to anyone who has
-done this work. Deliberately not a tech company — the point is that access sprawl is a
-people-and-process problem.
+A regional gas and electric utility. Roughly 1,200 employees, 22 business applications, ~15,000
+entitlements, a two-person IAM team, and a Q3 access review that is three weeks late. Mid-size,
+unglamorous, instantly recognizable to anyone who has done this work.
+
+The industry is chosen deliberately. A utility has a real ERP, a large field workforce, heavy
+contractor use, and a small IT shop — without dragging in PHI or cardholder scope. That keeps the
+compliance pressure internal, which is the framing this program picked. See the
+[generator spec](./2026-07-15-data-generator-design.md) for the full world: departments, app
+catalog, SoD matrix, and personas.
 
 ### What ships in the kit
 
@@ -125,7 +130,7 @@ false positives cost more than another catch-rate point is worth more than the p
 
 > **Reconciliation is code. Judgment is agents.**
 
-Nobody should ask a model to join a 1,200-row roster against a 40,000-row entitlement export. That
+Nobody should ask a model to join a 1,200-row roster against a 15,000-row entitlement export. That
 is a database operation — slow, expensive, and wrong in ways you cannot test. But *"is this
 contractor's manager vouching for them enough, given the standard says access ends at contract
 end?"* is irreducibly judgment, and no rules engine reaches it.
@@ -136,7 +141,7 @@ architecture makes the line structural. Three layers, each independently testabl
 
 ```mermaid
 flowchart TB
-    A["Five synthetic artifacts<br/>~40,000 entitlements"] --> B
+    A["Five synthetic artifacts<br/>~15,000 entitlements"] --> B
     subgraph L1["LEDGER · deterministic, zero LLM calls"]
       B["Normalize + join → one dossier per account"] --> C["Mechanical triage"]
     end
@@ -157,8 +162,11 @@ flowchart TB
 
 Ingests the five artifacts, normalizes them, joins them into one dossier per account: who holds it,
 what HR says, what tickets exist, when it was last used, what last quarter decided. Then triages —
-"no HR record" and "term date in the past" are just code. Forty thousand entitlements become roughly
-a hundred and fifty candidates. Everything else is provably clean.
+"no HR record" and "term date in the past" are just code. Fifteen thousand entitlements become
+roughly a hundred and fifty candidates. Everything else is provably clean.
+
+Roughly half the dataset is boring by construction: six apps (AD, Gateway, Slack, Zoom, VPN, badge
+access) are held by nearly everyone. That is what the Ledger exists to triage away.
 
 That narrowing is the module's real lesson: **context economics.** They will feel it in the API
 bill if they get it wrong.
@@ -180,12 +188,27 @@ the attestation.
 ### The contract — fixed in Module 0, never changed
 
 ```
-run_review(export_dir: Path) -> findings.json
+run_review(export_dir: Path, limit: int | None = None) -> findings.json
 ```
 
 Each finding carries: account, employee (nullable — orphans have none), app, entitlement, category,
 severity, recommendation (revoke / review / retain), rationale, evidence with source references,
 policy citations, and confidence.
+
+**On `limit`.** It caps how many candidates reach the agent layer, and exists for the debugging
+loop. A full run is ~150 candidates fanned across two or three specialists each — several hundred
+model calls. A learner tuning an analyst's prompt does not need 150 candidates to know whether it
+helped; twenty tells them. Without an obvious cheap path, they will re-run the whole pipeline
+thirty times in an afternoon, and that is the most likely way this program blows its budget.
+
+Grading always calls with `limit=None`, so it never touches scoring. It earns its place in the
+graded signature for three reasons: the kit can teach cheap iteration from Module 0, submissions
+stay uniform, and the grading agent can smoke-test with `limit=5` to confirm a submission runs at
+all before committing to a full scored run.
+
+Learners could slice their own candidate lists without this — everything downstream of
+`export_dir` is their code. The parameter is a nudge and a grading convenience, not a capability
+they otherwise lack.
 
 This one interface earns its keep four times: the grading agent calls it on unseen Q4 data, their
 eval harness calls it against the labeled Q3 key, the UI renders it, and a structured-output schema
