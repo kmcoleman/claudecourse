@@ -167,7 +167,7 @@ git commit -m "feat: project scaffold and deterministic RNG"
 
 **Interfaces:**
 - Produces the frozen/dataclasses used everywhere downstream:
-  - `Person(employee_id: str, full_name: str, email: str, department: str, title: str, hire_date: date, term_date: date | None, employment_type: str, status: str, in_hr: bool)` — frozen.
+  - `Person(employee_id: str, full_name: str, email: str, department: str, title: str, hire_date: date, term_date: date | None, employment_type: str, status: str, in_hr: bool, account_name: str = "")` — frozen. `account_name` is the IAM-side display name and carries the name-mismatch hazard; it defaults to `""` so existing 10-arg positional construction keeps working.
   - `Entitlement(account_id: str, account_name: str, app: str, role: str, granted_date: date, granted_by: str, last_login: date | None)`.
   - `Ticket(ticket_id: str, account_id: str, app: str, role: str, requested_date: date, approver: str, status: str)`.
   - `PriorReviewRow(account_id: str, app: str, reviewer: str, decision: str, review_date: date)`.
@@ -231,6 +231,8 @@ class Person:
     employment_type: str   # "FTE" | "Contractor"
     status: str            # "active" | "terminated" | "on_leave"
     in_hr: bool            # False => orphan account, no HR record
+    account_name: str = ""  # IAM-side display name; may mismatch full_name (~10% hazard).
+                            # Defaulted last so 10-arg positional construction still works.
 
 
 @dataclass
@@ -700,6 +702,18 @@ def test_contractors_exist_and_are_minority():
     pop = build_population(w, rng, make_faker(rng), date(2026, 9, 30))
     contractors = [p for p in pop if p.employment_type == "Contractor"]
     assert 0 < len(contractors) < 300
+
+
+def test_account_name_set_and_some_mismatch():
+    # The name-format mismatch hazard must survive into account_name, or it
+    # never reaches the exported entitlements and the join hazard is lost.
+    w = load_world("world")
+    rng = make_rng(7)
+    pop = build_population(w, rng, make_faker(rng), date(2026, 9, 30))
+    assert all(p.account_name for p in pop)          # every person has an IAM name
+    plain = lambda p: f"{p.full_name.split()[0].lower()}.{p.full_name.split()[-1].lower()}"
+    mismatched = [p for p in pop if p.account_name != plain(p)]
+    assert 40 < len(mismatched) < 240                # ~10% of 1200
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -734,7 +748,7 @@ def build_population(world: World, rng, faker, quarter_end: date) -> list[Person
         for _ in range(headcount):
             is_contractor = rng.random() < rate
             mismatch = rng.random() < 0.10          # ~10% name-format mismatch hazard
-            full, _account, email = make_identity(faker, rng, mismatch=mismatch)
+            full, account, email = make_identity(faker, rng, mismatch=mismatch)
             people.append(Person(
                 employee_id="PENDING",
                 full_name=full,
@@ -746,6 +760,7 @@ def build_population(world: World, rng, faker, quarter_end: date) -> list[Person
                 employment_type="Contractor" if is_contractor else "FTE",
                 status="active",
                 in_hr=True,
+                account_name=account,          # carry the (possibly mismatched) IAM name
             ))
     rng.shuffle(people)                              # ID order must not encode department
     from dataclasses import replace
@@ -755,7 +770,7 @@ def build_population(world: World, rng, faker, quarter_end: date) -> list[Person
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_population.py -v`
-Expected: PASS (4 passed).
+Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -773,10 +788,10 @@ git commit -m "feat: population builder"
 - Test: `tests/test_entitlements.py`
 
 **Interfaces:**
-- Consumes: `World`, `Person`, `Entitlement`, `make_identity`.
+- Consumes: `World`, `Person`, `Entitlement`.
 - Produces:
-  - `account_name_for(person, rng, faker) -> str` — the IAM display name; may mismatch the HR name (~10%).
-  - `baseline_entitlements(person, world, rng, faker, quarter_end, account_id) -> list[Entitlement]` — the boring volume. Everyone gets the universal apps + AD Standard + Gateway Help Desk-or-Standard; some get department-appropriate business/infra roles. Averages ~12 rows/person so the full population lands near 15,000. `last_login` is within ~90 days for active users, sometimes `None`. All `granted_date` values are before `quarter_end`.
+  - `account_name_for(person, rng=None, faker=None) -> str` — returns `person.account_name` (set at population time, carrying the mismatch hazard), falling back to a `first.last` slug of `full_name` if unset. Does **not** generate a new name — the mismatch decision was already made in the population step, and re-deriving it here would drop it.
+  - `baseline_entitlements(person, world, rng, faker, quarter_end, account_id) -> list[Entitlement]` — the boring volume. Everyone gets the universal apps + AD Standard + Gateway Help Desk + the org-wide business tools; department members get department-appropriate roles; plus 0–3 accumulated "sprawl" apps. Averages ~12.5 rows/person so the full population lands near 15,000. `last_login` is within ~90 days for active users, sometimes `None`. All `granted_date` values are before `quarter_end`. **The `test_population_entitlement_total_in_range` test (12,000–18,000) is the acceptance gate for this volume — tune the per-person app counts until it passes.**
 
 - [ ] **Step 1: Write the failing test** in `tests/test_entitlements.py`
 
@@ -832,11 +847,11 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from meridian.identity import make_identity
 from meridian.models import Entitlement, Person, World
 
 _UNIVERSAL = ["Slack", "Zoom", "VPN", "Badge access"]
-_ALWAYS = ["Active Directory", "Gateway"]
+# org-wide business tools nearly everyone holds
+_COMMON_BUSINESS = ["PeopleHub HRIS", "Expense", "Box", "DocuSign"]
 # department -> extra business/infra apps its members commonly hold
 _DEPT_APPS = {
     "Engineering": ["GitHub Enterprise", "AWS NonProd", "AWS Prod", "Jenkins", "Tableau"],
@@ -849,15 +864,16 @@ _DEPT_APPS = {
     "Customer Care": ["Compass CRM", "Helix ITSM"],
     "Operations": ["Helix ITSM"],
 }
+# accumulated miscellaneous access (realistic sprawl); adds volume toward ~12.5/person
+_EXTRA_POOL = ["Tableau", "Jenkins", "Snowflake", "Compass CRM", "Helix ITSM", "AWS NonProd"]
 
 
-def account_name_for(person: Person, rng, faker) -> str:
-    # reuse identity logic: derive an IAM-side account name from the person's name
-    _full, account, _email = make_identity(faker, rng, mismatch=False)
-    # keep it tied to the real person: base it on their stored name
-    first = person.full_name.split()[0].lower()
-    last = person.full_name.split()[-1].lower()
-    return f"{first}.{last}"
+def account_name_for(person: Person, rng=None, faker=None) -> str:
+    # the IAM-side name carries the mismatch hazard, set at population time
+    if person.account_name:
+        return person.account_name
+    parts = person.full_name.split()
+    return f"{parts[0].lower()}.{parts[-1].lower()}"
 
 
 def _grant(app: str, role: str, person: Person, rng, qe: date, account_id: str,
@@ -877,20 +893,27 @@ def _grant(app: str, role: str, person: Person, rng, qe: date, account_id: str,
 
 def baseline_entitlements(person: Person, world: World, rng, faker, quarter_end: date,
                           account_id: str) -> list[Entitlement]:
-    account_name = account_name_for(person, rng, faker)
+    account_name = account_name_for(person)
     ents: list[Entitlement] = []
-    for app in _UNIVERSAL:
-        role = world.apps[app].roles[0]
+
+    def add(app, role):
         ents.append(_grant(app, role, person, rng, quarter_end, account_id, account_name))
-    ents.append(_grant("Active Directory", "Standard", person, rng, quarter_end,
-                       account_id, account_name))
-    ents.append(_grant("Gateway", "Help Desk" if person.department ==
-                       "Information Technology" else "Help Desk", person, rng,
-                       quarter_end, account_id, account_name))
+
+    # universal apps + core directory/IdP — everyone
+    for app in _UNIVERSAL:
+        add(app, world.apps[app].roles[0])
+    add("Active Directory", "Standard")
+    add("Gateway", "Help Desk")
+    # org-wide business tools — everyone
+    for app in _COMMON_BUSINESS:
+        add(app, world.apps[app].roles[0])
+    # department-appropriate apps
     for app in _DEPT_APPS.get(person.department, []):
-        if rng.random() < 0.6:
-            role = rng.choice(world.apps[app].roles[:2])   # low-privilege by default
-            ents.append(_grant(app, role, person, rng, quarter_end, account_id, account_name))
+        if rng.random() < 0.75:
+            add(app, rng.choice(world.apps[app].roles[:2]))   # low-privilege by default
+    # accumulated sprawl
+    for app in rng.sample(_EXTRA_POOL, rng.randint(0, 3)):
+        add(app, world.apps[app].roles[0])
     return ents
 ```
 
