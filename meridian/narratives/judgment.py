@@ -43,9 +43,12 @@ class _TransferKeptOldAccess(Narrative):
         person = replace(person, department="Finance & Accounting")
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         name = ents[0].account_name
-        # retained old-department access: a dispatch/ops entitlement
+        # retained old-department access: a dispatch/ops entitlement.
+        # floor the grant at hire_date (the transfer finding depends on the
+        # department change, not on the grant date being pre-hire).
         old = Entitlement(account_id, name, "Helix ITSM", "Change Approver",
-                          quarter_end - timedelta(days=700), "gateway.provisioning",
+                          max(person.hire_date, quarter_end - timedelta(days=700)),
+                          "gateway.provisioning",
                           quarter_end - timedelta(days=rng.randint(0, 45)))
         ents.append(old)
         case = Case(f"case-{account_id}", self.name, "judgment", "account",
@@ -68,7 +71,8 @@ class _SoDConflictWithCompensatingControl(Narrative):
         ents = [e for e in ents if e.app != "Atlas ERP"]   # narrative owns Atlas access; no baseline Atlas leak
         for role in ("Vendor Admin", "AP Manager"):
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
-                                    quarter_end - timedelta(days=rng.randint(60, 500)),
+                                    max(person.hire_date,
+                                        quarter_end - timedelta(days=rng.randint(60, 500))),
                                     "gateway.provisioning",
                                     quarter_end - timedelta(days=rng.randint(0, 30))))
         case = Case(f"case-{account_id}", self.name, "judgment", "account",

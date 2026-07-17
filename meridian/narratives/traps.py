@@ -84,7 +84,8 @@ class _ExemptedSoDPair(Narrative):
         ents = [e for e in ents if e.app != "Atlas ERP"]
         tickets = []
         for role in ("Vendor Admin", "AP Manager"):
-            granted = quarter_end - timedelta(days=rng.randint(200, 900))
+            granted = max(person.hire_date,
+                          quarter_end - timedelta(days=rng.randint(200, 900)))
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
                                     granted,
                                     "gateway.provisioning",

@@ -31,9 +31,24 @@ def account_name_for(person: Person, rng=None, faker=None) -> str:
     return f"{parts[0].lower()}.{parts[-1].lower()}"
 
 
+def grant_date(rng, hire_date, quarter_end, max_days_back):
+    """Sample a grant date that is always >= hire_date and < quarter_end.
+
+    The generator invariant is that the ONLY entitlements dated before their
+    holder's hire_date are the deliberate GrantBeforeHireDate planted grants.
+    Every other grant date must be floored at hire_date so recently-hired people
+    never carry an unplanted grant-before-hire finding.
+    """
+    earliest = max(hire_date, quarter_end - timedelta(days=max_days_back))
+    if earliest >= quarter_end:
+        earliest = quarter_end - timedelta(days=1)
+    span = max(1, (quarter_end - earliest).days)
+    return quarter_end - timedelta(days=rng.randint(1, span))
+
+
 def _grant(app: str, role: str, person: Person, rng, qe: date, account_id: str,
            account_name: str) -> Entitlement:
-    granted = qe - timedelta(days=rng.randint(30, 365 * 6))
+    granted = grant_date(rng, person.hire_date, qe, max_days_back=365 * 6)
     last_login = None if rng.random() < 0.08 else qe - timedelta(days=rng.randint(0, 90))
     return Entitlement(
         account_id=account_id,

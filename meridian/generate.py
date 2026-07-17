@@ -42,10 +42,12 @@ def generate(seed: int, quarter: str, out_dir: str, key_path: str | None = None)
     pairs = assign_narratives(population, rng)
 
     hr_rows, iam_rows, tickets, prior_narrative, cases = [], [], [], [], []
+    hire_by_account: dict[str, date] = {}
     counter = 1
     for person, narrative_name in pairs:
         account_id = f"A{counter:06d}"
         counter += 1
+        hire_by_account[account_id] = person.hire_date
         result = NARRATIVES[narrative_name].emit(person, world, rng, faker, q_end, account_id)
         hr_rows.extend(result.hr_rows)
         iam_rows.extend(result.iam_rows)
@@ -55,9 +57,14 @@ def generate(seed: int, quarter: str, out_dir: str, key_path: str | None = None)
 
     cases.extend(coverage_gap_cases(selection))
 
-    # make the new app look freshly rolled out: recent grant dates
+    # make the new app look freshly rolled out: recent grant dates. Floor each
+    # rewritten date at the holder's hire_date so the rollout (quarter_start+20)
+    # never precedes the hire of anyone onboarded in the last ~70 days -- that
+    # would manufacture an unplanted grant-before-hire finding.
     new_grant = effective_impl_date(selection.new_app, selection, world, q_start)
-    iam_rows = [replace(e, granted_date=new_grant) if e.app == selection.new_app else e
+    iam_rows = [replace(e, granted_date=max(new_grant,
+                                            hire_by_account.get(e.account_id, new_grant)))
+                if e.app == selection.new_app else e
                 for e in iam_rows]
 
     prior_rows = build_prior_review(iam_rows, selection, prior_narrative, rng, q_end)

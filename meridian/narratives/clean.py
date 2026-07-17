@@ -35,7 +35,9 @@ class _CleanPrivileged(Narrative):
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         app = "Vault"
         role = "Admin"
-        granted = quarter_end - timedelta(days=rng.randint(60, 400))
+        # floor at hire_date: only GrantBeforeHireDate may predate the hire
+        granted = max(person.hire_date,
+                      quarter_end - timedelta(days=rng.randint(60, 400)))
         ents.append(Entitlement(account_id, ents[0].account_name, app, role, granted,
                                 "gateway.provisioning",
                                 quarter_end - timedelta(days=rng.randint(0, 20))))

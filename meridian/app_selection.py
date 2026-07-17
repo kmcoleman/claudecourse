@@ -4,10 +4,19 @@ from datetime import date, timedelta
 
 from meridian.models import AppSelection, Case, World
 
+# Apps on which planted narratives deliberately place findings by rewriting a
+# grant's date (GrantBeforeHireDate -> GitHub Enterprise, PrivilegedGrantNoTicket
+# -> AWS Prod, TransferKeptOldAccess -> Helix ITSM). If any of these were chosen
+# as the per-seed `new_app`, the "fresh rollout" date override in generate.py
+# would overwrite the planted grant's date and destroy the finding. Reserve them
+# so `new_app` can never coincide with a planted-narrative app.
+_RESERVED_FOR_NARRATIVES = {"GitHub Enterprise", "AWS Prod", "Helix ITSM"}
+
 
 def choose_apps(world: World, rng) -> AppSelection:
     new_candidates = sorted(n for n, a in world.apps.items()
-                            if a.tier in {"business", "infra"})
+                            if a.tier in {"business", "infra"}
+                            and n not in _RESERVED_FOR_NARRATIVES)
     new_app = rng.choice(new_candidates)
     skip_candidates = sorted(n for n, a in world.apps.items()
                              if a.tier == "business" and n != new_app)

@@ -30,7 +30,8 @@ class _TerminatedWithActiveAdmin(Narrative):
         else:
             app, role = "Active Directory", "Domain Admin"
         ents.append(_priv_grant(account_id, name, app, role,
-                                quarter_end - timedelta(days=400),
+                                max(person.hire_date,
+                                    quarter_end - timedelta(days=400)),
                                 term - timedelta(days=5)))
         case = Case(f"case-{account_id}", self.name, "must_catch", "account",
                     {"employee_id": person.employee_id, "account_id": account_id,
@@ -66,7 +67,8 @@ class _PrivilegedGrantNoTicket(Narrative):
         name = ents[0].account_name
         app, role = "AWS Prod", "Admin"
         ents.append(_priv_grant(account_id, name, app, role,
-                                quarter_end - timedelta(days=rng.randint(30, 300)),
+                                max(person.hire_date,
+                                    quarter_end - timedelta(days=rng.randint(30, 300))),
                                 quarter_end - timedelta(days=rng.randint(0, 60))))
         case = Case(f"case-{account_id}", self.name, "must_catch", "account",
                     {"employee_id": person.employee_id, "account_id": account_id,
@@ -113,7 +115,8 @@ class _DormantPrivileged(Narrative):
                 e.last_login = quarter_end - timedelta(days=rng.randint(200, 400))
         app, role = "Vault", "Admin"
         ents.append(_priv_grant(account_id, name, app, role,
-                                quarter_end - timedelta(days=500),
+                                max(person.hire_date,
+                                    quarter_end - timedelta(days=500)),
                                 quarter_end - timedelta(days=rng.randint(200, 400))))
         case = Case(f"case-{account_id}", self.name, "must_catch", "account",
                     {"employee_id": person.employee_id, "account_id": account_id,

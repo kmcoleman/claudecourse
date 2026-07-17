@@ -45,9 +45,17 @@ def parse_date(s):
 
 
 def test_coherence_every_case_derivable(tmp_path):
+    # Loop over many seeds: a single seed cannot see seed-dependent breaks such
+    # as the new_app override colliding with a planted-narrative app (C1). Every
+    # case in every seed's answer key must be derivable from the written data.
+    for seed in range(30):
+        _check_coherence_for_seed(tmp_path / f"seed{seed}", seed)
+
+
+def _check_coherence_for_seed(tmp_path, seed):
     out = tmp_path / "2026-Q3"
     key_path = tmp_path / "answer_key.json"
-    key = generate(20260715, "2026-Q3", str(out), str(key_path))
+    key = generate(seed, "2026-Q3", str(out), str(key_path))
     hr, ent, prior, tickets = _load(out)
     w = load_world("world")
     quarter_end = quarter_bounds("2026-Q3")[1]
