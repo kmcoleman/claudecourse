@@ -30,3 +30,29 @@ def test_sod_conflict_holds_both_roles():
     r = SoDConflictWithCompensatingControl.emit(person, w, rng, fake, qe, "A000021")
     roles = {e.role for e in r.iam_rows if e.app == "Atlas ERP"}
     assert {"Vendor Admin", "AP Manager"} <= roles
+
+
+def test_sod_account_atlas_roles_are_exactly_the_pair():
+    # Regression test: baseline_entitlements can grant a Finance person a
+    # random non-privileged Atlas ERP role (AP Clerk, AP Manager, GL
+    # Accountant) BEFORE the narrative appends its own Vendor Admin +
+    # AP Manager roles. That leak either creates a second, uncataloged SoD
+    # conflict (AP Clerk + AP Manager) or a duplicate (Atlas ERP, AP Manager)
+    # row. The narrative must fully own this account's Atlas ERP access.
+    for seed in range(41):
+        w = load_world("world")
+        rng = make_rng(seed)
+        fake = make_faker(rng)
+        qe = date(2026, 9, 30)
+        person = build_population(w, rng, fake, qe)[0]
+        r = SoDConflictWithCompensatingControl.emit(person, w, rng, fake, qe, "A000021")
+
+        atlas_roles = [e.role for e in r.iam_rows if e.app == "Atlas ERP"]
+        assert set(atlas_roles) == {"Vendor Admin", "AP Manager"}, (
+            f"seed={seed}: unexpected Atlas ERP roles {atlas_roles}"
+        )
+
+        pairs = [(e.app, e.role) for e in r.iam_rows]
+        assert len(pairs) == len(set(pairs)), (
+            f"seed={seed}: duplicate (app, role) rows on account: {pairs}"
+        )

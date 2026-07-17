@@ -65,6 +65,7 @@ class _SoDConflictWithCompensatingControl(Narrative):
         person = replace(person, department="Finance & Accounting", title="Senior Accountant")
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         name = ents[0].account_name
+        ents = [e for e in ents if e.app != "Atlas ERP"]   # narrative owns Atlas access; no baseline Atlas leak
         for role in ("Vendor Admin", "AP Manager"):
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
                                     quarter_end - timedelta(days=rng.randint(60, 500)),
