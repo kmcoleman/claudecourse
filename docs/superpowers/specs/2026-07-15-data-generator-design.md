@@ -54,7 +54,7 @@ this size.
 
 | Department | Heads | Role in the case study |
 |---|---:|---|
-| Operations | 380 | The bulk. Plant and dispatch. |
+| Operations | 482 | The bulk. Plant and dispatch. |
 | Field Services | 210 | Heavy contractor mix, mobile access, high turnover |
 | Customer Care | 140 | Call center — the churn engine |
 | Engineering | 120 | Prod access, deploy rights |

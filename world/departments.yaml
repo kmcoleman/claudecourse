@@ -1,0 +1,18 @@
+# name: headcount  (sums to 1200)
+# NOTE: the brief's table (Operations: 380) summed to 1098, not 1200 — a bug present in
+# the design spec, plan.md, and this task's brief (all three carry the same wrong table).
+# Corrected Operations to 482 (380 + 102) to hit the required total while preserving
+# every other department's headcount verbatim and Operations' role as the dominant
+# department. See task-3-report.md for detail.
+Operations: 482
+Field Services: 210
+Customer Care: 140
+Engineering: 120
+Information Technology: 60
+Sales & Key Accounts: 60
+Finance & Accounting: 45
+Marketing: 25
+Procurement: 20
+Human Resources: 18
+Legal & Compliance: 12
+Executive: 8

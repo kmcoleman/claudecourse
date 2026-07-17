@@ -1,0 +1,24 @@
+# tier: crown | business | infra | universal
+# implementation_date: default legacy date; the per-seed new app is overridden at generation time.
+Atlas ERP:        {tier: crown,      owning_dept: Finance & Accounting, implementation_date: 2014-05-01, roles: [AP Clerk, AP Manager, Vendor Admin, GL Accountant, Controller, ERP Admin], privileged_roles: [Vendor Admin, Controller, ERP Admin]}
+MeridianPay:      {tier: crown,      owning_dept: Human Resources,      implementation_date: 2016-02-01, roles: [Payroll Clerk, Payroll Approver, Payroll Admin], privileged_roles: [Payroll Approver, Payroll Admin]}
+Gateway:          {tier: crown,      owning_dept: Information Technology, implementation_date: 2013-09-01, roles: [Help Desk, User Admin, App Admin, Super Admin], privileged_roles: [User Admin, App Admin, Super Admin]}
+Active Directory: {tier: crown,      owning_dept: Information Technology, implementation_date: 2010-01-01, roles: [Standard, Account Operator, Domain Admin], privileged_roles: [Account Operator, Domain Admin]}
+Vault:            {tier: crown,      owning_dept: Information Technology, implementation_date: 2018-06-01, roles: [Reader, Writer, Admin], privileged_roles: [Admin]}
+Compass CRM:      {tier: business,   owning_dept: Sales & Key Accounts,  implementation_date: 2017-03-01, roles: [User, Manager, Admin], privileged_roles: [Admin]}
+Helix ITSM:       {tier: business,   owning_dept: Information Technology, implementation_date: 2015-07-01, roles: [Agent, Change Approver, Admin], privileged_roles: [Change Approver, Admin]}
+PeopleHub HRIS:   {tier: business,   owning_dept: Human Resources,       implementation_date: 2016-08-01, roles: [Employee, HR Partner, Admin], privileged_roles: [Admin]}
+Procure:          {tier: business,   owning_dept: Procurement,           implementation_date: 2017-11-01, roles: [Requisitioner, Buyer, Receiver, Admin], privileged_roles: [Admin]}
+Expense:          {tier: business,   owning_dept: Finance & Accounting,  implementation_date: 2018-01-01, roles: [Submitter, Approver, Admin], privileged_roles: [Admin]}
+Tableau:          {tier: business,   owning_dept: Engineering,           implementation_date: 2019-04-01, roles: [Viewer, Author, Admin], privileged_roles: [Admin]}
+DocuSign:         {tier: business,   owning_dept: Legal & Compliance,    implementation_date: 2018-09-01, roles: [Sender, Admin], privileged_roles: [Admin]}
+Box:              {tier: business,   owning_dept: Information Technology, implementation_date: 2016-05-01, roles: [Member, Co-Owner, Admin], privileged_roles: [Admin]}
+GitHub Enterprise: {tier: infra,     owning_dept: Engineering,           implementation_date: 2017-02-01, roles: [Member, Maintainer, Org Admin], privileged_roles: [Org Admin]}
+AWS Prod:         {tier: infra,      owning_dept: Engineering,           implementation_date: 2016-06-01, roles: [ReadOnly, Developer, Admin], privileged_roles: [Admin]}
+AWS NonProd:      {tier: infra,      owning_dept: Engineering,           implementation_date: 2016-06-01, roles: [ReadOnly, Developer, Admin], privileged_roles: [Admin]}
+Snowflake:        {tier: infra,      owning_dept: Engineering,           implementation_date: 2020-10-01, roles: [Reader, Analyst, SysAdmin], privileged_roles: [SysAdmin]}
+Jenkins:          {tier: infra,      owning_dept: Engineering,           implementation_date: 2015-01-01, roles: [Viewer, Builder, Admin], privileged_roles: [Admin]}
+Slack:            {tier: universal,  owning_dept: Information Technology, implementation_date: 2016-01-01, roles: [Member, Admin], privileged_roles: [Admin]}
+Zoom:             {tier: universal,  owning_dept: Information Technology, implementation_date: 2017-01-01, roles: [Member, Admin], privileged_roles: [Admin]}
+VPN:              {tier: universal,  owning_dept: Information Technology, implementation_date: 2012-01-01, roles: [User], privileged_roles: []}
+Badge access:     {tier: universal,  owning_dept: Operations,            implementation_date: 2009-01-01, roles: [Standard, Facilities Admin], privileged_roles: [Facilities Admin]}
