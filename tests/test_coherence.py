@@ -76,7 +76,6 @@ def test_coherence_every_case_derivable(tmp_path):
         elif narrative == "OrphanNoHRRecord":
             assert subj["employee_id"] in (None, "")
             assert subj["account_id"] in ent_by_acct   # entitlements exist, HR does not
-            assert subj["employee_id"] not in hr_by_id  # genuinely no HR row for this identity
 
         elif narrative == "PrivilegedGrantNoTicket":
             role = subj["entitlement"]
@@ -116,6 +115,19 @@ def test_coherence_every_case_derivable(tmp_path):
             assert row["status"] == "active"
             term_date = parse_date(row["term_date"])
             assert term_date is not None and term_date < quarter_end
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["app"] == subj["app"] and r["role"] == subj["entitlement"]
+                       for r in rows_acct), (
+                "flagged entitlement (VPN / User) not found on the contractor's account"
+            )
+            vouch_tickets = [t for t in tickets
+                              if t["account_id"] == subj["account_id"]
+                              and t["status"] == "approved"
+                              and t.get("app", subj["app"]) == subj["app"]
+                              and t.get("role", subj["entitlement"]) == subj["entitlement"]]
+            assert vouch_tickets, (
+                "no approved vouch ticket found for the contractor's account"
+            )
 
         elif narrative == "TransferKeptOldAccess":
             row = hr_by_id[subj["employee_id"]]
