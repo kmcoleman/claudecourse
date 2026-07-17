@@ -1554,6 +1554,23 @@ def test_service_account_name_in_registry():
     w, rng, fake, qe, person = _ctx()
     r = ApprovedServiceAccount.emit(person, w, rng, fake, qe, "A000031")
     assert any(e.account_name in w.service_accounts for e in r.iam_rows)
+
+
+def test_exempted_controller_holds_only_the_exempted_pair():
+    # The Controller trap must carry ONLY the exempted Vendor Admin+AP Manager pair on
+    # Atlas — never a baseline AP Clerk/GL Accountant, which would form a genuine
+    # NON-exempt SoD conflict and make this "don't flag" trap actually flaggable.
+    for seed in range(41):
+        w = load_world("world")
+        rng = make_rng(seed)
+        fake = make_faker(rng)
+        qe = date(2026, 9, 30)
+        person = build_population(w, rng, fake, qe)[0]
+        r = ExemptedSoDPair.emit(person, w, rng, fake, qe, "A000040")
+        atlas_roles = sorted(e.role for e in r.iam_rows if e.app == "Atlas ERP")
+        assert atlas_roles == ["AP Manager", "Vendor Admin"], f"seed {seed}: {atlas_roles}"
+        pairs = [(e.app, e.role) for e in r.iam_rows]
+        assert len(pairs) == len(set(pairs)), f"seed {seed}: duplicate rows"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1637,6 +1654,11 @@ class _ExemptedSoDPair(Narrative):
         person = replace(person, department="Finance & Accounting", title="Controller")
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         name = ents[0].account_name
+        # The narrative owns this account's Atlas access. Strip any baseline Atlas role
+        # first: otherwise a baseline "AP Clerk" would give the Controller a genuine,
+        # NON-exempt AP Clerk+AP Manager conflict, making this "don't flag" trap actually
+        # flaggable. After stripping, Atlas roles are exactly the exempted pair.
+        ents = [e for e in ents if e.app != "Atlas ERP"]
         for role in ("Vendor Admin", "AP Manager"):
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
                                     quarter_end - timedelta(days=rng.randint(200, 900)),
@@ -1657,7 +1679,7 @@ ExemptedSoDPair = register(_ExemptedSoDPair())
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_narratives_traps.py -v`
-Expected: PASS (3 passed).
+Expected: PASS (4 passed).
 
 - [ ] **Step 5: Commit**
 
