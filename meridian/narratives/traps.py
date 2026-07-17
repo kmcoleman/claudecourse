@@ -4,7 +4,7 @@ from dataclasses import replace
 from datetime import timedelta
 
 from meridian.entitlements import baseline_entitlements
-from meridian.models import Case, EmitResult, Entitlement
+from meridian.models import Case, EmitResult, Entitlement, Ticket
 from meridian.narratives import register
 from meridian.narratives.base import Narrative
 
@@ -21,13 +21,16 @@ class _ApprovedServiceAccount(Narrative):
 
     def emit(self, person, world, rng, faker, quarter_end, account_id):
         acct = "marcus.pipeline"   # human-looking, in the registry
+        granted = quarter_end - timedelta(days=800)
         ents = [Entitlement(account_id, acct, "Atlas ERP", "ERP Admin",
-                            quarter_end - timedelta(days=800), "gateway.provisioning",
+                            granted, "gateway.provisioning",
                             quarter_end - timedelta(days=rng.randint(1, 5)))]
+        ticket = Ticket(f"REQ-{account_id}", account_id, "Atlas ERP", "ERP Admin",
+                        granted - timedelta(days=rng.randint(2, 5)), "service.owner", "approved")
         case = _trap_case(account_id, self.name,
                           {"employee_id": None, "account_id": account_id,
                            "app": "Atlas ERP", "entitlement": "ERP Admin"})
-        return EmitResult(hr_rows=[], iam_rows=ents, cases=[case])
+        return EmitResult(hr_rows=[], iam_rows=ents, tickets=[ticket], cases=[case])
 
 
 class _BreakGlassDormant(Narrative):
@@ -37,13 +40,16 @@ class _BreakGlassDormant(Narrative):
 
     def emit(self, person, world, rng, faker, quarter_end, account_id):
         acct = "emergency.admin"
+        granted = quarter_end - timedelta(days=1000)
         ents = [Entitlement(account_id, acct, "Active Directory", "Domain Admin",
-                            quarter_end - timedelta(days=1000), "security.team",
+                            granted, "security.team",
                             quarter_end - timedelta(days=rng.randint(220, 400)))]
+        ticket = Ticket(f"REQ-{account_id}", account_id, "Active Directory", "Domain Admin",
+                        granted - timedelta(days=rng.randint(2, 5)), "security.team", "approved")
         case = _trap_case(account_id, self.name,
                           {"employee_id": None, "account_id": account_id,
                            "app": "Active Directory", "entitlement": "Domain Admin"})
-        return EmitResult(hr_rows=[], iam_rows=ents, cases=[case])
+        return EmitResult(hr_rows=[], iam_rows=ents, tickets=[ticket], cases=[case])
 
 
 class _EmployeeOnLeave(Narrative):
@@ -76,15 +82,22 @@ class _ExemptedSoDPair(Narrative):
         # NON-exempt AP Clerk+AP Manager conflict, making this "don't flag" trap actually
         # flaggable. After stripping, Atlas roles are exactly the exempted pair.
         ents = [e for e in ents if e.app != "Atlas ERP"]
+        tickets = []
         for role in ("Vendor Admin", "AP Manager"):
+            granted = quarter_end - timedelta(days=rng.randint(200, 900))
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
-                                    quarter_end - timedelta(days=rng.randint(200, 900)),
+                                    granted,
                                     "gateway.provisioning",
                                     quarter_end - timedelta(days=rng.randint(0, 20))))
+            if role in world.apps["Atlas ERP"].privileged_roles:
+                tickets.append(Ticket(f"REQ-{account_id}-{role.replace(' ', '')}", account_id,
+                                      "Atlas ERP", role,
+                                      granted - timedelta(days=rng.randint(2, 5)),
+                                      "cfo.approval", "approved"))
         case = _trap_case(account_id, self.name,
                           {"employee_id": person.employee_id, "account_id": account_id,
                            "app": "Atlas ERP", "entitlement": "Vendor Admin+AP Manager"})
-        return EmitResult(hr_rows=[person], iam_rows=ents, cases=[case])
+        return EmitResult(hr_rows=[person], iam_rows=ents, tickets=tickets, cases=[case])
 
 
 ApprovedServiceAccount = register(_ApprovedServiceAccount())

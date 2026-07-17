@@ -53,3 +53,20 @@ def test_exempted_controller_holds_only_the_exempted_pair():
         assert atlas_roles == ["AP Manager", "Vendor Admin"], f"seed {seed}: {atlas_roles}"
         pairs = [(e.app, e.role) for e in r.iam_rows]
         assert len(pairs) == len(set(pairs)), f"seed {seed}: duplicate rows"
+
+
+def test_privileged_trap_grants_have_covering_ticket():
+    # Traps carry expected == {}, meaning a correct review system must NOT flag them.
+    # Per world/policies/privileged-access-standard.md, a privileged grant with no
+    # approved ticket is a genuine PrivilegedGrantNoTicket finding. Every privileged
+    # entitlement in these traps must therefore have a matching approved ticket.
+    w, rng, fake, qe, person = _ctx()
+    for i, narr in enumerate([ApprovedServiceAccount, BreakGlassDormant, ExemptedSoDPair]):
+        r = narr.emit(person, w, rng, fake, qe, f"A0001{i}0")
+        for e in r.iam_rows:
+            if e.role in w.apps[e.app].privileged_roles:
+                assert any(
+                    t.account_id == e.account_id and t.app == e.app and t.role == e.role
+                    and t.status == "approved"
+                    for t in r.tickets
+                ), f"{narr.name}: privileged grant {e.app}/{e.role} has no covering ticket"
