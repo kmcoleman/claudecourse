@@ -791,7 +791,10 @@ git commit -m "feat: population builder"
 - Consumes: `World`, `Person`, `Entitlement`.
 - Produces:
   - `account_name_for(person, rng=None, faker=None) -> str` — returns `person.account_name` (set at population time, carrying the mismatch hazard), falling back to a `first.last` slug of `full_name` if unset. Does **not** generate a new name — the mismatch decision was already made in the population step, and re-deriving it here would drop it.
-  - `baseline_entitlements(person, world, rng, faker, quarter_end, account_id) -> list[Entitlement]` — the boring volume. Everyone gets the universal apps + AD Standard + Gateway Help Desk + the org-wide business tools; department members get department-appropriate roles; plus 0–3 accumulated "sprawl" apps. Averages ~12.5 rows/person so the full population lands near 15,000. `last_login` is within ~90 days for active users, sometimes `None`. All `granted_date` values are before `quarter_end`. **The `test_population_entitlement_total_in_range` test (12,000–18,000) is the acceptance gate for this volume — tune the per-person app counts until it passes.**
+  - `grant_date(rng, hire_date, quarter_end, max_days_back) -> date` — samples a grant date floored at `hire_date` (and below `quarter_end`), so only the deliberate `GrantBeforeHireDate` narrative ever predates a person's hire.
+  - `baseline_entitlements(person, world, rng, faker, quarter_end, account_id) -> list[Entitlement]` — the boring volume. Everyone gets the universal apps + AD Standard + Gateway Help Desk + the org-wide business tools; department members get department-appropriate roles (deduped per app, non-privileged only); plus 0–3 accumulated "sprawl" apps, also deduped and clamped to the apps actually available. Averages ~12.5 rows/person so the full population lands near 15,000. `last_login` is within ~90 days for active users, sometimes `None`. All `granted_date` values are before `quarter_end` and never before `hire_date`. **The `test_population_entitlement_total_in_range` test (12,000–18,000) is the acceptance gate for this volume — tune the per-person app counts until it passes.**
+
+> **Amended post-implementation:** code review found baseline entitlements could (a) hand out a privileged/SoD-relevant role at random, contaminating the planted-narrative SoD/privileged findings, (b) grant the same app twice to one person, and (c) sample more sprawl apps than were actually left in the pool. Fixed by deduping per app via a `granted_apps` tracking set, restricting department-app roles to non-privileged roles only, and clamping the sprawl sample size to the remaining candidates. Also added `grant_date()` so no baseline grant predates `hire_date` (previously only quarter-end was respected), which had been silently manufacturing unplanted "grant before hire" findings for anyone hired within the lookback window.
 
 - [ ] **Step 1: Write the failing test** in `tests/test_entitlements.py`
 
@@ -833,12 +836,44 @@ def test_population_entitlement_total_in_range():
     total = sum(len(baseline_entitlements(p, w, rng, fake, qe, f"A{i:06d}"))
                for i, p in enumerate(pop))
     assert 12000 <= total <= 18000
+
+
+def test_no_duplicate_app_rows_per_person():
+    w = load_world("world")
+    rng = make_rng(3)
+    fake = make_faker(rng)
+    qe = date(2026, 9, 30)
+    pop = build_population(w, rng, fake, qe)
+    for i, p in enumerate(pop[:200]):
+        ents = baseline_entitlements(p, w, rng, fake, qe, f"A{i:06d}")
+        apps = [e.app for e in ents]
+        assert len(apps) == len(set(apps)), (
+            f"person {i} has duplicate app rows: {apps}"
+        )
+
+
+def test_baseline_grants_no_privileged_roles():
+    w = load_world("world")
+    rng = make_rng(3)
+    fake = make_faker(rng)
+    qe = date(2026, 9, 30)
+    pop = build_population(w, rng, fake, qe)
+    for i, p in enumerate(pop):
+        ents = baseline_entitlements(p, w, rng, fake, qe, f"A{i:06d}")
+        for e in ents:
+            assert e.role not in w.apps[e.app].privileged_roles, (
+                f"person {i} baseline granted privileged role {e.role!r} for {e.app!r}"
+            )
 ```
+
+> **Amended post-implementation:** two tests were added during code review — `test_no_duplicate_app_rows_per_person` and `test_baseline_grants_no_privileged_roles` — to lock in the dedup and non-privileged-only fixes described above so they cannot silently regress.
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_entitlements.py -v`
 Expected: FAIL with `ImportError` for `meridian.entitlements`.
+
+> **Amended post-implementation:** the implementation below reflects the fixed version (dedup via `granted_apps`, non-privileged-only department roles, sprawl sample clamped to remaining candidates, and `grant_date()` flooring every grant at `hire_date`). See the Task 6 Interfaces note above for why.
 
 - [ ] **Step 3: Write `meridian/entitlements.py`**
 
@@ -876,9 +911,24 @@ def account_name_for(person: Person, rng=None, faker=None) -> str:
     return f"{parts[0].lower()}.{parts[-1].lower()}"
 
 
+def grant_date(rng, hire_date, quarter_end, max_days_back):
+    """Sample a grant date that is always >= hire_date and < quarter_end.
+
+    The generator invariant is that the ONLY entitlements dated before their
+    holder's hire_date are the deliberate GrantBeforeHireDate planted grants.
+    Every other grant date must be floored at hire_date so recently-hired people
+    never carry an unplanted grant-before-hire finding.
+    """
+    earliest = max(hire_date, quarter_end - timedelta(days=max_days_back))
+    if earliest >= quarter_end:
+        earliest = quarter_end - timedelta(days=1)
+    span = max(1, (quarter_end - earliest).days)
+    return quarter_end - timedelta(days=rng.randint(1, span))
+
+
 def _grant(app: str, role: str, person: Person, rng, qe: date, account_id: str,
            account_name: str) -> Entitlement:
-    granted = qe - timedelta(days=rng.randint(30, 365 * 6))
+    granted = grant_date(rng, person.hire_date, qe, max_days_back=365 * 6)
     last_login = None if rng.random() < 0.08 else qe - timedelta(days=rng.randint(0, 90))
     return Entitlement(
         account_id=account_id,
@@ -895,9 +945,11 @@ def baseline_entitlements(person: Person, world: World, rng, faker, quarter_end:
                           account_id: str) -> list[Entitlement]:
     account_name = account_name_for(person)
     ents: list[Entitlement] = []
+    granted_apps: set[str] = set()
 
     def add(app, role):
         ents.append(_grant(app, role, person, rng, quarter_end, account_id, account_name))
+        granted_apps.add(app)
 
     # universal apps + core directory/IdP — everyone
     for app in _UNIVERSAL:
@@ -907,20 +959,37 @@ def baseline_entitlements(person: Person, world: World, rng, faker, quarter_end:
     # org-wide business tools — everyone
     for app in _COMMON_BUSINESS:
         add(app, world.apps[app].roles[0])
-    # department-appropriate apps
+    # department-appropriate apps — at most one grant per app per person, and
+    # baseline never hands out a privileged/SoD-relevant role (those come only
+    # from the narrative layer in later tasks).
     for app in _DEPT_APPS.get(person.department, []):
+        if app in granted_apps:
+            continue
         if rng.random() < 0.75:
-            add(app, rng.choice(world.apps[app].roles[:2]))   # low-privilege by default
-    # accumulated sprawl
-    for app in rng.sample(_EXTRA_POOL, rng.randint(0, 3)):
-        add(app, world.apps[app].roles[0])
+            spec = world.apps[app]
+            non_privileged = [r for r in spec.roles if r not in spec.privileged_roles]
+            if not non_privileged:
+                continue
+            add(app, rng.choice(non_privileged))
+    # accumulated sprawl — skip apps already held, and never sample more apps
+    # than are actually available to add
+    sprawl_candidates = [app for app in _EXTRA_POOL if app not in granted_apps]
+    sample_size = min(rng.randint(0, 3), len(sprawl_candidates))
+    for app in rng.sample(sprawl_candidates, sample_size):
+        role = world.apps[app].roles[0]
+        # defensive: sprawl/common-business pools are expected to use only the
+        # base (non-privileged) role — baseline must never grant privileged access
+        assert role not in world.apps[app].privileged_roles, (
+            f"sprawl base role {role!r} for {app!r} is privileged"
+        )
+        add(app, role)
     return ents
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_entitlements.py -v`
-Expected: PASS (3 passed).
+Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -1048,6 +1117,8 @@ def test_clean_privileged_has_ticket_and_no_cases():
 Run: `pytest tests/test_narratives_clean.py -v`
 Expected: FAIL with `ImportError` for `meridian.narratives.clean`.
 
+> **Amended post-implementation:** `CleanPrivileged`'s grant date is now floored at `person.hire_date` (`max(person.hire_date, ...)`), matching the `entitlements.py` invariant that only `GrantBeforeHireDate` may predate a hire. Without the floor, a recently-hired person could randomly draw a "clean" privileged grant dated before their hire — an unplanted, uncataloged finding. Fixed during Task 6/8 review.
+
 - [ ] **Step 3: Write `meridian/narratives/clean.py`**
 
 ```python
@@ -1088,7 +1159,9 @@ class _CleanPrivileged(Narrative):
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         app = "Vault"
         role = "Admin"
-        granted = quarter_end - timedelta(days=rng.randint(60, 400))
+        # floor at hire_date: only GrantBeforeHireDate may predate the hire
+        granted = max(person.hire_date,
+                      quarter_end - timedelta(days=rng.randint(60, 400)))
         ents.append(Entitlement(account_id, ents[0].account_name, app, role, granted,
                                 "gateway.provisioning",
                                 quarter_end - timedelta(days=rng.randint(0, 20))))
@@ -1193,6 +1266,8 @@ def test_grant_before_hire_is_actually_before():
 Run: `pytest tests/test_narratives_must_catch.py -v`
 Expected: FAIL with `ImportError` for `meridian.narratives.must_catch`.
 
+> **Amended post-implementation:** `TerminatedWithActiveAdmin` and `PrivilegedGrantNoTicket` now floor their planted grant date at `person.hire_date` (only `GrantBeforeHireDate` may predate a hire). `DormantPrivileged` now ages `last_login` on **every** entitlement already on the account, not just the appended row — otherwise the account had a fresh login on some other app and wasn't genuinely dormant, undermining the "the whole account went dark" story. Fixed during Task 6/9 review.
+
 - [ ] **Step 3: Write `meridian/narratives/must_catch.py`**
 
 ```python
@@ -1228,7 +1303,8 @@ class _TerminatedWithActiveAdmin(Narrative):
         else:
             app, role = "Active Directory", "Domain Admin"
         ents.append(_priv_grant(account_id, name, app, role,
-                                quarter_end - timedelta(days=400),
+                                max(person.hire_date,
+                                    quarter_end - timedelta(days=400)),
                                 term - timedelta(days=5)))
         case = Case(f"case-{account_id}", self.name, "must_catch", "account",
                     {"employee_id": person.employee_id, "account_id": account_id,
@@ -1264,7 +1340,8 @@ class _PrivilegedGrantNoTicket(Narrative):
         name = ents[0].account_name
         app, role = "AWS Prod", "Admin"
         ents.append(_priv_grant(account_id, name, app, role,
-                                quarter_end - timedelta(days=rng.randint(30, 300)),
+                                max(person.hire_date,
+                                    quarter_end - timedelta(days=rng.randint(30, 300))),
                                 quarter_end - timedelta(days=rng.randint(0, 60))))
         case = Case(f"case-{account_id}", self.name, "must_catch", "account",
                     {"employee_id": person.employee_id, "account_id": account_id,
@@ -1303,9 +1380,16 @@ class _DormantPrivileged(Narrative):
     def emit(self, person, world, rng, faker, quarter_end, account_id):
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         name = ents[0].account_name
+        # the whole account has gone dark, not just the privileged grant: push
+        # every existing last_login on this account back beyond 180 days so the
+        # dormancy finding is true of the account, not an isolated data point
+        for e in ents:
+            if e.last_login is not None:
+                e.last_login = quarter_end - timedelta(days=rng.randint(200, 400))
         app, role = "Vault", "Admin"
         ents.append(_priv_grant(account_id, name, app, role,
-                                quarter_end - timedelta(days=500),
+                                max(person.hire_date,
+                                    quarter_end - timedelta(days=500)),
                                 quarter_end - timedelta(days=rng.randint(200, 400))))
         case = Case(f"case-{account_id}", self.name, "must_catch", "account",
                     {"employee_id": person.employee_id, "account_id": account_id,
@@ -1390,12 +1474,42 @@ def test_sod_conflict_holds_both_roles():
     r = SoDConflictWithCompensatingControl.emit(person, w, rng, fake, qe, "A000021")
     roles = {e.role for e in r.iam_rows if e.app == "Atlas ERP"}
     assert {"Vendor Admin", "AP Manager"} <= roles
+
+
+def test_sod_account_atlas_roles_are_exactly_the_pair():
+    # Regression test: baseline_entitlements can grant a Finance person a
+    # random non-privileged Atlas ERP role (AP Clerk, AP Manager, GL
+    # Accountant) BEFORE the narrative appends its own Vendor Admin +
+    # AP Manager roles. That leak either creates a second, uncataloged SoD
+    # conflict (AP Clerk + AP Manager) or a duplicate (Atlas ERP, AP Manager)
+    # row. The narrative must fully own this account's Atlas ERP access.
+    for seed in range(41):
+        w = load_world("world")
+        rng = make_rng(seed)
+        fake = make_faker(rng)
+        qe = date(2026, 9, 30)
+        person = build_population(w, rng, fake, qe)[0]
+        r = SoDConflictWithCompensatingControl.emit(person, w, rng, fake, qe, "A000021")
+
+        atlas_roles = [e.role for e in r.iam_rows if e.app == "Atlas ERP"]
+        assert set(atlas_roles) == {"Vendor Admin", "AP Manager"}, (
+            f"seed={seed}: unexpected Atlas ERP roles {atlas_roles}"
+        )
+
+        pairs = [(e.app, e.role) for e in r.iam_rows]
+        assert len(pairs) == len(set(pairs)), (
+            f"seed={seed}: duplicate (app, role) rows on account: {pairs}"
+        )
 ```
+
+> **Amended post-implementation:** `test_sod_account_atlas_roles_are_exactly_the_pair` was added during code review after `baseline_entitlements` was found to occasionally leak a random baseline Atlas ERP role onto the same account before the narrative's Vendor Admin/AP Manager pair was appended, producing a second uncataloged SoD conflict or a duplicate row.
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_narratives_judgment.py -v`
 Expected: FAIL with `ImportError` for `meridian.narratives.judgment`.
+
+> **Amended post-implementation:** `TransferKeptOldAccess`'s retained-access grant date is now floored at `hire_date`, and `SoDConflictWithCompensatingControl` strips any baseline Atlas ERP rows before appending its own Vendor Admin + AP Manager pair (and also floors those grant dates at hire_date) — see the test amendment above for why the strip was needed. Fixed during Task 10 review.
 
 - [ ] **Step 3: Write `meridian/narratives/judgment.py`**
 
@@ -1445,9 +1559,12 @@ class _TransferKeptOldAccess(Narrative):
         person = replace(person, department="Finance & Accounting")
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         name = ents[0].account_name
-        # retained old-department access: a dispatch/ops entitlement
+        # retained old-department access: a dispatch/ops entitlement.
+        # floor the grant at hire_date (the transfer finding depends on the
+        # department change, not on the grant date being pre-hire).
         old = Entitlement(account_id, name, "Helix ITSM", "Change Approver",
-                          quarter_end - timedelta(days=700), "gateway.provisioning",
+                          max(person.hire_date, quarter_end - timedelta(days=700)),
+                          "gateway.provisioning",
                           quarter_end - timedelta(days=rng.randint(0, 45)))
         ents.append(old)
         case = Case(f"case-{account_id}", self.name, "judgment", "account",
@@ -1467,9 +1584,11 @@ class _SoDConflictWithCompensatingControl(Narrative):
         person = replace(person, department="Finance & Accounting", title="Senior Accountant")
         ents = baseline_entitlements(person, world, rng, faker, quarter_end, account_id)
         name = ents[0].account_name
+        ents = [e for e in ents if e.app != "Atlas ERP"]   # narrative owns Atlas access; no baseline Atlas leak
         for role in ("Vendor Admin", "AP Manager"):
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
-                                    quarter_end - timedelta(days=rng.randint(60, 500)),
+                                    max(person.hire_date,
+                                        quarter_end - timedelta(days=rng.randint(60, 500))),
                                     "gateway.provisioning",
                                     quarter_end - timedelta(days=rng.randint(0, 30))))
         case = Case(f"case-{account_id}", self.name, "judgment", "account",
@@ -1488,7 +1607,7 @@ SoDConflictWithCompensatingControl = register(_SoDConflictWithCompensatingContro
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_narratives_judgment.py -v`
-Expected: PASS (2 passed).
+Expected: PASS (3 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -1571,12 +1690,33 @@ def test_exempted_controller_holds_only_the_exempted_pair():
         assert atlas_roles == ["AP Manager", "Vendor Admin"], f"seed {seed}: {atlas_roles}"
         pairs = [(e.app, e.role) for e in r.iam_rows]
         assert len(pairs) == len(set(pairs)), f"seed {seed}: duplicate rows"
+
+
+def test_privileged_trap_grants_have_covering_ticket():
+    # Traps carry expected == {}, meaning a correct review system must NOT flag them.
+    # Per world/policies/privileged-access-standard.md, a privileged grant with no
+    # approved ticket is a genuine PrivilegedGrantNoTicket finding. Every privileged
+    # entitlement in these traps must therefore have a matching approved ticket.
+    w, rng, fake, qe, person = _ctx()
+    for i, narr in enumerate([ApprovedServiceAccount, BreakGlassDormant, ExemptedSoDPair]):
+        r = narr.emit(person, w, rng, fake, qe, f"A0001{i}0")
+        for e in r.iam_rows:
+            if e.role in w.apps[e.app].privileged_roles:
+                assert any(
+                    t.account_id == e.account_id and t.app == e.app and t.role == e.role
+                    and t.status == "approved"
+                    for t in r.tickets
+                ), f"{narr.name}: privileged grant {e.app}/{e.role} has no covering ticket"
 ```
+
+> **Amended post-implementation:** `test_privileged_trap_grants_have_covering_ticket` was added during code review. `ApprovedServiceAccount`, `BreakGlassDormant`, and `ExemptedSoDPair` each grant privileged roles with `expected == {}` (meaning "don't flag this"), but per the Privileged Access Standard a privileged grant with no approved ticket IS a genuine finding (`PrivilegedGrantNoTicket`). Without a covering ticket these traps were self-contradicting — flaggable by their own policy even though the answer key said not to flag them.
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_narratives_traps.py -v`
 Expected: FAIL with `ImportError` for `meridian.narratives.traps`.
+
+> **Amended post-implementation:** `ApprovedServiceAccount` and `BreakGlassDormant` now emit an approved `Ticket` covering their privileged grant, and `ExemptedSoDPair` emits approved tickets for both legs of the exempted pair — see the test amendment above for why. Fixed during Task 11 review.
 
 - [ ] **Step 3: Write `meridian/narratives/traps.py`**
 
@@ -1587,7 +1727,7 @@ from dataclasses import replace
 from datetime import timedelta
 
 from meridian.entitlements import baseline_entitlements
-from meridian.models import Case, EmitResult, Entitlement
+from meridian.models import Case, EmitResult, Entitlement, Ticket
 from meridian.narratives import register
 from meridian.narratives.base import Narrative
 
@@ -1604,13 +1744,16 @@ class _ApprovedServiceAccount(Narrative):
 
     def emit(self, person, world, rng, faker, quarter_end, account_id):
         acct = "marcus.pipeline"   # human-looking, in the registry
+        granted = quarter_end - timedelta(days=800)
         ents = [Entitlement(account_id, acct, "Atlas ERP", "ERP Admin",
-                            quarter_end - timedelta(days=800), "gateway.provisioning",
+                            granted, "gateway.provisioning",
                             quarter_end - timedelta(days=rng.randint(1, 5)))]
+        ticket = Ticket(f"REQ-{account_id}", account_id, "Atlas ERP", "ERP Admin",
+                        granted - timedelta(days=rng.randint(2, 5)), "service.owner", "approved")
         case = _trap_case(account_id, self.name,
                           {"employee_id": None, "account_id": account_id,
                            "app": "Atlas ERP", "entitlement": "ERP Admin"})
-        return EmitResult(hr_rows=[], iam_rows=ents, cases=[case])
+        return EmitResult(hr_rows=[], iam_rows=ents, tickets=[ticket], cases=[case])
 
 
 class _BreakGlassDormant(Narrative):
@@ -1620,13 +1763,16 @@ class _BreakGlassDormant(Narrative):
 
     def emit(self, person, world, rng, faker, quarter_end, account_id):
         acct = "emergency.admin"
+        granted = quarter_end - timedelta(days=1000)
         ents = [Entitlement(account_id, acct, "Active Directory", "Domain Admin",
-                            quarter_end - timedelta(days=1000), "security.team",
+                            granted, "security.team",
                             quarter_end - timedelta(days=rng.randint(220, 400)))]
+        ticket = Ticket(f"REQ-{account_id}", account_id, "Active Directory", "Domain Admin",
+                        granted - timedelta(days=rng.randint(2, 5)), "security.team", "approved")
         case = _trap_case(account_id, self.name,
                           {"employee_id": None, "account_id": account_id,
                            "app": "Active Directory", "entitlement": "Domain Admin"})
-        return EmitResult(hr_rows=[], iam_rows=ents, cases=[case])
+        return EmitResult(hr_rows=[], iam_rows=ents, tickets=[ticket], cases=[case])
 
 
 class _EmployeeOnLeave(Narrative):
@@ -1659,15 +1805,23 @@ class _ExemptedSoDPair(Narrative):
         # NON-exempt AP Clerk+AP Manager conflict, making this "don't flag" trap actually
         # flaggable. After stripping, Atlas roles are exactly the exempted pair.
         ents = [e for e in ents if e.app != "Atlas ERP"]
+        tickets = []
         for role in ("Vendor Admin", "AP Manager"):
+            granted = max(person.hire_date,
+                          quarter_end - timedelta(days=rng.randint(200, 900)))
             ents.append(Entitlement(account_id, name, "Atlas ERP", role,
-                                    quarter_end - timedelta(days=rng.randint(200, 900)),
+                                    granted,
                                     "gateway.provisioning",
                                     quarter_end - timedelta(days=rng.randint(0, 20))))
+            if role in world.apps["Atlas ERP"].privileged_roles:
+                tickets.append(Ticket(f"REQ-{account_id}-{role.replace(' ', '')}", account_id,
+                                      "Atlas ERP", role,
+                                      granted - timedelta(days=rng.randint(2, 5)),
+                                      "cfo.approval", "approved"))
         case = _trap_case(account_id, self.name,
                           {"employee_id": person.employee_id, "account_id": account_id,
                            "app": "Atlas ERP", "entitlement": "Vendor Admin+AP Manager"})
-        return EmitResult(hr_rows=[person], iam_rows=ents, cases=[case])
+        return EmitResult(hr_rows=[person], iam_rows=ents, tickets=tickets, cases=[case])
 
 
 ApprovedServiceAccount = register(_ApprovedServiceAccount())
@@ -1679,7 +1833,7 @@ ExemptedSoDPair = register(_ExemptedSoDPair())
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_narratives_traps.py -v`
-Expected: PASS (4 passed).
+Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -1699,9 +1853,11 @@ git commit -m "feat: trap narratives"
 **Interfaces:**
 - Consumes: `World`, `AppSelection`, `Case`.
 - Produces:
-  - `choose_apps(world, rng) -> AppSelection` — picks 1 `new_app` (from business/infra tier only — never crown or universal) and 2 `skipped_apps` (distinct, from business tier only), seed-varied.
+  - `choose_apps(world, rng) -> AppSelection` — picks 1 `new_app` (from business/infra tier only — never crown or universal, and never one of `_RESERVED_FOR_NARRATIVES`) and 2 `skipped_apps` (distinct, from business tier only), seed-varied.
   - `effective_impl_date(app_name, selection, world, quarter_start) -> date` — returns a date *inside the quarter* for the new app, otherwise the world default.
   - `coverage_gap_cases(selection) -> list[Case]` — two judgment app-scoped cases (one per skipped app) with `expected={"category": "coverage_gap", "recommendation": "review"}`, plus one trap app-scoped case for the new app with `expected={}`.
+
+> **Amended post-implementation:** `choose_apps` now excludes `_RESERVED_FOR_NARRATIVES = {"GitHub Enterprise", "AWS Prod", "Helix ITSM"}` from the `new_app` candidate pool. Several planted narratives (`GrantBeforeHireDate`, `PrivilegedGrantNoTicket`, `TransferKeptOldAccess`) place their finding by writing a specific grant date onto one of these apps; `generate.py`'s "fresh rollout" override rewrites every grant date on whichever app becomes `new_app`, so a collision would silently destroy the planted finding. Found via the cross-seed check described in the test amendment below.
 
 - [ ] **Step 1: Write the failing test** in `tests/test_app_selection.py`
 
@@ -1709,7 +1865,8 @@ git commit -m "feat: trap narratives"
 from datetime import date
 from meridian.world import load_world
 from meridian.rng import make_rng
-from meridian.app_selection import choose_apps, coverage_gap_cases, effective_impl_date
+from meridian.app_selection import (_RESERVED_FOR_NARRATIVES, choose_apps,
+                                    coverage_gap_cases, effective_impl_date)
 
 
 def test_selection_disjoint_and_correct_tiers():
@@ -1740,6 +1897,20 @@ def test_coverage_gap_cases_shape():
     assert all(c.scope == "application" for c in cases)
 
 
+def test_new_app_never_a_planted_narrative_app():
+    # The per-seed new_app triggers a "fresh rollout" date override in generate.py
+    # that rewrites every grant on that app. Planted narratives place findings by
+    # setting specific grant dates on GitHub Enterprise / AWS Prod / Helix ITSM;
+    # if new_app ever coincided, the override would destroy those findings. Across
+    # many seeds, new_app must never land on a planted-narrative app.
+    w = load_world("world")
+    for seed in range(40):
+        sel = choose_apps(w, make_rng(seed))
+        assert sel.new_app not in _RESERVED_FOR_NARRATIVES, (
+            f"seed {seed}: new_app {sel.new_app!r} is a reserved planted-narrative app"
+        )
+
+
 def test_selection_is_seed_varied():
     w = load_world("world")
     s1 = choose_apps(w, make_rng(1))
@@ -1747,10 +1918,14 @@ def test_selection_is_seed_varied():
     assert (s1.new_app, s1.skipped_apps) != (s2.new_app, s2.skipped_apps)
 ```
 
+> **Amended post-implementation:** `test_new_app_never_a_planted_narrative_app` was added during code review. Looping `choose_apps` over many seeds surfaced that `new_app` could land on `GitHub Enterprise`, `AWS Prod`, or `Helix ITSM` — apps that planted narratives use to place findings via a specific grant date — and `generate.py`'s new-app "fresh rollout" override would then silently rewrite that date and erase the finding.
+
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_app_selection.py -v`
 Expected: FAIL with `ImportError` for `meridian.app_selection`.
+
+> **Amended post-implementation:** the implementation below adds `_RESERVED_FOR_NARRATIVES` and excludes it from the `new_app` candidate pool — see the Interfaces and test amendments above for why.
 
 - [ ] **Step 3: Write `meridian/app_selection.py`**
 
@@ -1761,10 +1936,19 @@ from datetime import date, timedelta
 
 from meridian.models import AppSelection, Case, World
 
+# Apps on which planted narratives deliberately place findings by rewriting a
+# grant's date (GrantBeforeHireDate -> GitHub Enterprise, PrivilegedGrantNoTicket
+# -> AWS Prod, TransferKeptOldAccess -> Helix ITSM). If any of these were chosen
+# as the per-seed `new_app`, the "fresh rollout" date override in generate.py
+# would overwrite the planted grant's date and destroy the finding. Reserve them
+# so `new_app` can never coincide with a planted-narrative app.
+_RESERVED_FOR_NARRATIVES = {"GitHub Enterprise", "AWS Prod", "Helix ITSM"}
+
 
 def choose_apps(world: World, rng) -> AppSelection:
     new_candidates = sorted(n for n, a in world.apps.items()
-                            if a.tier in {"business", "infra"})
+                            if a.tier in {"business", "infra"}
+                            and n not in _RESERVED_FOR_NARRATIVES)
     new_app = rng.choice(new_candidates)
     skip_candidates = sorted(n for n, a in world.apps.items()
                              if a.tier == "business" and n != new_app)
@@ -1794,7 +1978,7 @@ def coverage_gap_cases(selection: AppSelection) -> list[Case]:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_app_selection.py -v`
-Expected: PASS (4 passed).
+Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -2385,7 +2569,9 @@ git commit -m "feat: answer key assembly"
   - `generate(seed: int, quarter: str, out_dir: str, key_path: str | None) -> dict` — runs the full pipeline and returns the answer-key dict. Writes all five artifacts + policies into `out_dir`, and the key to `key_path` if given.
   - `quarter_bounds(quarter: str) -> tuple[date, date]` — parses `"2026-Q3"` → `(quarter_start, quarter_end)`.
   - `main(argv=None)` — argparse CLI matching the spec's interface.
-- Pipeline order: load world → `choose_apps` → build population → `assign_narratives` → for each (person, narrative) call `emit(...)` with a monotonically increasing account-id counter, collecting hr/iam/tickets/prior/cases → add `coverage_gap_cases` → override new-app entitlement grant dates to be recent (via `effective_impl_date`) → `build_prior_review` → inject messes → shuffle all exported row lists → write files → assemble & write key.
+- Pipeline order: load world → `choose_apps` → build population → `assign_narratives` → for each (person, narrative) call `emit(...)` with a monotonically increasing account-id counter, collecting hr/iam/tickets/prior/cases (and recording each account's `hire_date` in a `hire_by_account` map) → add `coverage_gap_cases` → override new-app entitlement grant dates to be recent (via `effective_impl_date`, floored at each holder's `hire_date`) → `build_prior_review` → inject messes → shuffle all exported row lists → write files → assemble & write key.
+
+> **Amended post-implementation:** the new-app "fresh rollout" date override originally set every entitlement on the new app to a single flat date (`quarter_start + 20`) regardless of who held it. For anyone hired within the last ~70 days, that could predate their `hire_date`, silently manufacturing an unplanted grant-before-hire finding. Fixed by building a `hire_by_account` map during the emit loop and flooring the override date at `max(new_grant, hire_by_account[account_id])`. Caught by `tests/test_acceptance.py::test_no_unplanted_grant_before_hire` (Task 19).
 
 - [ ] **Step 1: Write the failing smoke test** in `tests/test_coherence.py` (coherence assertions come in Task 19; this first test just drives the CLI)
 
@@ -2461,10 +2647,12 @@ def generate(seed: int, quarter: str, out_dir: str, key_path: str | None = None)
     pairs = assign_narratives(population, rng)
 
     hr_rows, iam_rows, tickets, prior_narrative, cases = [], [], [], [], []
+    hire_by_account: dict[str, date] = {}
     counter = 1
     for person, narrative_name in pairs:
         account_id = f"A{counter:06d}"
         counter += 1
+        hire_by_account[account_id] = person.hire_date
         result = NARRATIVES[narrative_name].emit(person, world, rng, faker, q_end, account_id)
         hr_rows.extend(result.hr_rows)
         iam_rows.extend(result.iam_rows)
@@ -2474,9 +2662,14 @@ def generate(seed: int, quarter: str, out_dir: str, key_path: str | None = None)
 
     cases.extend(coverage_gap_cases(selection))
 
-    # make the new app look freshly rolled out: recent grant dates
+    # make the new app look freshly rolled out: recent grant dates. Floor each
+    # rewritten date at the holder's hire_date so the rollout (quarter_start+20)
+    # never precedes the hire of anyone onboarded in the last ~70 days -- that
+    # would manufacture an unplanted grant-before-hire finding.
     new_grant = effective_impl_date(selection.new_app, selection, world, q_start)
-    iam_rows = [replace(e, granted_date=new_grant) if e.app == selection.new_app else e
+    iam_rows = [replace(e, granted_date=max(new_grant,
+                                            hire_by_account.get(e.account_id, new_grant)))
+                if e.app == selection.new_app else e
                 for e in iam_rows]
 
     prior_rows = build_prior_review(iam_rows, selection, prior_narrative, rng, q_end)
@@ -2586,6 +2779,192 @@ def test_coherence_every_case_derivable(tmp_path):
             assert subj["app"] not in prior_apps       # the trap: also absent, but expected
 ```
 
+> **Amended post-implementation:** the four-narrative sketch above was the seed for the coherence test but does not match what shipped. Code review found it (a) only checked 4 of the 15 narratives, silently passing over any case it didn't recognize instead of failing, and (b) ran against a single seed, which cannot see seed-dependent breaks (e.g. the C1 new-app/planted-app collision fixed in Task 12). The shipped version replaces it with the block below: a dispatch over **every** narrative with `pytest.fail(...)` for anything unhandled, looped across ~30 seeds, plus a strengthened check that all three omitted apps (2 coverage-gap + 1 new-app) are genuinely absent from the final `prior_review.csv` (guarding against narrative-supplied prior-review rows leaking an omitted app back in).
+
+```python
+import csv
+import json
+from datetime import datetime
+
+import pytest
+
+from meridian.generate import generate, quarter_bounds
+from meridian.world import load_world
+
+
+def _load(out):
+    hr = list(csv.DictReader(open(out / "hr_roster.csv")))
+    ent = list(csv.DictReader(open(out / "entitlements.csv")))
+    prior = list(csv.DictReader(open(out / "prior_review.csv")))
+    tickets = json.load(open(out / "access_tickets.json"))
+    return hr, ent, prior, tickets
+
+
+def parse_date(s):
+    """Entitlements CSV deliberately mixes ISO (YYYY-MM-DD) and US (MM/DD/YYYY)
+    date formats per row. HR roster dates are always ISO, which this also parses
+    fine since ISO is tried first. Blank strings return None."""
+    if not s:
+        return None
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def test_coherence_every_case_derivable(tmp_path):
+    # Loop over many seeds: a single seed cannot see seed-dependent breaks such
+    # as the new_app override colliding with a planted-narrative app (C1). Every
+    # case in every seed's answer key must be derivable from the written data.
+    for seed in range(30):
+        _check_coherence_for_seed(tmp_path / f"seed{seed}", seed)
+
+
+def _check_coherence_for_seed(tmp_path, seed):
+    out = tmp_path / "2026-Q3"
+    key_path = tmp_path / "answer_key.json"
+    key = generate(seed, "2026-Q3", str(out), str(key_path))
+    hr, ent, prior, tickets = _load(out)
+    w = load_world("world")
+    quarter_end = quarter_bounds("2026-Q3")[1]
+
+    hr_by_id = {r["employee_id"]: r for r in hr}
+    ent_by_acct = {}
+    for r in ent:
+        ent_by_acct.setdefault(r["account_id"], []).append(r)
+    prior_apps = {r["app"] for r in prior}
+
+    omitted_apps = set()
+
+    for case in key["cases"]:
+        subj = case["subject"]
+        narrative = case["narrative"]
+
+        if narrative in ("TerminatedWithActiveAdmin", "TerminatedWithActiveAdminUniversal"):
+            # HR row shows a term date; the flagged entitlement still exists
+            row = hr_by_id[subj["employee_id"]]
+            assert row["term_date"] != "", "terminated case must have a term_date"
+            assert subj["account_id"] in ent_by_acct
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["app"] == subj["app"] and r["role"] == subj["entitlement"]
+                       for r in rows_acct), "flagged privileged grant not found on account"
+
+        elif narrative == "OrphanNoHRRecord":
+            assert subj["employee_id"] in (None, "")
+            assert subj["account_id"] in ent_by_acct   # entitlements exist, HR does not
+
+        elif narrative == "PrivilegedGrantNoTicket":
+            role = subj["entitlement"]
+            app = subj["app"]
+            assert role in w.apps[app].privileged_roles, (
+                f"{role!r} is not a privileged role for {app!r}"
+            )
+            matching_tickets = [t for t in tickets
+                                if t["account_id"] == subj["account_id"]
+                                and t["app"] == app and t["role"] == role]
+            assert not matching_tickets, "ticket exists for a supposedly ticket-less grant"
+
+        elif narrative == "GrantBeforeHireDate":
+            row = hr_by_id[subj["employee_id"]]
+            hire_date = parse_date(row["hire_date"])
+            assert hire_date is not None
+            rows_acct = ent_by_acct[subj["account_id"]]
+            flagged = [r for r in rows_acct
+                      if r["app"] == subj["app"] and r["role"] == subj["entitlement"]]
+            assert flagged, "flagged entitlement row missing from account"
+            assert any(parse_date(r["granted_date"]) is not None
+                       and parse_date(r["granted_date"]) < hire_date
+                       for r in flagged), "no grant on this account predates the hire date"
+
+        elif narrative == "DormantPrivileged":
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert rows_acct
+            for r in rows_acct:
+                ll = parse_date(r["last_login"])
+                assert ll is None or (quarter_end - ll).days > 180, (
+                    f"account {subj['account_id']} has a non-dormant entitlement row"
+                )
+
+        elif narrative == "ContractorOverstayWithVouch":
+            row = hr_by_id[subj["employee_id"]]
+            assert row["employment_type"] == "Contractor"
+            assert row["status"] == "active"
+            term_date = parse_date(row["term_date"])
+            assert term_date is not None and term_date < quarter_end
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["app"] == subj["app"] and r["role"] == subj["entitlement"]
+                       for r in rows_acct), (
+                "flagged entitlement (VPN / User) not found on the contractor's account"
+            )
+            vouch_tickets = [t for t in tickets
+                              if t["account_id"] == subj["account_id"]
+                              and t["status"] == "approved"
+                              and t.get("app", subj["app"]) == subj["app"]
+                              and t.get("role", subj["entitlement"]) == subj["entitlement"]]
+            assert vouch_tickets, (
+                "no approved vouch ticket found for the contractor's account"
+            )
+
+        elif narrative == "TransferKeptOldAccess":
+            row = hr_by_id[subj["employee_id"]]
+            assert row["department"].strip().lower() == "finance & accounting"
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["app"] == "Helix ITSM" and r["role"] == "Change Approver"
+                       for r in rows_acct), "old-department access not found on account"
+
+        elif narrative == "SoDConflictWithCompensatingControl":
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["app"] == "Atlas ERP" and r["role"] == "Vendor Admin"
+                       for r in rows_acct), "missing Vendor Admin leg of the SoD pair"
+            assert any(r["app"] == "Atlas ERP" and r["role"] == "AP Manager"
+                       for r in rows_acct), "missing AP Manager leg of the SoD pair"
+
+        elif narrative in ("ApprovedServiceAccount", "BreakGlassDormant"):
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["account_name"] in w.service_accounts for r in rows_acct), (
+                "no entitlement row on this account uses a registered service-account name"
+            )
+
+        elif narrative == "EmployeeOnLeave":
+            row = hr_by_id[subj["employee_id"]]
+            assert row["status"] == "on_leave"
+            assert row["term_date"] == ""
+
+        elif narrative == "ExemptedSoDPair":
+            row = hr_by_id[subj["employee_id"]]
+            assert row["title"] == "Controller"
+            rows_acct = ent_by_acct[subj["account_id"]]
+            assert any(r["app"] == "Atlas ERP" and r["role"] == "Vendor Admin"
+                       for r in rows_acct), "missing Vendor Admin leg of the exempted pair"
+            assert any(r["app"] == "Atlas ERP" and r["role"] == "AP Manager"
+                       for r in rows_acct), "missing AP Manager leg of the exempted pair"
+
+        elif narrative == "PriorReviewCoverageGap":
+            assert subj["app"] not in prior_apps       # genuinely absent from prior review
+            omitted_apps.add(subj["app"])
+
+        elif narrative == "NewAppNoPriorReview":
+            assert subj["app"] not in prior_apps       # the trap: also absent, but expected
+            omitted_apps.add(subj["app"])
+
+        else:
+            pytest.fail(f"no coherence check for narrative {narrative!r}")
+
+    # Strengthened check: the new app AND both skipped apps must be genuinely
+    # absent from the FINAL written prior_review.csv -- guards against the
+    # coupling where narrative-supplied prior-review rows (e.g. the
+    # ContractorOverstayWithVouch VPN row) are appended to prior_review
+    # without being filtered against the omitted-apps set.
+    assert len(omitted_apps) == 3, "expected 2 coverage-gap apps + 1 new app"
+    for app in omitted_apps:
+        assert app not in prior_apps, (
+            f"{app!r} was supposed to be omitted from prior review, "
+            "but appears in the final prior_review.csv"
+        )
+```
+
 - [ ] **Step 2: Run coherence test**
 
 Run: `pytest tests/test_coherence.py -v`
@@ -2649,10 +3028,83 @@ def test_seed_variation_changes_selection(tmp_path):
     assert apps1 != apps2
 ```
 
+> **Amended post-implementation:** code review found the acceptance suite had no direct test of the core "no unplanted grant predates its holder's hire date" invariant that `entitlements.py`, `generate.py`, and several narratives all rely on (see the Task 6 and Task 18 amendments). `test_no_unplanted_grant_before_hire` was added to close that gap — it cross-references `entitlements.csv` against `hr_roster.csv` by IAM account name (skipping any name that maps ambiguously, since entitlements carry no direct employee link) and asserts that any pre-hire grant belongs to a `GrantBeforeHireDate` case, across four seeds:
+
+```python
+import csv
+import filecmp
+import json
+from datetime import datetime
+
+from meridian.generate import generate
+
+
+def _parse_date(s):
+    """Entitlements CSV mixes ISO (YYYY-MM-DD) and US (MM/DD/YYYY) formats;
+    HR dates are always ISO (tried first). Blank -> None."""
+    if not s:
+        return None
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _derived_account_name(full_name):
+    parts = full_name.split()
+    return f"{parts[0].lower()}.{parts[-1].lower()}"
+
+
+def test_no_unplanted_grant_before_hire(tmp_path):
+    # Core invariant: the ONLY entitlements dated before their holder's hire_date
+    # are the deliberate GrantBeforeHireDate planted grants. Nothing else, on any
+    # account (clean or trap), may carry a pre-hire grant.
+    for seed in (1, 7, 42, 20260715):
+        out, key_path = _gen(tmp_path / f"s{seed}", seed=seed)
+        ent = list(csv.DictReader(open(out / "entitlements.csv")))
+        hr = list(csv.DictReader(open(out / "hr_roster.csv")))
+        key = json.load(open(key_path))
+
+        # account_name -> hire_date, keeping only names with a single unambiguous
+        # hire_date (guards against Faker full-name collisions in HR).
+        by_name = {}
+        for r in hr:
+            hd = _parse_date(r["hire_date"])
+            if hd is not None:
+                by_name.setdefault(_derived_account_name(r["full_name"]), set()).add(hd)
+        hire_by_name = {n: next(iter(s)) for n, s in by_name.items() if len(s) == 1}
+
+        # Entitlements carry no employee link, and a ~10% "mismatch" nickname can
+        # coincide with another person's real first.last name. Only trust a name
+        # that resolves to a single account_id on the IAM side -- otherwise the
+        # holder is ambiguous and its true hire_date is unknown.
+        accts_by_name = {}
+        for r in ent:
+            accts_by_name.setdefault(r["account_name"], set()).add(r["account_id"])
+
+        gbh_accounts = {c["subject"]["account_id"] for c in key["cases"]
+                        if c["narrative"] == "GrantBeforeHireDate"}
+        assert gbh_accounts, f"seed {seed}: expected GrantBeforeHireDate planted cases"
+
+        for r in ent:
+            hire = hire_by_name.get(r["account_name"])
+            if hire is None or len(accts_by_name[r["account_name"]]) != 1:
+                continue  # mismatch/service/ambiguous account -> hire_date unknown
+            granted = _parse_date(r["granted_date"])
+            if granted is not None and granted < hire:
+                assert r["account_id"] in gbh_accounts, (
+                    f"seed {seed}: account {r['account_id']} ({r['account_name']}) holds a "
+                    f"grant on {r['app']} dated {granted} before hire {hire}, "
+                    "but is not a GrantBeforeHireDate subject"
+                )
+```
+
 - [ ] **Step 4: Run the acceptance suite**
 
 Run: `pytest tests/test_acceptance.py -v`
-Expected: PASS (4 passed). If `test_seed_variation_changes_selection` is flaky across adjacent seeds, widen the seed gap — the selection is genuinely seed-varied.
+Expected: PASS (5 passed). If `test_seed_variation_changes_selection` is flaky across adjacent seeds, widen the seed gap — the selection is genuinely seed-varied.
 
 - [ ] **Step 5: Run the whole suite**
 
@@ -2667,6 +3119,24 @@ git commit -m "test: coherence, determinism, anti-leak, and counts acceptance ga
 ```
 
 ---
+
+## Post-Implementation Amendments
+
+The code review loop (run after each task's tests went green) found several places where the first-draft implementation was internally consistent but not *globally* coherent — a grant date, a leaked baseline role, or a missing ticket that would have made a "clean" or "trap" case actually flaggable, or an unplanted finding appear out of nowhere. All are now fixed on `main` and reflected inline above; this section is the one-place summary.
+
+**Six coherence fixes** (each closes a way a case's own artifacts could contradict its `expected` label):
+
+- **`entitlements.py` (Task 6):** baseline entitlements could grant a person the same app twice, hand out a privileged/SoD-relevant role at random, or over-sample the sprawl pool. Fixed with a per-person `granted_apps` dedup set, restricting department-app roles to non-privileged roles only, and clamping the sprawl sample to the apps actually left. Without this, planted SoD and privileged-access findings could be silently doubled or contaminated by baseline noise.
+- **`clean.py` (Task 8):** `CleanPrivileged`'s grant date wasn't floored at `hire_date`, so a recently-hired person could randomly draw a "clean" grant dated before their hire — an unplanted finding hiding in a case that's supposed to have none.
+- **`must_catch.py` (Task 9):** `DormantPrivileged` aged only the one appended entitlement's `last_login`, leaving other rows on the same account freshly active — so the account wasn't genuinely dormant. Fixed to age every entitlement's `last_login` on the account.
+- **`judgment.py` (Task 10):** `SoDConflictWithCompensatingControl` could inherit a baseline Atlas ERP role alongside its own Vendor Admin + AP Manager pair, forming a second, uncataloged SoD conflict or a duplicate row. Fixed by stripping baseline Atlas ERP rows before the narrative appends its own.
+- **`traps.py` (Task 11):** `ApprovedServiceAccount`, `BreakGlassDormant`, and `ExemptedSoDPair` grant privileged roles with `expected == {}` (don't flag), but had no approval ticket — which per the Privileged Access Standard is itself a genuine finding, self-contradicting the trap. Fixed by adding matching approved tickets.
+- **`tests/test_coherence.py` (Task 19):** the original coherence test only checked 4 of 15 narratives (silently skipping the rest) on a single seed. Fixed to dispatch over every narrative with `pytest.fail(...)` on anything unhandled, loop across ~30 seeds, and add a strengthened check that all three omitted apps are genuinely absent from the final `prior_review.csv`.
+
+**Two cross-seed fixes** (bugs that only a specific unlucky seed would trigger, so they weren't visible from a single generation run):
+
+- **Reserved apps (`app_selection.py`, Task 12):** the per-seed `new_app` could coincide with `GitHub Enterprise`, `AWS Prod`, or `Helix ITSM` — apps that planted narratives use to place a finding via a specific grant date. `generate.py`'s "fresh rollout" override rewrites every grant date on `new_app`, so a collision silently destroyed the planted finding. Fixed with a `_RESERVED_FOR_NARRATIVES` set excluded from the `new_app` candidate pool.
+- **Grant-date flooring (`entitlements.py` + `generate.py`, Task 6/18):** the invariant "only `GrantBeforeHireDate` predates a hire" was violated whenever a baseline or new-app-rollout grant date landed before a recently-hired person's `hire_date`. Fixed by flooring baseline grants at `hire_date` (`grant_date()` helper) and, in `generate.py`, flooring the new-app rollout override at each holder's `hire_date` via a `hire_by_account` map. Locked in by `tests/test_acceptance.py::test_no_unplanted_grant_before_hire`.
 
 ## Self-Review Notes
 
