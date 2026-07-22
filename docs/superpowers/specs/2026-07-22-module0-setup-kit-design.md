@@ -14,8 +14,8 @@ Give each learner a clone-and-go starting point so nobody loses capstone Week 1 
 - the pre-generated Q3 Meridian dataset (data + the MCP server) — **no answer key**,
 - the frozen `run_review(export_dir, limit) -> findings.json` contract and its JSON Schema,
 - a single read-only MCP server exposing Meridian's systems of record,
-- a two-tier smoke test (offline green light + opt-in live-API check),
-- a devcontainer, `.env` wiring, `Makefile`, `CLAUDE.md`, and README.
+- a green-light smoke test that includes a mandatory live-API check,
+- a Windows-first native bootstrap that checks/installs the host prerequisites (Python, Git, Node, VS Code) plus `.env` wiring, `CLAUDE.md`, and README.
 
 The learner replaces the `run_review` stub and grows the system across Modules 1–6. The kit itself never changes after Module 0.
 
@@ -59,11 +59,13 @@ meridian-capstone/
   examples/
     sample_findings.json        # one filled-in finding, so a valid shape is visible
   tests/
-    test_smoke.py               # offline green light  (make check)
-    test_api.py                 # opt-in live-Claude check  (make check-api)
-  .devcontainer/                # reproducible env; MCP server pre-registered in .mcp.json
+    test_smoke.py               # offline checks: data, contract, MCP  (pytest -m "not api")
+    test_api.py                 # mandatory live-Claude check           (marked @pytest.mark.api)
+  scripts/
+    bootstrap.ps1               # Windows setup: check+install Python/Git/Node/VS Code, then env + green light
+    bootstrap.sh                # macOS/Linux fallback (brew/apt) — secondary
+  .mcp.json                     # MCP server pre-registered for Claude Code / VS Code
   .env.example                  # ANTHROPIC_API_KEY=
-  Makefile                      # check / check-api / mcp / help
   CLAUDE.md                     # project memory for their Claude Code sessions
   README.md                     # 10-minute onboarding
 ```
@@ -182,25 +184,46 @@ This is a few lines in the generator's `emit.py` + `generate.py` (writers alread
 
 ---
 
-## Smoke test — the two-tier green light
+## Smoke test — the green light
 
-**`make check` (offline, deterministic, free, CI-able)** — `tests/test_smoke.py`:
+The green light is **`pytest`** (run by the bootstrap at the end of setup). It runs everything, and it is not green until all of it passes — **including one real Claude call**. Four things must hold:
 
 1. **Data loads** — every export file present and parseable (HR/IAM/tickets/prior-review CSVs+JSON, the three reference JSONs, the policies).
 2. **The contract wires up** — `run_review(data/2026-Q3)` returns a list; `examples/sample_findings.json` validates against `findings.schema.json`; the stub's empty output validates too. Proves schema + entry point + validator agree before any real logic.
 3. **The MCP server answers** — it starts and sample tool calls return correct data (`get_employee` on a known ID; `get_application` returns an `implementation_date`).
+4. **The API works (mandatory)** — `tests/test_api.py` makes a single real Claude call through the Agent SDK, confirming the learner's `ANTHROPIC_API_KEY` and billing. A dead key or unbilled account fails the green light at setup, not mid-Module-3.
 
-**`make check-api` (opt-in, one paid call)** — `tests/test_api.py`: a single real Claude call through the Agent SDK confirming the learner's `ANTHROPIC_API_KEY` and billing work. Separated so the offline light stays free/CI-able and so a dead key is caught at setup, not mid-Module-3.
+**Offline subset for CI and quick loops.** The API test is marked `@pytest.mark.api`. `pytest -m "not api"` runs items 1–3 only — deterministic, free, and CI-able — for fast iteration and continuous integration. But a learner's "my environment is ready" bar is the full `pytest`, API included. This is why the earlier two-tier split is collapsed into one mandatory green light with a free subset underneath it: the requirement is that setup proves the API works, per direction.
 
 ---
 
-## Dev environment
+## Dev environment — Windows-first native bootstrap
 
-- `.devcontainer/` — Python 3.11+, deps pinned (Claude Agent SDK, the Python MCP SDK, `jsonschema`, `pytest`), the MCP server pre-registered in `.mcp.json`, VS Code extensions. One clone → container builds → `make check` goes green.
-- `.env.example` → `ANTHROPIC_API_KEY=`; README step 1 is copying it to `.env`.
-- `Makefile`: `check`, `check-api`, `mcp` (run the server), `help`.
+**Target platform: Windows.** These learners are on Windows machines and are IT/compliance practitioners, not container people. So the kit does **not** use a devcontainer (which would drag in Docker Desktop + WSL2). Instead it ships a native bootstrap that checks for and installs the host prerequisites, then wires up the project.
+
+**`scripts/bootstrap.ps1`** (PowerShell) is the one command a learner runs after cloning. It is idempotent — check first, install only what's missing — and uses **`winget`** (the built-in Windows Package Manager) for installs:
+
+1. **Prerequisites — check then install each:**
+   - **Python 3.11+** (`winget install Python.Python.3.12`) — the runtime.
+   - **Git** (`winget install Git.Git`) — version control.
+   - **Node.js LTS** (`winget install OpenJS.NodeJS.LTS`) — needed because **Claude Code ships over npm** and the **MCP Inspector** runs via `npx`; not for the Python app itself.
+   - **VS Code** (`winget install Microsoft.VisualStudioCode`) — the IDE.
+   For each: detect the existing install and version; install/upgrade via winget only if absent or too old; report what it did.
+2. **Claude Code** — `npm install -g @anthropic-ai/claude-code` (once Node is present).
+3. **Python project** — create a venv, install the pinned deps (Claude Agent SDK, the Python MCP SDK, `jsonschema`, `pytest`).
+4. **VS Code** — install the recommended extensions (Python, the Claude Code extension) via `code --install-extension`.
+5. **Env** — if no `.env`, copy `.env.example` to `.env` and prompt the learner to paste their `ANTHROPIC_API_KEY`.
+6. **Green light** — run `pytest` (the full mandatory check, API included) and print a clear ready / not-ready result with next steps.
+
+**`scripts/bootstrap.sh`** is a secondary macOS/Linux fallback (Homebrew/apt) for anyone not on Windows; Windows is the supported path and gets the care.
+
+**No `make`.** GNU Make isn't native on Windows, so the interface is the bootstrap script plus plain `pytest` (and `pytest -m "not api"` for the offline subset). Running the MCP server for manual poking is a documented one-liner (`python -m mcp.server` or the MCP Inspector), not a make target.
+
+Other environment files:
+- `.mcp.json` — the Meridian MCP server pre-registered so Claude Code and VS Code pick it up with no learner config.
+- `.env.example` → `ANTHROPIC_API_KEY=`.
 - `CLAUDE.md` — project memory: repo layout, the frozen contract, the MCP tools, and the rules of the road (honor the contract signature exactly, since the instructor's grader calls it; the `limit` param is for cheap iteration; submit `findings.json` produced by `run_review`; the single MCP server is a course simplification of what would be separate connectors at a real client).
-- `README.md` — the 10-minute onboarding path.
+- `README.md` — the 10-minute onboarding path, Windows-first: clone → run `scripts/bootstrap.ps1` → paste API key → green light.
 
 ---
 
@@ -214,12 +237,14 @@ This is a few lines in the generator's `emit.py` + `generate.py` (writers alread
 
 ## Build-time verification (do not trust training data)
 
-Two APIs must be confirmed against live docs before coding, and the plan will call for it:
+These must be confirmed against live docs before coding, and the plan will call for it:
 
-- **Claude Agent SDK** — the current Python package name and the minimal call used by `check-api`.
+- **Claude Agent SDK** — the current Python package name and the minimal call used by the mandatory API test.
 - **Python MCP SDK** — the current server-construction and tool-registration API used by `mcp/server.py`.
+- **winget package IDs** — the exact identifiers for Python 3.11+, Git, Node.js LTS, and VS Code (e.g. `Python.Python.3.12`, `Git.Git`, `OpenJS.NodeJS.LTS`, `Microsoft.VisualStudioCode`) can change; verify each against `winget search` before baking them into `bootstrap.ps1`.
+- **Claude Code install** — confirm the current npm package (`@anthropic-ai/claude-code`) and the VS Code extension ID.
 
-Use the `claude-api` skill / `claude-code-guide` agent to confirm both, rather than relying on memory.
+Use the `claude-api` skill / `claude-code-guide` agent to confirm the SDK and Claude Code details, rather than relying on memory.
 
 ---
 
