@@ -11,7 +11,7 @@
 
 Give each learner a clone-and-go starting point so nobody loses capstone Week 1 to a Python install, a bad API key, or an ambiguous interface. The kit ships:
 
-- the pre-generated Q3 Meridian dataset and its **full** answer key (learners build their eval against it),
+- the pre-generated Q3 Meridian dataset (data + the MCP server) — **no answer key**,
 - the frozen `run_review(export_dir, limit) -> findings.json` contract and its JSON Schema,
 - a single read-only MCP server exposing Meridian's systems of record,
 - a two-tier smoke test (offline green light + opt-in live-API check),
@@ -19,16 +19,20 @@ Give each learner a clone-and-go starting point so nobody loses capstone Week 1 
 
 The learner replaces the `run_review` stub and grows the system across Modules 1–6. The kit itself never changes after Module 0.
 
+**No ground truth in the kit.** Learners never receive the answer key. They build their system, run it against the shipped Q3 data, and **submit their `findings.json`**. The instructor holds the answer key and evaluates the submitted output against it. This makes the kit simpler (no key to protect *within* the learner's own repo) and makes hard-coding-to-the-key impossible by construction — the learner has no key to code to.
+
+**Downstream implication (flagged, not solved here).** Module 5 (evals), as sketched in the parent spec, had learners "score against the labeled Q3 key." Because learners have no key, Module 5 must be reconceived into something achievable without ground truth (schema/coverage validation, self-consistency checks, or a small learner-hand-labeled eval). That is the Module 5 sub-project's problem; it also means the parent program spec's grading section needs a small reconciliation. Out of scope for Module 0 beyond this note.
+
 ---
 
 ## The kit boundary
 
 **The kit is a separate repo, `meridian-capstone`.** It contains only the *outputs* of the generator plus scaffolding — never generator source.
 
-Why: the generator plants the findings and writes the answer key (including the hidden Q4 used at grading). If its source reached learners, they could reverse-engineer how findings are planted and hard-code to the key. So:
+Why: the generator plants the findings and writes the answer key. If its source (or the key) reached learners, they could reverse-engineer how findings are planted and hard-code to them. So:
 
-- The **instructor** runs the generator (the existing `meridian` repo) to produce `data/2026-Q3/` and `answer_key.json`, and commits those artifacts into the kit.
-- The kit repo never imports or vendors the generator package.
+- The **instructor** runs the generator (the existing `meridian` repo) to produce `data/2026-Q3/` and the answer key. The instructor commits **only `data/2026-Q3/`** into the kit and **keeps the answer key** for grading.
+- The kit repo never imports or vendors the generator package, and never contains the answer key.
 
 This is the one non-negotiable separation; everything else is convenience.
 
@@ -47,7 +51,6 @@ meridian-capstone/
     sod_matrix.json             # conflict pairs + exemptions                          (generator prerequisite)
     service_accounts.json       # approved registry                                    (generator prerequisite)
     policies/*.md               # the five prose policies (become Skills in Module 2)
-  answer_key.json               # FULL labeled Q3 key — learners build their eval against it
   contract/
     findings.schema.json        # the frozen findings JSON Schema
     run_review.py               # the entry point they implement (returns [] on day one)
@@ -196,7 +199,7 @@ This is a few lines in the generator's `emit.py` + `generate.py` (writers alread
 - `.devcontainer/` — Python 3.11+, deps pinned (Claude Agent SDK, the Python MCP SDK, `jsonschema`, `pytest`), the MCP server pre-registered in `.mcp.json`, VS Code extensions. One clone → container builds → `make check` goes green.
 - `.env.example` → `ANTHROPIC_API_KEY=`; README step 1 is copying it to `.env`.
 - `Makefile`: `check`, `check-api`, `mcp` (run the server), `help`.
-- `CLAUDE.md` — project memory: repo layout, the frozen contract, the MCP tools, and the rules of the road (honor the contract signature; the `limit` param is for cheap iteration; do not try to reverse-engineer the answer key; the single MCP server is a course simplification of what would be separate connectors).
+- `CLAUDE.md` — project memory: repo layout, the frozen contract, the MCP tools, and the rules of the road (honor the contract signature exactly, since the instructor's grader calls it; the `limit` param is for cheap iteration; submit `findings.json` produced by `run_review`; the single MCP server is a course simplification of what would be separate connectors at a real client).
 - `README.md` — the 10-minute onboarding path.
 
 ---
@@ -220,7 +223,10 @@ Use the `claude-api` skill / `claude-code-guide` agent to confirm both, rather t
 
 ---
 
+## Instructor-side kit export
+
+The instructor produces the kit's data by running the generator and copying **only the export directory** (never the answer key) into the kit. This is a small target in the *generator* repo — e.g. `make kit-export OUT=../meridian-capstone/data/2026-Q3` — which generates the quarter, emits the export (including the three reference JSONs), and copies it into the kit, deliberately leaving `answer_key.json` behind in the generator repo where the instructor grades against it. Making it a script (not a manual runbook) removes the risk of accidentally copying the key across the boundary.
+
 ## Open questions
 
-1. **CLAUDE.md guardrails vs. openness.** How firmly should `CLAUDE.md` steer the learner's Claude Code sessions — e.g. should it hard-forbid inspecting `answer_key.json` while building `run_review` (to preserve the eval-vs-implementation distinction), or trust learners? Leaning: document the intent, don't try to enforce it technically (they have the key by design for eval-building).
-2. **Where the instructor-side "refresh the kit" step lives.** The instructor regenerates data and copies it in. Is that a documented manual runbook, or a small script in the *generator* repo (`make kit-export OUT=../meridian-capstone/data/2026-Q3`)? Leaning: a script in the generator repo, since that is where the generator and the emit logic live.
+None outstanding for Module 0.
