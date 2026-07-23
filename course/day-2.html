@@ -349,7 +349,7 @@
       <p class="lede">It's Monday at Meridian Regional Energy. A regulator has asked a
       question that should be simple: <em>show us everyone who can approve a vendor
       payment.</em> Nobody can answer it — not because the access doesn't exist,
-      but because it's scattered across three systems that have never spoken to each other.</p>
+      but because it's scattered across several systems that have never spoken to each other.</p>
       <p>That's your job this week. Today you lay the foundation: a single, trustworthy
       record of who holds what access across Meridian. Everything you build the rest of
       the week sits on top of it.</p>
@@ -358,9 +358,9 @@
     <div class="panel">
       <h3>What you'll build today</h3>
       <p>A <strong>Ledger</strong> — one unified table that reconciles Meridian's HR
-      roster, Active Directory accounts, and application entitlements into a single view
-      of every person and the access they hold, plus a first automated finding that flags
-      a risky access pattern.</p>
+      roster against the entitlements export — every account and the app-roles it holds —
+      into a single view of every person and the access they hold, plus a first automated
+      finding that flags a risky access pattern.</p>
     </div>
 
     <div class="panel">
@@ -397,18 +397,22 @@
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Meridian's access story lives in three files, each exported from a different
-      system that was never designed to talk to the others:</p>
-      <p><strong>HR roster</strong> knows people — legal names, job titles, managers,
-      departments. <strong>Active Directory</strong> knows accounts — usernames, groups,
-      when someone last logged in. <strong>Application entitlements</strong> knows
-      permissions — which account can do what inside each business app.</p>
-      <p>They don't line up. HR lists a Finance &amp; Accounting employee by her full legal
-      name and title. Active Directory knows that same person under two usernames — an
-      everyday login and a second <code>_adm</code> admin account left over from an old
-      project. Atlas ERP just sees a user ID. Pulling these into one view is called
-      <em>identity reconciliation</em> — deciding, with evidence, that these fragments are
-      all the same human being.</p>
+      <p>Meridian's access story for the quarter lives in <code>data/2026-Q3/</code>. Two
+      exports carry the identity picture, each from a system that was never designed to talk
+      to the other:</p>
+      <p><strong><code>hr_roster.csv</code></strong> knows people — employee IDs, legal
+      names, emails, departments, titles, hire and termination dates.
+      <strong><code>entitlements.csv</code></strong> knows access — one row per grant: which
+      account holds which role inside which app (Atlas ERP, Active Directory, Gateway, and
+      the rest), when it was granted, and when the account last logged in.</p>
+      <p>They don't line up. HR keys every person on an <code>employee_id</code>. The
+      entitlements export has never heard of that ID — it identifies accounts by an
+      <code>account_id</code> and an <code>account_name</code> like
+      <code>marcus.pipeline</code>, with no link back to HR. Pulling these into one view is
+      called <em>identity reconciliation</em> — deciding, with evidence, that an account and
+      an HR record are the same human being. And the data fights you: grant dates arrive in
+      two different formats, department names drift in capitalization, and a few rows are
+      exact duplicates.</p>
 
       <div class="whatis">
         <span class="tag">What is pandas?</span>
@@ -453,7 +457,7 @@
         </li>
 
         <li>
-          <div class="step-do">Ask Claude Code to load the three CSV files into DataFrames and print their shapes.</div>
+          <div class="step-do">Ask Claude Code to load the two CSV files into DataFrames and print their shapes.</div>
           <p class="step-why">Why: printing the "shape" (rows × columns) is the quickest
           way to confirm each file loaded and to see how much data you're dealing with.</p>
           <div class="whatis" style="margin-top:10px">
@@ -464,27 +468,26 @@
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Load the three CSVs in data/ (hr_roster.csv, ad_accounts.csv,
-app_entitlements.csv) into pandas DataFrames. Print the shape and
+            <pre>Load the two CSVs in data/2026-Q3/ (hr_roster.csv and
+entitlements.csv) into pandas DataFrames. Print the shape and
 the column names of each one.</pre>
           </div>
           <p class="step-why">You should see output like this:</p>
           <div class="terminal">
 <span class="cmd">python load_data.py</span>
-<span class="out">hr_roster        (1200, 6)    ['employee_id', 'full_name', 'title', 'manager', 'department', 'status']
-ad_accounts      (1487, 5)    ['username', 'display_name', 'groups', 'last_login', 'enabled']
-app_entitlements (15234, 4)   ['app', 'user_id', 'role', 'granted_on']</span>
+<span class="out">hr_roster    (1200, 9)     ['employee_id', 'full_name', 'email', 'department', 'title', 'hire_date', 'term_date', 'employment_type', 'status']
+entitlements (15234, 7)   ['account_id', 'account_name', 'app', 'role', 'granted_date', 'granted_by', 'last_login']</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
               <p><strong>FileNotFoundError?</strong> Check that you're running the command
-              from the repository root, and that the <code>data/</code> folder is where
+              from the repository root, and that the <code>data/2026-Q3/</code> folder is where
               Claude Code expects it. Ask Claude Code: "the file isn't found — where are you
               looking, and where are the CSVs actually located?"</p>
               <p><strong>Numbers look different?</strong> That's fine — placeholder counts
-              above are illustrative. What matters is that all three loaded without error.</p>
+              above are illustrative. What matters is that both loaded without error.</p>
             </div>
           </details>
         </li>
@@ -504,7 +507,7 @@ app_entitlements (15234, 4)   ['app', 'user_id', 'role', 'granted_on']</span>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Load HR, AD, and entitlement data"</pre>
+git commit -m "Load HR roster and entitlements data"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c1-s4"> Mark done</label>
         </li>
@@ -513,7 +516,7 @@ git commit -m "Load HR, AD, and entitlement data"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 1 when</strong> all three files load without error,
+      <p><strong>You're done with Cycle 1 when</strong> both files load without error,
       you've seen the shape of each one printed to your terminal, and you've made your first commit.</p>
     </div>
   </section>
@@ -553,19 +556,21 @@ git commit -m "Load HR, AD, and entitlement data"</pre>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Write a function reconcile_identities() that merges the three
-DataFrames into one ledger. Match on employee_id where available;
-fall back to name matching for AD and app records that lack it.
-Assign each matched person a canonical_id. Keep unmatched rows in
-a separate list so we can review them — don't silently drop them.</pre>
+            <pre>Write a function reconcile_identities() that merges the
+entitlements accounts onto the HR roster to build one ledger.
+The entitlements rows have no employee_id, so match each account
+to a person by name (account_name is firstname.lastname; HR has
+the full name and email). Assign each matched person a
+canonical_id. Keep accounts you can't confidently match in a
+separate list so we can review them — don't silently drop them.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
               <p>If Claude Code's first attempt drops unmatched rows or crashes on missing
-              values, tell it exactly what you saw: "some AD accounts have no employee_id and
-              the function errored — handle those as unmatched instead of failing."</p>
+              values, tell it exactly what you saw: "some entitlement accounts don't match any
+              HR name and the function errored — handle those as unmatched instead of failing."</p>
             </div>
           </details>
         </li>
@@ -592,14 +597,15 @@ Ledger written to:  ledger.csv</span>
         <li>
           <div class="step-do">Spot-check the results.</div>
           <p class="step-why">Why: reconciliation is a judgment call, not a guarantee. Pick a
-          few people and confirm the merge looks right — especially anyone with a second
-          <code>_adm</code> account.</p>
+          few people and confirm the merge looks right — and look at what landed in the
+          unmatched list.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Pick a person in the ledger who has a second _adm admin account.
-Show me their ledger rows — are both accounts (their standard
-login and their _adm account) linked to the same canonical_id?</pre>
+            <pre>Pick a person in the ledger and show me all their entitlement
+rows — is every app-role they hold linked to the same
+canonical_id? Then show me three accounts that didn't match any
+HR person, and tell me why each one failed to match.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
         </li>
@@ -621,8 +627,8 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 2 when</strong> <code>ledger.csv</code> exists, every
       matched account carries a <code>canonical_id</code>, unmatched rows are set aside for
-      review rather than dropped, and your spot-check confirms a known dual-account person
-      merged correctly.</p>
+      review rather than dropped, and your spot-check confirms one person's app-roles all
+      rolled up under a single canonical identity.</p>
     </div>
   </section>
 
@@ -781,7 +787,7 @@ git commit -m "Add admin-role-non-manager triage rule and findings"</pre>
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>Loaded three fragmented source systems into a workspace you control</li>
+        <li>Loaded Meridian's fragmented HR and entitlements exports into a workspace you control</li>
         <li>Reconciled them into a <strong>Ledger</strong> — a single source of truth about who holds what</li>
         <li>Generated your first automated <strong>finding</strong> and wrote it to a structured <code>findings.json</code></li>
       </ul>

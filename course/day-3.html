@@ -480,9 +480,8 @@ through it section by section. What makes this a good Skill?</pre>
       a whole risky process end to end — the person who <em>enters</em> an invoice shouldn't also
       be able to <em>approve</em> it. Meridian's SoD policy, and the conflicting role pairs it points
       to in the SoD matrix, run to a few pages of prose. You'll turn the relevant part into a Skill.</p>
-      <p>Remember the Finance &amp; Accounting employee from Day 2 with two linked accounts — a standard
-      login and an old <code>_adm</code> account. Look at what those accounts can do in Atlas ERP: one
-      carries the <strong>AP Clerk</strong> role (enter an invoice), the other carries <strong>AP
+      <p>Take a Finance &amp; Accounting employee from your Day 2 ledger. Their entitlements in
+      Atlas ERP carry two roles: <strong>AP Clerk</strong> (enter an invoice) and <strong>AP
       Manager</strong> (approve it). One human, both halves of the payment — and this person is a
       clerk, not the Controller, so no exemption covers it. That's a textbook SoD violation, and it's
       the case you'll test your Skill against.</p>
@@ -495,8 +494,8 @@ through it section by section. What makes this a good Skill?</pre>
 ## Rule
 Flag any person who holds a conflicting pair of roles from the SoD
 matrix — for example **AP Clerk + AP Manager** in Atlas ERP (enter an
-invoice, then approve it) — whether through one account or several
-linked accounts.
+invoice, then approve it) — evaluating all roles under one canonical
+identity together.
 
 ## Exceptions
 - ACP-4.2 documented exemption: the Controller in Finance &amp; Accounting
@@ -518,12 +517,19 @@ When flagging, cite: "SoD Skill, §<clause>".</pre>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Read policies/sod-policy.md and the SoD matrix, plus the ACP-4.2
-exemption in policies/access-control-policy.md. Draft a Skill that
-flags anyone holding a conflicting role pair (e.g. AP Clerk +
-AP Manager in Atlas ERP), across linked accounts. Include the
-ACP-4.2 Controller exemption. Number the clauses so findings can
-cite them.</pre>
+<!-- TODO: verify with Kevin — sod-policy.md says "See the SoD matrix for conflicting
+     role pairs," but the current generator ships only the 5 policy .md files and does NOT
+     export a SoD matrix (world/sod_matrix.yaml is never copied into the kit). Students
+     therefore have no matrix file to read; the AP Clerk + AP Manager pair below is the only
+     worked example the course supplies. Either the generator should emit the matrix, or the
+     course should stop pointing students at it. -->
+            <pre>Read policies/sod-policy.md (it names the conflicting role pairs
+via a SoD matrix) plus the ACP-4.2 exemption in
+policies/access-control-policy.md. Draft a Skill that flags anyone
+holding a conflicting role pair (e.g. AP Clerk + AP Manager in
+Atlas ERP), evaluating all roles under one canonical identity.
+Include the ACP-4.2 Controller exemption. Number the clauses so
+findings can cite them.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
         </li>
@@ -562,8 +568,8 @@ that, and add a clause number for it.</pre>
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
             <pre>Using the SoD Skill, evaluate the Finance & Accounting employee who
-holds AP Clerk on one account and AP Manager on the other, in
-Atlas ERP. Is this a violation? Cite the clause.</pre>
+holds both AP Clerk and AP Manager in Atlas ERP. Is this a
+violation? Cite the clause.</pre>
           </div>
           <div class="terminal">
 <span class="cmd">claude</span>
@@ -576,8 +582,8 @@ Atlas ERP. Is this a violation? Cite the clause.</pre>
             <summary>Stuck?</summary>
             <div class="body">
               <p><strong>Claude misses the second role?</strong> It may be evaluating each
-              account separately. Remind it: "these two accounts belong to the same canonical_id —
-              evaluate their roles together as one person."</p>
+              entitlement row separately. Remind it: "group every role under one canonical_id and
+              evaluate them together as one person."</p>
             </div>
           </details>
         </li>
