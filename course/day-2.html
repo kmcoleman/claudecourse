@@ -397,31 +397,67 @@
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Meridian's access story for the quarter lives in <code>data/2026-Q3/</code>. Two
-      exports carry the identity picture, each from a system that was never designed to talk
-      to the other:</p>
-      <p><strong><code>hr_roster.csv</code></strong> knows people — employee IDs, legal
-      names, emails, departments, titles, hire and termination dates.
-      <strong><code>entitlements.csv</code></strong> knows access — one row per grant: which
-      account holds which role inside which app (Atlas ERP, Active Directory, Gateway, and
-      the rest), when it was granted, and when the account last logged in.</p>
-      <p>They don't line up. HR keys every person on an <code>employee_id</code>. The
-      entitlements export has never heard of that ID — it identifies accounts by an
-      <code>account_id</code> and an <code>account_name</code> like
-      <code>marcus.pipeline</code>, with no link back to HR. Pulling these into one view is
-      called <em>identity reconciliation</em> — deciding, with evidence, that an account and
-      an HR record are the same human being. And the data fights you: grant dates arrive in
-      two different formats, department names drift in capitalization, and a few rows are
-      exact duplicates.</p>
+      <p>Meridian's access story for the quarter lives in <code>data/2026-Q3/</code>. Before
+      you can answer the regulator — <em>who can approve a vendor payment?</em> — you have to
+      get that story into a place you can actually query. Today's first move is the humblest
+      one all week: <strong>load two files and look hard at what's really inside them.</strong></p>
+
+      <p>Two exports carry the identity picture, each from a system that was never designed to
+      talk to the other:</p>
+      <ul class="learn">
+        <li><strong><code>hr_roster.csv</code></strong> knows <em>people</em>. One row per
+        employee: an <code>employee_id</code>, legal <code>full_name</code>, work
+        <code>email</code>, <code>department</code>, <code>title</code>, <code>hire_date</code>,
+        <code>term_date</code>, <code>employment_type</code> (FTE or Contractor), and
+        <code>status</code> (active, terminated, on&nbsp;leave).</li>
+        <li><strong><code>entitlements.csv</code></strong> knows <em>access</em>. One row per
+        grant: which <code>account_id</code> / <code>account_name</code> holds which
+        <code>role</code> inside which <code>app</code> (Atlas ERP, Active Directory, Gateway,
+        and nineteen others), when it was <code>granted_date</code>, by whom
+        (<code>granted_by</code>), and when the account <code>last_login</code>.</li>
+      </ul>
 
       <div class="whatis">
-        <span class="tag">What is pandas?</span>
+        <span class="tag">What is pandas — and a DataFrame?</span>
         <p>pandas is a Python library for working with tables of data — think of it as a
-        spreadsheet you drive with code instead of a mouse. It loads a CSV into a
-        <em>DataFrame</em> (a table with named columns) so you can inspect, filter, and
-        join data. You won't write much of it by hand; Claude Code will, and you'll read
-        and check its work.</p>
+        spreadsheet you drive with code instead of a mouse. It loads a <em>CSV</em>
+        (comma-separated values — a plain-text table, one line per row, commas between columns)
+        into a <em>DataFrame</em>: a table with named columns you can inspect, count, filter,
+        and join. You won't write much pandas by hand; Claude Code will, and your job is to read
+        its work and check the numbers it reports.</p>
       </div>
+
+      <p><strong>Why these two files don't simply line up.</strong> HR keys every person on
+      <code>employee_id</code>. The entitlements export has never heard of that ID — it
+      identifies accounts by an <code>account_id</code> like <code>A000544</code> and an
+      <code>account_name</code> like <code>jeanette.petty</code>, with no column pointing back
+      to HR. To get from "a pile of grants" to "<em>this human</em> holds <em>these</em> roles,"
+      you'll eventually have to match accounts to people using the only thing the two files
+      share — a name, buried in an email on one side and a <code>firstname.lastname</code>
+      handle on the other. That job is called <em>identity reconciliation</em>, and it's Cycle
+      2's work. Cycle 1's job is to earn the right to attempt it: know exactly what each file
+      contains, and find where the data is dirty.</p>
+
+      <p><strong>And the data is dirty — on purpose, the way real exports always are.</strong>
+      Three messes matter, and you'll measure all three yourself today:</p>
+      <ul class="learn">
+        <li><strong>Two date formats in one column.</strong> Roughly half of
+        <code>granted_date</code> is ISO (<code>2026-08-08</code>); the other half is US
+        (<code>05/31/2026</code>). Same column, two formats — because two upstream systems fed
+        the export and nobody normalized it. Sort or compare those dates naïvely and you'll get
+        nonsense.</li>
+        <li><strong>Department names that drift.</strong> <code>hr_roster.csv</code> spells the
+        <em>same</em> department several ways: <code>Customer Care</code>,
+        <code>CUSTOMER CARE</code>, <code>customer care</code>, and <code>&nbsp;Customer Care&nbsp;</code>
+        (with stray leading/trailing spaces) are all one department. Group by the raw string and
+        you'll invent departments that don't exist.</li>
+        <li><strong>Duplicate grant rows.</strong> A few entitlement rows are exact copies.
+        Worse, some duplicates <em>hide</em>: the same grant appears twice with its date written
+        in each format, so an exact-match check won't catch them.</li>
+      </ul>
+
+      <p>None of this is exotic — it is what every real access export looks like. Spotting and
+      counting it <em>now</em> is what keeps every number you report later in the week honest.</p>
     </div>
 
     <div class="task">
@@ -447,7 +483,7 @@
 
         <li>
           <div class="step-do">Install pandas.</div>
-          <p class="step-why">Why: it's the tool you'll use to load and inspect the three data files.</p>
+          <p class="step-why">Why: it's the tool you'll use to load and inspect the data files.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
@@ -457,37 +493,92 @@
         </li>
 
         <li>
-          <div class="step-do">Ask Claude Code to load the two CSV files into DataFrames and print their shapes.</div>
-          <p class="step-why">Why: printing the "shape" (rows × columns) is the quickest
-          way to confirm each file loaded and to see how much data you're dealing with.</p>
-          <div class="whatis" style="margin-top:10px">
-            <span class="tag">What is a CSV?</span>
-            <p>A CSV ("comma-separated values") is a plain-text table — the simplest way to
-            export data from almost any system. Each line is a row; commas separate the columns.</p>
-          </div>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Load the two CSVs in data/2026-Q3/ (hr_roster.csv and
-entitlements.csv) into pandas DataFrames. Print the shape and
-the column names of each one.</pre>
-          </div>
-          <p class="step-why">You should see output like this:</p>
+          <div class="step-do">Load both files into pandas and explore what's really in them.</div>
+          <p class="step-why">Why: every finding you produce this week inherits the quality of
+          this data. Before you trust a single row, you confirm both files loaded, learn their
+          exact shape, and measure the three messes with your own eyes.</p>
+
+          <p><strong>What you're building.</strong> A short exploration — a script, or a live
+          Python session — that loads <code>hr_roster.csv</code> and <code>entitlements.csv</code>
+          into DataFrames and answers a handful of questions about each: how many rows and
+          columns, what the columns are called, and how bad the three messes really are. You are
+          not cleaning anything yet — just looking, and writing down what you see.</p>
+
+          <p><strong>What the data looks like.</strong> The columns are listed in the Concept
+          above. What you can't see until you load it are the messes — here is exactly what each
+          one looks like in the file, so you know what you're counting:</p>
           <div class="terminal">
-<span class="cmd">python load_data.py</span>
-<span class="out">hr_roster    (1200, 9)     ['employee_id', 'full_name', 'email', 'department', 'title', 'hire_date', 'term_date', 'employment_type', 'status']
-entitlements (15234, 7)   ['account_id', 'account_name', 'app', 'role', 'granted_date', 'granted_by', 'last_login']</span>
+<span class="out">granted_date   one column, two date formats
+  2026-08-08      &lt;- ISO,  YYYY-MM-DD
+  05/31/2026      &lt;- US,   MM/DD/YYYY
+
+department     one department, four spellings
+  'Customer Care'   ' Customer Care '   'CUSTOMER CARE'   'customer care'
+
+entitlements   a duplicate hiding behind the format split
+  A000025  kara.morgan  Box  Member  07/21/2026     &lt;- same grant,
+  A000025  kara.morgan  Box  Member  2026-07-21     &lt;- recorded twice</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> Both files load without error and
+          their shape matches exactly (the shipped kit is seed-locked, so your numbers are not
+          "approximately" these — they <em>are</em> these):</p>
+          <div class="terminal">
+<span class="cmd">python explore.py</span>
+<span class="out">hr_roster      (1190, 9)     employee_id, full_name, email, department, title,
+                            hire_date, term_date, employment_type, status
+entitlements   (15111, 7)    account_id, account_name, app, role, granted_date,
+                            granted_by, last_login</span>
+          </div>
+          <p class="step-why">Then the three messes, and a couple of distributions, should
+          measure out to these — verify each one against your own output:</p>
+          <ul class="learn">
+            <li><strong>22 distinct apps</strong> in <code>entitlements</code> — from Active
+            Directory (1,210 grants) down to Procure (15). Atlas ERP, the accounting system, has
+            just 63.</li>
+            <li><code>granted_date</code> splits into <strong>two formats</strong>: about
+            <strong>7,486</strong> rows ISO (<code>YYYY-MM-DD</code>) and <strong>7,625</strong>
+            rows US (<code>MM/DD/YYYY</code>) — 15,111 in total, roughly half and half.</li>
+            <li><code>department</code> shows <strong>31 distinct spellings</strong> that collapse
+            to <strong>12 real departments</strong> once you strip surrounding spaces and
+            lowercase. (Customer Care alone accounts for four of those spellings.)</li>
+            <li><code>entitlements</code> has <strong>7 exact-duplicate rows</strong>
+            (<code>df.duplicated().sum()</code>) — plus more that hide behind the date-format
+            split and won't show up in an exact-match count.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Work with Claude Code by describing <em>what you
+          want to know</em>, not the code to get it. A reasonable path: ask it to load both CSVs
+          from <code>data/2026-Q3/</code> and report each file's shape and column names; then ask
+          it to count the distinct apps, break <code>granted_date</code> down by format, count the
+          distinct department spellings (and how many survive stripping and lowercasing), and count
+          exact-duplicate entitlement rows. Read every number it reports against the targets above.
+          When one doesn't match, <em>that</em> is the next thing to dig into with Claude Code — not
+          a reason to move on.</p>
+
           <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>FileNotFoundError?</strong> Check that you're running the command
-              from the repository root, and that the <code>data/2026-Q3/</code> folder is where
-              Claude Code expects it. Ask Claude Code: "the file isn't found — where are you
-              looking, and where are the CSVs actually located?"</p>
-              <p><strong>Numbers look different?</strong> That's fine — placeholder counts
-              above are illustrative. What matters is that both loaded without error.</p>
+              <p><strong>FileNotFoundError?</strong> You're probably not in the repository root,
+              or the path is off. Confirm <code>data/2026-Q3/hr_roster.csv</code> exists from where
+              you're running, and that you typed the quarter folder exactly.</p>
+              <p><strong><code>ModuleNotFoundError: No module named 'pandas'</code>?</strong> The
+              venv isn't active, or pandas landed in a different Python. Re-run Step 1, then check
+              that <code>which python</code> points inside this project's <code>venv/</code> before
+              you install again.</p>
+              <p><strong>The whole file reads as a single column, or the header looks wrong?</strong>
+              Something upstream of pandas is off — an unexpected delimiter or a stray first line.
+              Show Claude Code the first few raw lines of the file and ask why the parse produced one
+              column instead of the expected columns.</p>
+              <p><strong>Your counts are off by a little?</strong> The kit is seed-locked, so exact
+              matches are expected. A mismatch usually means the mess itself — e.g. counting
+              department spellings <em>after</em> stripping spaces gives 12, but <em>before</em>
+              stripping gives 31. Make sure you're measuring the raw column when the target says
+              "spellings."</p>
+              <p><strong>Dates won't sort or compare?</strong> That's the two-format mess, working
+              as intended. Don't fix it here — just measure how many rows are in each format. Turning
+              those strings into real dates comes later.</p>
             </div>
           </details>
         </li>
@@ -507,7 +598,7 @@ entitlements (15234, 7)   ['account_id', 'account_name', 'app', 'role', 'granted
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Load HR roster and entitlements data"</pre>
+git commit -m "Load and explore HR roster and entitlements data"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c1-s4"> Mark done</label>
         </li>
@@ -516,8 +607,9 @@ git commit -m "Load HR roster and entitlements data"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 1 when</strong> both files load without error,
-      you've seen the shape of each one printed to your terminal, and you've made your first commit.</p>
+      <p><strong>You're done with Cycle 1 when</strong> both files load without error, their
+      shapes match <code>(1190, 9)</code> and <code>(15111, 7)</code>, you've measured all three
+      messes against the targets above, and you've made your first commit.</p>
     </div>
   </section>
 
