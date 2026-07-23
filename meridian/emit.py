@@ -55,3 +55,31 @@ def copy_policies(src_dir: str, dst_dir: str) -> None:
     for name in sorted(os.listdir(src_dir)):
         if name.endswith(".md"):
             shutil.copyfile(os.path.join(src_dir, name), os.path.join(dst_dir, name))
+
+
+def write_applications(path: str, world, selection, quarter_start) -> None:
+    from meridian.app_selection import effective_impl_date
+    records = []
+    for name, app in world.apps.items():
+        eff = effective_impl_date(name, selection, world, quarter_start)
+        records.append({
+            "name": name,
+            "tier": app.tier,
+            "roles": list(app.roles),
+            "privileged_roles": list(app.privileged_roles),
+            "owning_dept": app.owning_dept,
+            "implementation_date": eff.isoformat(),
+        })
+    with open(path, "w") as f:
+        json.dump(records, f, indent=2)
+
+
+def write_sod_matrix(path: str, world) -> None:
+    with open(path, "w") as f:
+        json.dump({"conflicts": world.sod_conflicts,
+                   "exemptions": world.sod_exemptions}, f, indent=2)
+
+
+def write_service_accounts(path: str, world) -> None:
+    with open(path, "w") as f:
+        json.dump(list(world.service_accounts), f, indent=2)
