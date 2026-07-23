@@ -346,9 +346,9 @@
     <h1>Who has access to what?</h1>
 
     <div class="narrative">
-      <p class="lede">It's Monday at Meridian Life Sciences. A regulator has asked a
-      question that should be simple: <em>show us everyone who can approve a clinical
-      trial payment.</em> Nobody can answer it — not because the access doesn't exist,
+      <p class="lede">It's Monday at Meridian Regional Energy. A regulator has asked a
+      question that should be simple: <em>show us everyone who can approve a vendor
+      payment.</em> Nobody can answer it — not because the access doesn't exist,
       but because it's scattered across three systems that have never spoken to each other.</p>
       <p>That's your job this week. Today you lay the foundation: a single, trustworthy
       record of who holds what access across Meridian. Everything you build the rest of
@@ -403,11 +403,12 @@
       departments. <strong>Active Directory</strong> knows accounts — usernames, groups,
       when someone last logged in. <strong>Application entitlements</strong> knows
       permissions — which account can do what inside each business app.</p>
-      <p>They don't line up. HR calls her "Katherine Okonkwo, Director of Clinical
-      Operations." AD knows her as <code>k.okonkwo</code> and also, from an old contract,
-      <code>okonkwok_adm</code>. The trial-payments app just sees a user ID. Pulling these
-      into one view is called <em>identity reconciliation</em> — deciding, with evidence,
-      that these fragments are all the same human being.</p>
+      <p>They don't line up. HR lists a Finance &amp; Accounting employee by her full legal
+      name and title. Active Directory knows that same person under two usernames — an
+      everyday login and a second <code>_adm</code> admin account left over from an old
+      project. Atlas ERP just sees a user ID. Pulling these into one view is called
+      <em>identity reconciliation</em> — deciding, with evidence, that these fragments are
+      all the same human being.</p>
 
       <div class="whatis">
         <span class="tag">What is pandas?</span>
@@ -470,9 +471,9 @@ the column names of each one.</pre>
           <p class="step-why">You should see output like this:</p>
           <div class="terminal">
 <span class="cmd">python load_data.py</span>
-<span class="out">hr_roster        (412, 6)   ['employee_id', 'full_name', 'title', 'manager', 'department', 'status']
-ad_accounts      (587, 5)   ['username', 'display_name', 'groups', 'last_login', 'enabled']
-app_entitlements (1043, 4)  ['app', 'user_id', 'role', 'granted_on']</span>
+<span class="out">hr_roster        (1200, 6)    ['employee_id', 'full_name', 'title', 'manager', 'department', 'status']
+ad_accounts      (1487, 5)    ['username', 'display_name', 'groups', 'last_login', 'enabled']
+app_entitlements (15234, 4)   ['app', 'user_id', 'role', 'granted_on']</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
           <details class="stuck">
@@ -580,9 +581,9 @@ a separate list so we can review them — don't silently drop them.</pre>
           </div>
           <div class="terminal">
 <span class="cmd">python reconcile.py</span>
-<span class="out">Canonical identities:      398
-Matched account records:   571
-Unmatched (needs review):   16
+<span class="out">Canonical identities:     1198
+Matched account records:  1451
+Unmatched (needs review):   36
 Ledger written to:  ledger.csv</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
@@ -596,9 +597,9 @@ Ledger written to:  ledger.csv</span>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Show me the ledger rows for canonical_id belonging to
-"Katherine Okonkwo". Are both her accounts (k.okonkwo and
-okonkwok_adm) linked to the same canonical_id?</pre>
+            <pre>Pick a person in the ledger who has a second _adm admin account.
+Show me their ledger rows — are both accounts (their standard
+login and their _adm account) linked to the same canonical_id?</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
         </li>
@@ -639,7 +640,7 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
     <div class="concept">
       <div class="label">Concept</div>
       <p>A ledger tells you who has what. <em>Triage</em> is the next question: which of those
-      access grants deserve a closer look? You can't hand a reviewer 1,000 rows and say "check
+      access grants deserve a closer look? You can't hand a reviewer 15,000 rows and say "check
       these" — you surface the ones that break a rule.</p>
       <p>Start with <strong>rule-based</strong> triage: precise, explainable conditions like
       "an Admin role held by someone who isn't a manager." Rules are fast, cheap, and easy to
@@ -662,11 +663,11 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
         <pre>{
   "finding_id": "F-0001",
   "rule": "admin-role-non-manager",
-  "canonical_id": "MERI-00317",
-  "person": "Daniel Reyes",
-  "app": "trial-payments",
-  "role": "Admin",
-  "reason": "Holds Admin but is not a people manager in HR",
+  "canonical_id": "MRE-00317",
+  "person": "marcus.pipeline",
+  "app": "Atlas ERP",
+  "role": "ERP Admin",
+  "reason": "Holds ERP Admin but is not a people manager in HR",
   "severity": "high",
   "status": "open"
 }</pre>
@@ -701,7 +702,7 @@ canonical_id, person, app, role, reason, severity, status.</pre>
           </div>
           <div class="terminal">
 <span class="cmd">python triage.py</span>
-<span class="out">Scanned ledger rows:   571
+<span class="out">Scanned ledger rows:   15234
 Rule: admin-role-non-manager
 Findings generated:      9
 Wrote findings.json</span>
@@ -787,9 +788,10 @@ git commit -m "Add admin-role-non-manager triage rule and findings"</pre>
     </div>
 
     <div class="narrative">
-      <p class="tomorrow">Tomorrow you'll teach Meridian's compliance policies to Claude as
-      <em>Skills</em> — turning the rules that today live only in a PDF binder into checks Claude
-      can apply on its own. The regulator's question is about to get a lot easier to answer.</p>
+      <p class="tomorrow">Tomorrow you'll teach three of Meridian's compliance policies — Segregation
+      of Duties, the Privileged Access Standard, and the Contractor Access Standard — to Claude as
+      <em>Skills</em>, turning rules that today live only in a PDF binder into checks Claude can apply
+      on its own. The regulator's question is about to get a lot easier to answer.</p>
     </div>
 
     <div class="panel curious">

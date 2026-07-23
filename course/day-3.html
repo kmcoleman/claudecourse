@@ -357,9 +357,9 @@
 
     <div class="panel">
       <h3>What you'll build today</h3>
-      <p>Three <strong>policy Skills</strong> — Segregation of Duties, Privileged Access Review,
-      and Dormancy — plus an upgraded triage step that makes every finding <em>cite</em> the exact
-      policy clause it came from.</p>
+      <p>Three <strong>policy Skills</strong> — Segregation of Duties, the Privileged Access
+      Standard, and the Contractor Access Standard — plus an upgraded triage step that makes every
+      finding <em>cite</em> the exact policy clause it came from.</p>
     </div>
 
     <div class="panel">
@@ -477,14 +477,15 @@ through it section by section. What makes this a good Skill?</pre>
     <div class="concept">
       <div class="label">Concept</div>
       <p><em>Segregation of Duties</em> (SoD) is the principle that no single person should control
-      a whole risky process end to end — the person who <em>requests</em> a payment shouldn't also
-      be able to <em>approve</em> it. Meridian's SoD policy is two pages of prose. You'll turn the
-      relevant part into a Skill.</p>
-      <p>Remember Katherine Okonkwo from Day 2 — Director of Clinical Operations, with two accounts:
-      <code>k.okonkwo</code> and the old admin account <code>okonkwok_adm</code>. That second
-      account can approve trial payments, while her main account can request them. One human, both
-      halves of the process. That's a textbook SoD violation, and it's the case you'll test your
-      Skill against.</p>
+      a whole risky process end to end — the person who <em>enters</em> an invoice shouldn't also
+      be able to <em>approve</em> it. Meridian's SoD policy, and the conflicting role pairs it points
+      to in the SoD matrix, run to a few pages of prose. You'll turn the relevant part into a Skill.</p>
+      <p>Remember the Finance &amp; Accounting employee from Day 2 with two linked accounts — a standard
+      login and an old <code>_adm</code> account. Look at what those accounts can do in Atlas ERP: one
+      carries the <strong>AP Clerk</strong> role (enter an invoice), the other carries <strong>AP
+      Manager</strong> (approve it). One human, both halves of the payment — and this person is a
+      clerk, not the Controller, so no exemption covers it. That's a textbook SoD violation, and it's
+      the case you'll test your Skill against.</p>
 
       <div class="code labeled">
         <span class="kind">.claude/skills/sod.md (target shape)</span>
@@ -492,12 +493,15 @@ through it section by section. What makes this a good Skill?</pre>
         <pre># Segregation of Duties
 
 ## Rule
-Flag any person who can both **request** and **approve** the same
-class of transaction (e.g. trial payments), whether through one
-account or several linked accounts.
+Flag any person who holds a conflicting pair of roles from the SoD
+matrix — for example **AP Clerk + AP Manager** in Atlas ERP (enter an
+invoice, then approve it) — whether through one account or several
+linked accounts.
 
 ## Exceptions
-- Documented break-glass accounts reviewed quarterly — note, don't escalate.
+- ACP-4.2 documented exemption: the Controller in Finance &amp; Accounting
+  may hold AP Manager + Vendor Admin under a CFO-signed compensating
+  control (quarterly payment review). Access held under ACP-4.2 is not a finding.
 
 ## Citation format
 When flagging, cite: "SoD Skill, §<clause>".</pre>
@@ -514,10 +518,12 @@ When flagging, cite: "SoD Skill, §<clause>".</pre>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Read policies/sod_policy.md. Draft a Skill that flags anyone who
-can both request and approve the same class of transaction, across
-linked accounts. Include the break-glass exception. Number the
-clauses so findings can cite them.</pre>
+            <pre>Read policies/sod-policy.md and the SoD matrix, plus the ACP-4.2
+exemption in policies/access-control-policy.md. Draft a Skill that
+flags anyone holding a conflicting role pair (e.g. AP Clerk +
+AP Manager in Atlas ERP), across linked accounts. Include the
+ACP-4.2 Controller exemption. Number the clauses so findings can
+cite them.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
         </li>
@@ -529,9 +535,10 @@ clauses so findings can cite them.</pre>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>The break-glass exception should only apply if the account was
-reviewed in the last 90 days. Update the Skill to say that, and
-add a clause number for it.</pre>
+            <pre>The ACP-4.2 exemption should only apply to the Controller in
+Finance & Accounting, and only with the CFO's quarterly
+compensating-control review on record. Update the Skill to say
+that, and add a clause number for it.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
         </li>
@@ -548,29 +555,29 @@ add a clause number for it.</pre>
         </li>
 
         <li>
-          <div class="step-do">Test the Skill against Katherine Okonkwo's grants.</div>
+          <div class="step-do">Test the Skill against the AP Clerk + AP Manager grant.</div>
           <p class="step-why">Why: never trust a new Skill on all your data first. Test it on one
           case you already understand, where you know the right answer.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Using the SoD Skill, evaluate Katherine Okonkwo's access
-(k.okonkwo and okonkwok_adm) against the trial-payments app.
-Is this a violation? Cite the clause.</pre>
+            <pre>Using the SoD Skill, evaluate the Finance & Accounting employee who
+holds AP Clerk on one account and AP Manager on the other, in
+Atlas ERP. Is this a violation? Cite the clause.</pre>
           </div>
           <div class="terminal">
 <span class="cmd">claude</span>
-<span class="out">VIOLATION — Katherine Okonkwo can request (k.okonkwo) and approve
-(okonkwok_adm) trial payments. Break-glass exception does not apply
-(no review in 90 days). Citation: SoD Skill, §2.3</span>
+<span class="out">VIOLATION — one person holds AP Clerk and AP Manager in Atlas ERP
+(enter an invoice, then approve it). ACP-4.2 exemption does not apply
+(this person is a clerk, not the Controller). Citation: SoD Skill, §2.3</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Claude misses the second account?</strong> It may be evaluating each
+              <p><strong>Claude misses the second role?</strong> It may be evaluating each
               account separately. Remind it: "these two accounts belong to the same canonical_id —
-              evaluate them together as one person."</p>
+              evaluate their roles together as one person."</p>
             </div>
           </details>
         </li>
@@ -591,7 +598,7 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 2 when</strong> <code>.claude/skills/sod.md</code> exists,
-      and Claude correctly flags Katherine Okonkwo's dual-account grant as an SoD violation with a
+      and Claude correctly flags the AP Clerk + AP Manager grant as an SoD violation with a
       clause citation.</p>
     </div>
   </section>
@@ -612,11 +619,13 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
       <p>You know the pattern now: read the policy, draft the Skill, refine the exceptions, test on
       a known case, save. Two more policies, same rhythm — and you should move noticeably faster the
       second and third time.</p>
-      <p><strong>Privileged Access Review:</strong> anyone holding elevated ("privileged")
-      permissions must have that access re-attested by their manager on a set cadence; access that
-      hasn't been reviewed in time gets flagged. <strong>Dormancy:</strong> an account that hasn't
-      been used in a defined window is a standing risk — no one's watching it, but it can still be
-      used. Both are prose policies with their own exceptions, and both become Skills.</p>
+      <p><strong>Privileged Access Standard:</strong> a privileged role requires an approved access
+      request (a ticket) before it's granted, and it must show activity within 180 days or be reviewed
+      for removal — a dormancy check that lives <em>inside</em> this standard. Registered, documented
+      break-glass accounts are exempt from that dormancy rule. <strong>Contractor Access Standard:</strong>
+      a contractor's access ends on their statement-of-work (SOW) end date; any extension needs a new
+      approved ticket referencing the renewed SOW <em>before</em> the old one lapses. Both are prose
+      policies with their own exceptions, and both become Skills.</p>
     </div>
 
     <div class="task">
@@ -629,9 +638,10 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Read policies/privileged_access_policy.md. Draft a Skill that
-flags privileged access not re-attested within its required
-cadence. Number the clauses. Save it to
+            <pre>Read policies/privileged-access-standard.md. Draft a Skill that
+flags privileged roles granted without an approved ticket, and
+privileged access dormant beyond 180 days (registered break-glass
+accounts exempt). Number the clauses. Save it to
 .claude/skills/privileged-access.md.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
@@ -640,35 +650,42 @@ cadence. Number the clauses. Save it to
         <li>
           <div class="step-do">Test the Privileged Access Skill on one known account.</div>
           <p class="step-why">Why: same discipline — confirm on a case you understand before you
-          trust it on the whole dataset.</p>
+          trust it on the whole dataset. <code>emergency.admin</code> is a good one: it looks dormant,
+          but it's a registered break-glass account, so the Skill should <em>not</em> flag it.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Using the Privileged Access Skill, evaluate okonkwok_adm. Was it
-re-attested in time? Cite the clause behind your answer.</pre>
+            <pre>Using the Privileged Access Skill, evaluate emergency.admin — a
+break-glass Domain Admin account in Active Directory with no login
+in ~300 days. Should the 180-day dormancy rule flag it? Cite the
+clause.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Draft, save, and spot-test the Dormancy Skill.</div>
+          <div class="step-do">Draft, save, and spot-test the Contractor Access Standard Skill.</div>
           <p class="step-why">Why: the third time should feel routine. Draft from the policy, save
-          to <code>.claude/skills/dormancy.md</code>, and test it on one clearly-stale account.</p>
+          to <code>.claude/skills/contractor-access.md</code>, and test it on one contractor whose
+          SOW has already lapsed.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Read policies/dormancy_policy.md. Draft a Skill that flags
-accounts unused beyond the dormancy window, with its exceptions
-and numbered clauses. Save to .claude/skills/dormancy.md, then
-test it on the account with the oldest last_login in the ledger.</pre>
+            <pre>Read policies/contractor-access-standard.md. Draft a Skill that
+flags contractor access still active past its SOW end date, unless
+a new approved ticket references a renewed SOW. Number the clauses.
+Save to .claude/skills/contractor-access.md, then test it on the
+contractor whose term_date is about three weeks past.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
               <p><strong>Not sure the Skill is being applied?</strong> Ask Claude to quote the exact
-              clause it used and the <code>last_login</code> value it read. If either looks wrong,
-              the Skill's wording — not the data — is usually the fix.</p>
+              clause it used and the dates it read — the SOW end date and any vouching ticket. A
+              manager's after-the-fact vouch in a ticket does <em>not</em> satisfy the standard; only
+              a new ticket referencing a renewed SOW does. If the call looks wrong, the Skill's
+              wording — not the data — is usually the fix.</p>
             </div>
           </details>
         </li>
@@ -679,7 +696,7 @@ test it on the account with the oldest last_login in the ledger.</pre>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Add privileged-access and dormancy policy Skills"</pre>
+git commit -m "Add privileged-access and contractor-access policy Skills"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s4"> Mark done</label>
         </li>
@@ -690,7 +707,7 @@ git commit -m "Add privileged-access and dormancy policy Skills"</pre>
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 3 when</strong> three Skills live in
       <code>.claude/skills/</code> — <code>sod.md</code>, <code>privileged-access.md</code>, and
-      <code>dormancy.md</code> — and each has passed a spot-test on a known account.</p>
+      <code>contractor-access.md</code> — and each has passed a spot-test on a known account.</p>
     </div>
   </section>
 
@@ -719,11 +736,11 @@ git commit -m "Add privileged-access and dormancy policy Skills"</pre>
         <button class="copy" type="button">Copy</button>
         <pre>{
   "finding_id": "F-0007",
-  "canonical_id": "MERI-00317",
-  "person": "Katherine Okonkwo",
-  "app": "trial-payments",
-  "role": "Approver + Requester",
-  "reason": "Can both request and approve trial payments",
+  "canonical_id": "MRE-00317",
+  "person": "&lt;name assigned at seed time&gt;",
+  "app": "Atlas ERP",
+  "role": "AP Clerk + AP Manager",
+  "reason": "Holds AP Clerk and AP Manager — can enter an invoice and approve it",
   "policy_reference": "SoD Skill, §2.3",
   "severity": "high",
   "status": "open"
@@ -742,8 +759,8 @@ git commit -m "Add privileged-access and dormancy policy Skills"</pre>
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
             <pre>Update triage.py so that for each ledger entry it evaluates the
-grant against the SoD, privileged-access, and dormancy Skills, and
-emits a finding for each violation.</pre>
+grant against the SoD, privileged-access, and contractor-access
+Skills, and emits a finding for each violation.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
         </li>
@@ -772,8 +789,8 @@ finding came from.</pre>
           </div>
           <div class="terminal">
 <span class="cmd">python triage.py</span>
-<span class="out">Applied Skills:  sod, privileged-access, dormancy
-Scanned ledger rows:   571
+<span class="out">Applied Skills:  sod, privileged-access, contractor-access
+Scanned ledger rows:   15234
 Findings generated:     34
   with policy_reference: 34 / 34
 Wrote findings.json</span>
@@ -839,8 +856,8 @@ git commit -m "Wire Skills into triage; findings now cite policy clauses"</pre>
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>Three policy <strong>Skills</strong> — SoD, privileged access, and dormancy — in prose Claude can apply</li>
-        <li>A tested SoD Skill that correctly flags Katherine Okonkwo's dual-account violation</li>
+        <li>Three policy <strong>Skills</strong> — SoD, privileged access, and contractor access — in prose Claude can apply</li>
+        <li>A tested SoD Skill that correctly flags the AP Clerk + AP Manager violation in Atlas ERP</li>
         <li>An upgraded triage step where every finding <strong>cites its policy clause</strong></li>
       </ul>
     </div>
@@ -848,7 +865,7 @@ git commit -m "Wire Skills into triage; findings now cite policy clauses"</pre>
     <div class="narrative">
       <p class="tomorrow">Your system now understands Meridian's compliance rulebook. Tomorrow you
       make it fast, parallel, and organized — <em>subagents</em>. One orchestrator that delegates to
-      specialists, so the pipeline stops choking on Meridian's full 12,000 entitlements.</p>
+      specialists, so the pipeline stops choking on Meridian's full 15,000 entitlements.</p>
     </div>
 
     <div class="panel curious">

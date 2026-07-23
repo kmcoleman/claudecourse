@@ -346,9 +346,9 @@
     <h1>One orchestrator, many specialists.</h1>
 
     <div class="narrative">
-      <p class="lede">Meridian has 47 apps, 2,300 users, and 12,000 entitlements. Your current
-      pipeline works — but it chokes on scale, because it's one giant prompt trying to reason about
-      everything at once. Today you decompose the problem.</p>
+      <p class="lede">Meridian has 22 apps, roughly 1,200 users, and around 15,000 entitlements. Your
+      current pipeline works — but it chokes on scale, because it's one giant prompt trying to reason
+      about everything at once. Today you decompose the problem.</p>
       <p>The fix isn't a bigger prompt. It's <em>division of labor</em>: one orchestrator that holds
       the plan, and a small team of specialists that each do one job well and report back. It's how
       you'd staff a real review — a data person, a policy person, a writer — except your specialists
@@ -400,7 +400,7 @@
       breaks the work into pieces, delegates each piece to the right specialist, and assembles the
       results. Same idea as a review lead who doesn't do every task personally but knows who should.</p>
 
-      <p><strong>Why decompose?</strong> A single prompt asked to reason about 12,000 entitlements
+      <p><strong>Why decompose?</strong> A single prompt asked to reason about 15,000 entitlements
       at once runs out of room — it loses track, mixes cases, and slows down. Split the work and each
       specialist keeps a small, clean context: the ledger-reader thinks only about data, the
       policy-applier thinks only about Skills, the findings-writer thinks only about output shape.
@@ -610,7 +610,7 @@ git commit -m "Wire ledger-reader specialist to Meridian MCP server"</pre>
         <li>
           <div class="step-do">Define the policy-applier specialist.</div>
           <p class="step-why">Why: it owns the compliance step — taking rows from the reader and
-          evaluating each against the SoD, privileged-access, and dormancy Skills.</p>
+          evaluating each against the SoD, privileged-access, and contractor-access Skills.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
@@ -822,9 +822,9 @@ tests/test_pipeline.py ......                                  [100%]
     </div>
 
     <div class="narrative">
-      <p class="tomorrow">You built a real agentic system. Tomorrow you prove it isn't hardcoded to
-      Meridian — you point it at a completely new company, <em>Northwind Biotech</em>, and find out
-      how much of what you built actually transfers.</p>
+      <p class="tomorrow">You built a real agentic system. Tomorrow you prove it didn't just memorize
+      Q3 — you regenerate Meridian with a new seed, a fresh <em>Q4</em> quarter your pipeline has never
+      seen, and find out whether it learned the pattern or quietly special-cased this quarter's data.</p>
     </div>
 
     <div class="panel curious">

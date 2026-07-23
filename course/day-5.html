@@ -346,29 +346,31 @@
     <h1>Prove it transfers.</h1>
 
     <div class="narrative">
-      <p class="lede">Your engagement at Meridian went well. Now imagine it's three weeks later —
-      you're at a new client, <em>Northwind Biotech</em>. Different apps, different policies, a
-      different data shape. Today you prove your system transfers.</p>
-      <p>This is the difference between a demo and a product. Anyone can build something that works
-      once, for one company, with the company's quirks baked in. What makes you a
-      <em>Claude Certified Architect</em> is a system that walks into a client you've never seen and
-      still produces good findings. Today you find out how close you already are — and close the gap.</p>
+      <p class="lede">Your Q3 review at Meridian went well. But a good review isn't one that worked
+      once — it's one that works <em>next quarter</em>, on data you've never seen. Today you regenerate
+      Meridian with a brand-new seed, producing a fresh <em>Q4</em> quarter, and find out what your
+      pipeline actually learned.</p>
+      <p>This is the difference between a demo and a product. The company is the same — same 22 apps,
+      same roles, same five policies, same SoD matrix. What's different is the cast: every employee has
+      a new name and ID, and which specific people are risky this quarter has completely changed. The
+      question the whole week has been building toward: did your pipeline learn the <em>pattern</em>, or
+      did it quietly memorize Q3?</p>
     </div>
 
     <div class="panel">
       <h3>What you'll build today</h3>
-      <p>A <strong>generalized</strong> version of your pipeline: the Meridian-specific assumptions
-      pulled out into config, so the same code runs against a brand-new Northwind dataset and
-      produces a valid <code>findings.json</code> without edits.</p>
+      <p>A pipeline you trust on <strong>unseen data</strong>: your Day 4 system, run against a freshly
+      generated Q4 quarter, producing a valid <code>findings.json</code> with no code changes — and any
+      place it secretly leaned on Q3's specifics found and removed.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll learn</h3>
       <ul class="learn">
-        <li>The difference between what you <em>hardcoded</em> and what you <em>parameterized</em></li>
-        <li>How to generate a fresh, realistically different synthetic client dataset</li>
-        <li>How to diagnose why code silently produces the wrong answer, not just crashes</li>
-        <li>How to extract client-specific assumptions into config so your system travels</li>
+        <li>The difference between learning a <em>pattern</em> and memorizing one quarter's specifics</li>
+        <li>How to regenerate the same company under a new seed to create a genuinely unseen quarter</li>
+        <li>How to catch a pipeline that silently special-cases Q3 people, IDs, or exact counts</li>
+        <li>How to prove a review system transfers — and reason about the quarters you haven't run yet</li>
       </ul>
     </div>
 
@@ -377,7 +379,7 @@
       <ul class="prereq">
         <li>Day 4 complete — the full subagent pipeline produces Meridian Q3 findings</li>
         <li>Your virtual environment is activated <em>(you'll confirm this in Step 1)</em></li>
-        <li>The kit's seed generator is available <em>(you'll run it in Cycle 1)</em></li>
+        <li>The kit's generator (<code>python -m meridian.generate</code>) is available <em>(you'll run it in Cycle 1)</em></li>
       </ul>
     </div>
   </section>
@@ -388,32 +390,33 @@
       <div class="cycle-num">1</div>
       <div class="meta">
         <div class="eyebrow">Cycle 1</div>
-        <h2>A fresh company from scratch</h2>
+        <h2>A fresh quarter, same company</h2>
         <span class="time">≈ 90 min</span>
       </div>
     </div>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>To test transfer honestly, you need a client that's genuinely different from Meridian — not
-      Meridian with the names changed. The kit's <em>seed generator</em> builds one: Northwind Biotech,
-      with its own app names, its own role vocabulary, and policy language written differently from
-      Meridian's.</p>
-      <p>Meet two people at Northwind. <strong>Marcus Webb</strong>, Head of Procurement, holds two
-      accounts — <code>m.webb</code> and a service account <code>webb.svc</code> — and Northwind's
-      <code>supplier-payments</code> app lets one request and the other approve. Sound familiar? It's
-      the same <em>shape</em> of risk as Katherine Okonkwo at Meridian, wearing completely different
-      clothes. And <strong>Dana Osei</strong>, a Research Analyst whose privileged
-      <code>lab-inventory</code> access hasn't been touched in months — a dormancy case your Day 3
-      Skill should still catch, if it truly generalized.</p>
+      <p>To test transfer honestly, you need data your pipeline has never seen — but from the
+      <em>same</em> company, so any failure is about your code, not a different world. The kit's
+      generator does exactly this: give it a new <em>seed</em> and a new <em>quarter</em>, and it
+      rebuilds Meridian from scratch — same 22 apps, same roles, same policies, same SoD matrix — but
+      with a completely new cast of people and a new set of specific findings.</p>
+      <p>What stays fixed seed to seed: the apps (Atlas ERP, MeridianPay, Gateway, Active Directory,
+      Vault, and the rest), the role vocabulary, the five policies, the SoD matrix, and the
+      service-account registry — <code>marcus.pipeline</code> and <code>emergency.admin</code> are
+      constants. What changes: every person's name, email, and employee ID; which employee is the AP
+      Clerk who also holds AP Manager; which one is the Controller covered by the ACP-4.2 exemption;
+      which contractor's SOW has lapsed; and the exact finding counts. A new seed is a new exam sat by
+      the same company.</p>
 
       <div class="whatis">
-        <span class="tag">Hardcoded vs. parameterized</span>
-        <p>Something is <em>hardcoded</em> when a specific value is baked directly into your code —
-        "the payments app is called <code>trial-payments</code>." It's <em>parameterized</em> when the
-        value lives in config and the code reads it — "the payments app is whatever
-        <code>config.payments_app</code> says." Hardcoded works for one client; parameterized travels
-        to the next.</p>
+        <span class="tag">Pattern vs. memorization</span>
+        <p>Your pipeline <em>learned the pattern</em> if it flags whoever holds AP Clerk + AP Manager
+        this quarter, exempts whoever the current Controller is, and catches whichever contractor is now
+        past SOW. It <em>memorized Q3</em> if it leans on a specific Q3 name, employee ID, or exact
+        count — <code>if canonical_id == "MRE-00902"</code>, or <code>assert findings == 214</code>.
+        Memorization passes Q3 and fails silently on Q4.</p>
       </div>
     </div>
 
@@ -432,42 +435,48 @@
         </li>
 
         <li>
-          <div class="step-do">Generate the Northwind dataset with the seed generator.</div>
-          <p class="step-why">Why: this creates a fresh synthetic client — different apps, roles, and
-          policy wording — under a new data folder.</p>
+          <div class="step-do">Generate a fresh Q4 quarter with a new seed.</div>
+          <p class="step-why">Why: this rebuilds Meridian under a new seed — same company, new people,
+          new specific findings — in its own Q4 folder. Use a seed different from the one that produced Q3.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>python -m kit.seed_generator --company northwind --out data/northwind-Q1</pre>
+            <pre>python -m meridian.generate --seed 44 --quarter 2026-Q4 --out data/2026-Q4</pre>
           </div>
           <div class="terminal">
-<span class="cmd">python -m kit.seed_generator --company northwind --out data/northwind-Q1</span>
-<span class="out">Generated: hr_roster.csv (388), ad_accounts.csv (521),
-app_entitlements.csv (964)
-Apps: supplier-payments, lab-inventory, grant-portal, ...
-Wrote data/northwind-Q1/</span>
+<span class="cmd">python -m meridian.generate --seed 44 --quarter 2026-Q4 --out data/2026-Q4</span>
+<span class="out">Generated Meridian 2026-Q4 (seed 44)
+  hr_roster.csv        1200 rows
+  entitlements.csv    15234 rows
+  access_tickets.json   612 tickets
+  prior_review.csv      copied policies/
+Apps: Atlas ERP, MeridianPay, Gateway, Active Directory, Vault, ... (22, unchanged)
+Wrote data/2026-Q4/</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c1-s1b"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Compare Northwind's shape to Meridian's.</div>
-          <p class="step-why">Why: knowing exactly how the new client differs tells you where your
-          code is most likely to break — different app names, different role labels, different columns.</p>
+          <div class="step-do">Compare Q4 to Q3.</div>
+          <p class="step-why">Why: the apps, roles, and policies should match Q3 exactly; only the cast
+          and the specific findings should differ. Seeing that split tells you what your pipeline must
+          handle generically rather than by name.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Compare data/northwind-Q1 to data/2026-Q3. What's different —
-column names, app names, role vocabulary, policy wording? List the
-differences most likely to trip up our pipeline.</pre>
+            <pre>Compare data/2026-Q4 to data/2026-Q3. Confirm the apps, roles, and
+policies are identical, then show me what changed — the people,
+their IDs, and which specific accounts are the risky ones this
+quarter.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c1-s2"> Mark done</label>
         </li>
 
         <li>
           <div class="step-do">In your notebook, predict what will break.</div>
-          <p class="step-why">Why: writing your prediction down before you run anything makes the next
-          cycle a test of your understanding, not a surprise.</p>
+          <p class="step-why">Why: if your pipeline learned the pattern, nothing should. If it memorized
+          any Q3 name, ID, or count, write down where you think it will show — the next cycle is a test
+          of that prediction.</p>
           <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
         </li>
       </ol>
@@ -475,9 +484,9 @@ differences most likely to trip up our pipeline.</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 1 when</strong> <code>data/northwind-Q1</code> exists with a
-      genuinely different shape from Meridian, and you've written down which parts of your pipeline you
-      expect to break.</p>
+      <p><strong>You're done with Cycle 1 when</strong> <code>data/2026-Q4</code> exists — same apps
+      and policies as Q3, a new cast — and you've written down where you expect your pipeline to have
+      memorized Q3.</p>
     </div>
   </section>
 
@@ -487,37 +496,37 @@ differences most likely to trip up our pipeline.</pre>
       <div class="cycle-num">2</div>
       <div class="meta">
         <div class="eyebrow">Cycle 2</div>
-        <h2>Point the pipeline at Northwind</h2>
+        <h2>Run your pipeline against Q4</h2>
         <span class="time">≈ 90 min</span>
       </div>
     </div>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Now run yesterday's pipeline — unchanged — against Northwind and watch what happens. Two kinds
-      of failure show up here, and the second is more dangerous than the first.</p>
-      <p>A <strong>crash</strong> is honest: the code errors because it looked for
-      <code>trial-payments</code> and there isn't one. A <strong>wrong answer</strong> is quiet: the
-      code runs clean but produces findings that are subtly incorrect, because a Meridian assumption
-      held somewhere you didn't notice. Today you learn to distrust a green run until you've checked
-      that it's actually <em>right</em>.</p>
+      <p>Now run yesterday's pipeline — unchanged — against Q4 and watch what happens. Two kinds of
+      failure show up here, and the second is more dangerous than the first.</p>
+      <p>A <strong>crash</strong> is honest: the code errors because it expected a specific Q3 employee
+      ID that Q4 doesn't have. A <strong>wrong answer</strong> is quiet: the run finishes clean but the
+      findings are subtly off — this quarter's Controller gets flagged even though the ACP-4.2 exemption
+      covers her, because your pipeline recognized the <em>Q3</em> Controller by ID and never learned
+      the rule. Today you learn to distrust a green run until you've checked it's actually <em>right</em>.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Run the pipeline against Northwind, unchanged.</div>
-          <p class="step-why">Why: this is the honest transfer test — same code, new client, no edits yet.</p>
+          <div class="step-do">Run the pipeline against Q4, unchanged.</div>
+          <p class="step-why">Why: this is the honest transfer test — same code, a quarter it's never seen, no edits yet.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Run run_review(export_dir='data/northwind-Q1') with no code
-changes. Show me exactly what happens — errors, or findings.</pre>
+            <pre>Run run_review(export_dir='data/2026-Q4') with no code changes.
+Show me exactly what happens — errors, or findings.</pre>
           </div>
           <div class="terminal">
-<span class="cmd">run_review(export_dir='data/northwind-Q1')</span>
-<span class="out">KeyError: 'trial-payments'  (policy-applier, sod Skill)
+<span class="cmd">run_review(export_dir='data/2026-Q4')</span>
+<span class="out">KeyError: 'MRE-00902'  (policy-applier, hardcoded ACP-4.2 exemption list)
 ... pipeline halted</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
@@ -525,48 +534,51 @@ changes. Show me exactly what happens — errors, or findings.</pre>
 
         <li>
           <div class="step-do">Diagnose the crash.</div>
-          <p class="step-why">Why: the first error names one hardcoded assumption. Find out which value
-          was baked in and where.</p>
+          <p class="step-why">Why: the first error names one memorized Q3 detail. Find out which specific
+          value was baked in and where.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Trace this KeyError. Which Meridian-specific value is hardcoded,
-in which file, and why does Northwind not have it?</pre>
+            <pre>Trace this KeyError. Which Q3-specific value did we hardcode, in
+which file, and why doesn't Q4 have it?</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
         </li>
 
         <li>
           <div class="step-do">Hunt for the quiet wrong answers, not just the crash.</div>
-          <p class="step-why">Why: fixing the crash won't be enough if other assumptions produce wrong
+          <p class="step-why">Why: fixing the crash won't be enough if other Q3 specifics produce wrong
           findings silently. Get ahead of them now.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Beyond this crash, scan the pipeline for other Meridian-specific
-assumptions — app names, role labels, column names, thresholds —
-that would produce wrong findings for Northwind without erroring.</pre>
+            <pre>Beyond this crash, scan the pipeline for anything tied to specific
+Q3 people, IDs, or exact counts — hardcoded names, allowlists, or
+asserts like "findings == 214" — that would pass silently but be
+wrong for Q4.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Not sure a finding is wrong?</strong> Check it against a case you seeded —
-              Marcus Webb should surface as an SoD violation and Dana Osei as dormancy. If either is
-              missing or mislabeled, an assumption is still baked in.</p>
+              <p><strong>Not sure a finding is wrong?</strong> Check it against the cases you know must
+              appear: this quarter's AP Clerk + AP Manager holder should be flagged, this quarter's
+              Controller should <em>not</em> be (ACP-4.2), the contractor past SOW should be flagged, and
+              <code>marcus.pipeline</code> should stay unflagged. If any of those is wrong, a Q3
+              assumption is still baked in.</p>
             </div>
           </details>
         </li>
 
         <li>
           <div class="step-do">Commit your diagnosis notes.</div>
-          <p class="step-why">Why: commit the list of assumptions before you start changing code, so
-          you have a clean record of what needed fixing.</p>
+          <p class="step-why">Why: commit the list of memorized specifics before you start changing code,
+          so you have a clean record of what needed fixing.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Diagnose Meridian-specific assumptions blocking transfer"</pre>
+git commit -m "Diagnose Q3-specific assumptions blocking transfer to Q4"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
         </li>
@@ -575,9 +587,9 @@ git commit -m "Diagnose Meridian-specific assumptions blocking transfer"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 2 when</strong> you've run the pipeline against Northwind, found
-      the first crash, and produced a written list of every Meridian assumption — loud and quiet — that
-      needs to come out.</p>
+      <p><strong>You're done with Cycle 2 when</strong> you've run the pipeline against Q4, hit the
+      first crash, and produced a written list of everything tied to Q3 specifics — crashes and quiet
+      wrong answers alike — that needs to come out.</p>
     </div>
   </section>
 
@@ -587,25 +599,30 @@ git commit -m "Diagnose Meridian-specific assumptions blocking transfer"</pre>
       <div class="cycle-num">3</div>
       <div class="meta">
         <div class="eyebrow">Cycle 3</div>
-        <h2>Fix the assumptions</h2>
+        <h2>Fix the memorization</h2>
         <span class="time">≈ 90 min</span>
       </div>
     </div>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Now do the actual generalizing. Each assumption on your list comes out of the code and moves
-      into a small config file — one place that says "for this client, the payments app is X, the
-      privileged roles are Y, the dormancy window is Z." The code stops naming Meridian and starts
-      reading the config it's pointed at.</p>
+      <p>Now do the actual generalizing. Every place your pipeline named a specific Q3 person, ID, or
+      count comes out and gets replaced with the <em>rule</em> it should have used all along. The
+      ACP-4.2 exemption shouldn't check <code>canonical_id == "MRE-00902"</code>; it should check the
+      rule — a Finance &amp; Accounting <strong>Controller</strong> holding AP Manager + Vendor Admin
+      with a documented compensating control. Rules travel; identifiers don't.</p>
       <div class="code labeled">
-        <span class="kind">config/northwind.yaml (target shape)</span>
+        <span class="kind">policy-applier.py (memorized → pattern)</span>
         <button class="copy" type="button">Copy</button>
-        <pre>company: Northwind Biotech
-payments_app: supplier-payments
-privileged_roles: [lab-admin, grant-approver]
-dormancy_days: 120
-id_columns: {roster: employee_no, ad: sam_account}</pre>
+        <pre># WRONG — memorized Q3
+if canonical_id in {"MRE-00902"}:          # the Q3 Controller
+    exempt = True
+
+# RIGHT — the rule, works every quarter
+if (title == "Controller"
+        and department == "Finance & Accounting"
+        and has_documented_exemption(person, "ACP-4.2")):
+    exempt = True</pre>
       </div>
     </div>
 
@@ -613,58 +630,61 @@ id_columns: {roster: employee_no, ad: sam_account}</pre>
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Extract the hardcoded values into a config file.</div>
-          <p class="step-why">Why: this is the core move of the day — every Meridian-specific value
-          becomes a config entry the code reads instead of a literal it assumes.</p>
+          <div class="step-do">Replace hardcoded Q3 identifiers with the rules behind them.</div>
+          <p class="step-why">Why: this is the core move of the day — every memorized Q3 detail becomes
+          the general rule that produced it.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Pull every hardcoded Meridian value we found into a config file.
-Create config/meridian.yaml and config/northwind.yaml, and change
-the code to read from a config instead of naming values directly.</pre>
+            <pre>Find every place the pipeline references a specific Q3 person,
+canonical_id, or exact count. Replace each with the general rule it
+should use — for the ACP-4.2 exemption, key off title = Controller
++ documented compensating control, not a specific ID.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Make the Skills read client vocabulary from config too.</div>
-          <p class="step-why">Why: a Skill that hardcodes "trial-payments" won't transfer. The policy
-          logic should stay; only the client-specific nouns should come from config.</p>
+          <div class="step-do">Check the Skills reference roles and policies, not people.</div>
+          <p class="step-why">Why: a Skill that names a Q3 person won't transfer. The policy logic stays;
+          the specific people never belonged there.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Update the SoD, privileged-access, and dormancy Skills so they
-refer to the payments app, privileged roles, and dormancy window
-by config, not by Meridian's specific names.</pre>
+            <pre>Check the SoD, privileged-access, and contractor-access Skills for
+any Q3-specific name or ID. They should describe conflicting roles,
+privileged roles, the 180-day window, and the SOW rule — never a
+particular person.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Re-run against Northwind with its config.</div>
-          <p class="step-why">Why: point the same code at Northwind's config and see whether the fixes
-          hold — no crash, and the seeded cases surfacing correctly.</p>
+          <div class="step-do">Re-run against Q4.</div>
+          <p class="step-why">Why: point the same code at Q4 and see whether the fixes hold — no crash,
+          and the cases you know must be right surfacing correctly.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Run run_review(export_dir='data/northwind-Q1') using
-config/northwind.yaml. Confirm Marcus Webb shows as an SoD
-violation and Dana Osei as dormancy.</pre>
+            <pre>Run run_review(export_dir='data/2026-Q4'). Confirm this quarter's
+AP Clerk + AP Manager case is flagged, the Q4 Controller is NOT
+flagged (ACP-4.2), and the contractor past SOW is flagged.</pre>
           </div>
           <div class="terminal">
-<span class="cmd">run_review(export_dir='data/northwind-Q1')</span>
-<span class="out">findings: 173   high: 28   medium: 97   low: 48
-  Marcus Webb  → SoD Skill, §2.3   (high)
-  Dana Osei    → Dormancy Skill, §1.2 (medium)
+<span class="cmd">run_review(export_dir='data/2026-Q4')</span>
+<span class="out">findings: 198   high: 33   medium: 104   low: 61
+  AP Clerk + AP Manager   → SoD Skill, §2.3         (high)   flagged
+  Controller (ACP-4.2)    → exempt                  (—)      not flagged
+  Contractor past SOW     → Contractor Skill, §1.1  (high)   flagged
 pipeline OK</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Still one assumption left?</strong> If a seeded case is still missing, one
-              value didn't make it into config. Ask Claude: "which remaining literal is stopping
-              Marcus Webb from being flagged?" and move that one too.</p>
+              <p><strong>Still one memorized detail left?</strong> If this quarter's Controller is being
+              wrongly flagged, the exemption is still keyed to a Q3 identifier. Ask Claude: "which literal
+              is still deciding the ACP-4.2 exemption?" and replace it with the rule.</p>
             </div>
           </details>
         </li>
@@ -675,7 +695,7 @@ pipeline OK</span>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Extract client specifics into config; pipeline runs on Northwind"</pre>
+git commit -m "Replace memorized Q3 specifics with general rules; pipeline runs on Q4"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s4"> Mark done</label>
         </li>
@@ -684,9 +704,9 @@ git commit -m "Extract client specifics into config; pipeline runs on Northwind"
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 3 when</strong> the Meridian-specific values live in config, the
-      pipeline runs against Northwind without code edits, and your two seeded cases — Marcus Webb and
-      Dana Osei — are correctly flagged.</p>
+      <p><strong>You're done with Cycle 3 when</strong> the pipeline runs against Q4 with no code edits,
+      nothing keys off a Q3 name or ID, and the three cases you know must be right — the AP Clerk
+      conflict flagged, the Controller exempt, the contractor flagged — all come out correct.</p>
     </div>
   </section>
 
@@ -703,52 +723,53 @@ git commit -m "Extract client specifics into config; pipeline runs on Northwind"
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>A clean run is necessary but not sufficient — you want to know the findings are <em>good</em>,
-      not just present. So you'll do a final clean run, then compare the quality of Northwind's findings
-      against Meridian's: same rigor, same traceability, same shape? Then you close the week with a short
-      written reflection — the single most useful artifact you'll take back to your real clients.</p>
+      <p>A clean run is necessary but not sufficient — you want the Q4 findings to be as <em>good</em> as
+      Q3's, not just present. So you'll do a final clean run, then compare the quality across the two
+      quarters: same rigor, same traceability, same shape? Then you close the week with a short written
+      reflection — the single most useful artifact you'll take back to your real clients.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Do a final clean run against Northwind.</div>
+          <div class="step-do">Do a final clean run against Q4.</div>
           <p class="step-why">Why: one uninterrupted run start to finish, producing a complete
-          <code>findings.json</code> for Northwind Q1.</p>
+          <code>findings.json</code> for Q4.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
             <pre>Do one clean end-to-end run of run_review(export_dir=
-'data/northwind-Q1') and write the resulting findings.json.</pre>
+'data/2026-Q4') and write the resulting findings.json.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Diff the quality of Northwind findings against Meridian's.</div>
-          <p class="step-why">Why: transfer means comparable quality, not just a file that exists. Check
-          that Northwind findings are as traceable and well-formed as Meridian's.</p>
+          <div class="step-do">Diff the quality of Q4 findings against Q3's.</div>
+          <p class="step-why">Why: transfer means comparable quality across quarters, not just a file that
+          exists. Check that Q4 findings are as traceable and well-formed as Q3's.</p>
           <div class="code prompt labeled">
             <span class="kind">Claude Code prompt</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Compare Northwind and Meridian findings.json for quality: do both
-cite clauses, carry all fields, and distribute across severities
-sensibly? Flag any way Northwind's are weaker.</pre>
+            <pre>Compare the Q4 and Q3 findings.json for quality: do both cite
+clauses, carry all fields, and distribute across severities
+sensibly? Flag any way Q4's are weaker.</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
         </li>
 
         <li>
           <div class="step-do">Write your capstone reflection — 3 to 5 sentences.</div>
-          <p class="step-why">Why: naming what you hardcoded and what you generalized is how you'll
-          approach the next real client faster. Save it in the repo as <code>REFLECTION.md</code>.</p>
+          <p class="step-why">Why: naming what your pipeline learned versus memorized is how you'll trust
+          it at the next real client. Save it in the repo as <code>REFLECTION.md</code>.</p>
           <div class="code labeled">
             <span class="kind">REFLECTION.md (prompt to yourself)</span>
             <button class="copy" type="button">Copy</button>
-            <pre>What did I hardcode to Meridian without realizing it?
-What did I successfully parameterize?
-What would I extract into config first at my next client?</pre>
+            <pre>Where did my pipeline memorize Q3 instead of learning the pattern?
+What made each fix a rule rather than a specific value?
+If I ran this against Q5, Q6, Q7 — unseen quarters — what would
+break first, and why?</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
         </li>
@@ -759,7 +780,7 @@ What would I extract into config first at my next client?</pre>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Prove transfer to Northwind; add capstone reflection"</pre>
+git commit -m "Prove transfer to Q4; add capstone reflection"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c4-s4"> Mark done</label>
         </li>
@@ -768,32 +789,32 @@ git commit -m "Prove transfer to Northwind; add capstone reflection"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 4 when</strong> Northwind has a complete, well-formed
-      <code>findings.json</code> of comparable quality to Meridian's, and your reflection is written and
-      committed.</p>
+      <p><strong>You're done with Cycle 4 when</strong> Q4 has a complete, well-formed
+      <code>findings.json</code> of comparable quality to Q3's, nothing in the pipeline keys off a
+      specific quarter, and your reflection is written and committed.</p>
     </div>
   </section>
 
   <!-- ============ VERIFICATION ============ -->
   <section class="verify">
     <h2 class="section-title">Prove it landed</h2>
-    <p>The final proof of the whole week: the same system, pointed at a client it was never built for,
-    returns findings with no code changes. Run it from the repository root:</p>
+    <p>The final proof of the whole week: the same system, pointed at a quarter it has never seen,
+    returns good findings with no code changes. Run it from the repository root:</p>
     <div class="code labeled">
       <span class="kind">Terminal</span>
       <button class="copy" type="button">Copy</button>
       <pre>pytest tests/test_transfer.py</pre>
     </div>
-    <p class="step-why">Green means <code>run_review(export_dir='data/northwind-Q1')</code> returns a
-    valid findings list without touching the code — your system genuinely transferred.</p>
+    <p class="step-why">Green means <code>run_review(export_dir='data/2026-Q4')</code> returns a
+    valid findings list without touching the code — your system learned the pattern, not just Q3.</p>
     <div class="terminal">
 <span class="cmd">pytest tests/test_transfer.py</span>
-<span class="out">run_review(export_dir='data/northwind-Q1')  → 173 findings, all fields valid
+<span class="out">run_review(export_dir='data/2026-Q4')  → 198 findings, all fields valid
 
 tests/test_transfer.py .....                                  [100%]
 5 passed in 3.11s</span>
     </div>
-    <label class="done"><input type="checkbox" data-task="verify"> Transfers to Northwind — Day 5 done</label>
+    <label class="done"><input type="checkbox" data-task="verify"> Transfers to an unseen quarter — Day 5 done</label>
   </section>
 
   <!-- ============ WRAP-UP ============ -->
@@ -803,25 +824,26 @@ tests/test_transfer.py .....                                  [100%]
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>A fresh, genuinely different client dataset — <strong>Northwind Biotech</strong></li>
-        <li>A diagnosis of every Meridian assumption, loud crashes and quiet wrong answers alike</li>
-        <li>A <strong>generalized pipeline</strong> with client specifics pulled into config</li>
-        <li>Proof of transfer — Northwind findings, no code changes — plus your capstone reflection</li>
+        <li>A freshly generated <strong>Q4 quarter</strong> — same company, unseen data</li>
+        <li>A diagnosis of every place the pipeline memorized Q3, loud crashes and quiet wrong answers alike</li>
+        <li>A <strong>generalized pipeline</strong> keyed to rules instead of Q3 specifics</li>
+        <li>Proof of transfer across quarters — Q4 findings, no code changes — plus your capstone reflection</li>
       </ul>
     </div>
 
     <div class="narrative">
       <p class="tomorrow">You built an agentic system, taught it a compliance rulebook, decomposed it
-      into subagents, and generalized it to a new client. You're a <em>Claude Certified Architect</em>.
-      Now go apply this to your real clients — that's your post-course homework.</p>
+      into subagents, and proved it generalizes to a quarter it had never seen. You're a
+      <em>Claude Certified Architect</em>. Now go apply this to your real clients — that's your
+      post-course homework.</p>
     </div>
 
     <div class="panel curious">
       <h3>If you're curious</h3>
       <ul class="learn">
-        <li><a href="#">Hardcoding vs. configuration</a> — the line between a demo and a product</li>
+        <li><a href="#">Learning a pattern vs. memorizing data</a> — the line between a demo and a product</li>
         <li><a href="#">Silent failures</a> — why a green run can still be wrong</li>
-        <li><a href="#">Designing systems that travel</a> — what to parameterize first</li>
+        <li><a href="#">Designing reviews that survive next quarter</a> — what to key off, and what never to</li>
       </ul>
     </div>
   </section>
