@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 2 — The Ledger · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    --ink:      #1b2733;   /* primary text, deep slate */
+    --muted:    #5a6673;   /* secondary text */
+    --faint:    #8b95a1;   /* captions, meta */
+    --bg:       #f5f6f8;   /* page background */
+    --card:     #ffffff;   /* surfaces */
+    --border:   #e2e7ec;   /* hairlines */
+    --brand:    #2f4bd0;   /* interactive / cycle spine (indigo) */
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;   /* "What is X?" callout */
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;   /* task block tint (warm paper) */
+    --task-br:  #c9a227;   /* task block spine (amber) */
+    --ok:       #1c7a52;   /* checkpoint / success green */
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;   /* terminal */
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink);
+    color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .day {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600; color: #fff;
+  }
+  .site .day em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto;
+    font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 48px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Day opener ---------- */
+  .opener { margin-top: 36px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif);
+    font-size: 40px; line-height: 1.12; font-weight: 600;
+    margin: 0 0 18px; letter-spacing: -.01em;
+  }
+  .narrative { color: var(--ink); }
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  ul.prereq { list-style: none; margin: 0; padding: 0; }
+  ul.prereq li { padding: 6px 0 6px 30px; position: relative; }
+  ul.prereq li::before {
+    content: "✓"; position: absolute; left: 0; top: 6px;
+    color: var(--ok); font-weight: 700;
+  }
+
+  /* ---------- Cycle ---------- */
+  .cycle { margin-top: 56px; }
+  .cycle-head {
+    display: flex; align-items: flex-start; gap: 18px;
+    border-top: 2px solid var(--ink);
+    padding-top: 16px;
+  }
+  .cycle-num {
+    font-family: var(--serif);
+    font-size: 46px; line-height: .9; font-weight: 600;
+    color: var(--brand); flex: 0 0 auto; min-width: 54px;
+  }
+  .cycle-head .meta { padding-top: 2px; }
+  .cycle-head .eyebrow {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+  }
+  .cycle-head h2 {
+    font-family: var(--serif);
+    font-size: 27px; font-weight: 600; margin: 2px 0 4px;
+  }
+  .cycle-head .time {
+    display: inline-block; font-size: 12.5px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px;
+  }
+
+  /* Concept block */
+  .concept { margin: 22px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg);
+    border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px; margin: 16px 0;
+    font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk);
+    display: block; margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0; color: #2c3a4a; }
+
+  /* Task block */
+  .task {
+    background: var(--task-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 8px;
+    margin: 20px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 6px;
+  }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step;
+    padding: 16px 0 16px 44px;
+    position: relative;
+    border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px;
+    margin-top: 12px; font-size: 14px; color: var(--muted);
+    cursor: pointer; user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* Code block */
+  .code {
+    position: relative;
+    background: #f2f4f7;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff;
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 3px 8px; cursor: pointer; opacity: 0;
+    transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700;
+    pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* Terminal output */
+  .terminal {
+    background: var(--term-bg);
+    border-radius: 6px; margin: 12px 0;
+    padding: 14px 16px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    color: var(--term-fg); overflow-x: auto;
+  }
+  .terminal .cmd::before { content: "$ "; color: var(--term-pmt); }
+  .terminal .cmd { color: #fff; }
+  .terminal .out { color: var(--term-dim); white-space: pre; }
+
+  /* Stuck? details */
+  details.stuck {
+    margin: 10px 0 2px; border: 1px solid var(--border);
+    border-radius: 6px; background: #fff;
+  }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px;
+    font-size: 14px; font-weight: 600; color: var(--brand);
+    list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 8px; }
+
+  /* Checkpoint */
+  .checkpoint {
+    background: var(--ok-bg);
+    border: 1px solid #c5e6d5;
+    border-radius: var(--radius);
+    padding: 16px 18px 16px 46px;
+    margin: 22px 0 0; position: relative;
+  }
+  .checkpoint::before {
+    content: "✓"; position: absolute; left: 16px; top: 15px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .checkpoint .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 2px;
+  }
+  .checkpoint p { margin: 0; color: #234a37; }
+
+  /* Verification + wrap */
+  .verify { border-top: 2px solid var(--ink); padding-top: 22px; }
+  .wrap-recap ul { padding-left: 20px; }
+  .tomorrow {
+    font-family: var(--serif); font-size: 19px; line-height: 1.5;
+    color: #33414f; border-left: 3px solid #c9a227;
+    padding-left: 18px; margin: 8px 0 0;
+  }
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Small screens */
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 30px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .cycle-num { font-size: 36px; min-width: 42px; }
+    .counter { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="day">Day 2 — <em>The Ledger</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ DAY OPENER ============ -->
+  <section class="opener">
+    <div class="kicker">Module 1 · The Ledger</div>
+    <h1>Who has access to what?</h1>
+
+    <div class="narrative">
+      <p class="lede">It's Monday at Meridian Life Sciences. A regulator has asked a
+      question that should be simple: <em>show us everyone who can approve a clinical
+      trial payment.</em> Nobody can answer it — not because the access doesn't exist,
+      but because it's scattered across three systems that have never spoken to each other.</p>
+      <p>That's your job this week. Today you lay the foundation: a single, trustworthy
+      record of who holds what access across Meridian. Everything you build the rest of
+      the week sits on top of it.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll build today</h3>
+      <p>A <strong>Ledger</strong> — one unified table that reconciles Meridian's HR
+      roster, Active Directory accounts, and application entitlements into a single view
+      of every person and the access they hold, plus a first automated finding that flags
+      a risky access pattern.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll learn</h3>
+      <ul class="learn">
+        <li>Why access data is fragmented across systems, and what <em>identity reconciliation</em> means</li>
+        <li>How to load and inspect raw data with pandas — no prior coding required</li>
+        <li>How to direct Claude Code to write a reconciliation function for you</li>
+        <li>The difference between rule-based and agent-based triage</li>
+        <li>How to produce a structured <code>findings.json</code> that later modules consume</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h3>Before you start</h3>
+      <ul class="prereq">
+        <li>Day 1 complete — your environment is set up and Claude Code runs</li>
+        <li>The <code>meridian-capstone</code> repository is cloned to your machine</li>
+        <li>Your virtual environment (venv) is activated <em>(you'll confirm this in Step 1)</em></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 1 ============ -->
+  <section class="cycle" id="cycle-1">
+    <div class="cycle-head">
+      <div class="cycle-num">1</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 1</div>
+        <h2>Load the raw data</h2>
+        <span class="time">≈ 30–45 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Meridian's access story lives in three files, each exported from a different
+      system that was never designed to talk to the others:</p>
+      <p><strong>HR roster</strong> knows people — legal names, job titles, managers,
+      departments. <strong>Active Directory</strong> knows accounts — usernames, groups,
+      when someone last logged in. <strong>Application entitlements</strong> knows
+      permissions — which account can do what inside each business app.</p>
+      <p>They don't line up. HR calls her "Katherine Okonkwo, Director of Clinical
+      Operations." AD knows her as <code>k.okonkwo</code> and also, from an old contract,
+      <code>okonkwok_adm</code>. The trial-payments app just sees a user ID. Pulling these
+      into one view is called <em>identity reconciliation</em> — deciding, with evidence,
+      that these fragments are all the same human being.</p>
+
+      <div class="whatis">
+        <span class="tag">What is pandas?</span>
+        <p>pandas is a Python library for working with tables of data — think of it as a
+        spreadsheet you drive with code instead of a mouse. It loads a CSV into a
+        <em>DataFrame</em> (a table with named columns) so you can inspect, filter, and
+        join data. You won't write much of it by hand; Claude Code will, and you'll read
+        and check its work.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Confirm your virtual environment is active.</div>
+          <p class="step-why">Why: the venv keeps this project's tools separate from the
+          rest of your computer, so nothing you install here breaks anything else.</p>
+          <div class="whatis" style="margin-top:10px">
+            <span class="tag">What is a venv?</span>
+            <p>A "virtual environment" is a private sandbox for one project's Python
+            packages. When it's active, your terminal prompt usually shows
+            <code>(venv)</code> at the start of the line.</p>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>source venv/bin/activate</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c1-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Install pandas.</div>
+          <p class="step-why">Why: it's the tool you'll use to load and inspect the three data files.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pip install pandas</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c1-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Ask Claude Code to load the three CSV files into DataFrames and print their shapes.</div>
+          <p class="step-why">Why: printing the "shape" (rows × columns) is the quickest
+          way to confirm each file loaded and to see how much data you're dealing with.</p>
+          <div class="whatis" style="margin-top:10px">
+            <span class="tag">What is a CSV?</span>
+            <p>A CSV ("comma-separated values") is a plain-text table — the simplest way to
+            export data from almost any system. Each line is a row; commas separate the columns.</p>
+          </div>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Load the three CSVs in data/ (hr_roster.csv, ad_accounts.csv,
+app_entitlements.csv) into pandas DataFrames. Print the shape and
+the column names of each one.</pre>
+          </div>
+          <p class="step-why">You should see output like this:</p>
+          <div class="terminal">
+<span class="cmd">python load_data.py</span>
+<span class="out">hr_roster        (412, 6)   ['employee_id', 'full_name', 'title', 'manager', 'department', 'status']
+ad_accounts      (587, 5)   ['username', 'display_name', 'groups', 'last_login', 'enabled']
+app_entitlements (1043, 4)  ['app', 'user_id', 'role', 'granted_on']</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>FileNotFoundError?</strong> Check that you're running the command
+              from the repository root, and that the <code>data/</code> folder is where
+              Claude Code expects it. Ask Claude Code: "the file isn't found — where are you
+              looking, and where are the CSVs actually located?"</p>
+              <p><strong>Numbers look different?</strong> That's fine — placeholder counts
+              above are illustrative. What matters is that all three loaded without error.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Make your first commit.</div>
+          <p class="step-why">Why: a commit is a permanent, labeled snapshot of your work.
+          Committing often means you can always get back to a known-good state.</p>
+          <div class="whatis" style="margin-top:10px">
+            <span class="tag">What is git?</span>
+            <p>git is a tool that tracks the history of your files. You "commit" to save a
+            snapshot with a short message describing what changed. The two commands below do
+            exactly that: <code>add</code> stages the files you changed, and <code>commit</code>
+            records them with your message.</p>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git add .
+git commit -m "Load HR, AD, and entitlement data"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c1-s4"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 1 when</strong> all three files load without error,
+      you've seen the shape of each one printed to your terminal, and you've made your first commit.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 2 ============ -->
+  <section class="cycle" id="cycle-2">
+    <div class="cycle-head">
+      <div class="cycle-num">2</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 2</div>
+        <h2>Reconcile identities</h2>
+        <span class="time">≈ 60–75 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Now you connect the three tables into one. This is a <em>join</em>: matching rows
+      from different tables that describe the same thing. The trouble is deciding what
+      "the same" means when the systems disagree.</p>
+      <p>Usernames feel like the obvious key — but they aren't unique or stable. People get
+      renamed after marriage, hold a second admin account, or inherit a username a former
+      employee once used. If you join on username alone, you'll merge two people or split
+      one person in two.</p>
+      <p>The fix is a <em>canonical identity</em>: one durable ID per real human that every
+      system's record points back to. Building that mapping — and being honest about the
+      rows you can't confidently match — is the heart of reconciliation.</p>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Ask Claude Code to write a reconciliation function.</div>
+          <p class="step-why">Why: you describe the matching logic in plain English; Claude
+          Code turns it into code you can run and inspect.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Write a function reconcile_identities() that merges the three
+DataFrames into one ledger. Match on employee_id where available;
+fall back to name matching for AD and app records that lack it.
+Assign each matched person a canonical_id. Keep unmatched rows in
+a separate list so we can review them — don't silently drop them.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p>If Claude Code's first attempt drops unmatched rows or crashes on missing
+              values, tell it exactly what you saw: "some AD accounts have no employee_id and
+              the function errored — handle those as unmatched instead of failing."</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Run the reconciliation and look at the summary.</div>
+          <p class="step-why">Why: you need to know how many identities matched cleanly and
+          how many need a human eye before you trust the ledger.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python reconcile.py</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">python reconcile.py</span>
+<span class="out">Canonical identities:      398
+Matched account records:   571
+Unmatched (needs review):   16
+Ledger written to:  ledger.csv</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Spot-check the results.</div>
+          <p class="step-why">Why: reconciliation is a judgment call, not a guarantee. Pick a
+          few people and confirm the merge looks right — especially anyone with a second
+          <code>_adm</code> account.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Show me the ledger rows for canonical_id belonging to
+"Katherine Okonkwo". Are both her accounts (k.okonkwo and
+okonkwok_adm) linked to the same canonical_id?</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git add .
+git commit -m "Reconcile identities into a unified ledger"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 2 when</strong> <code>ledger.csv</code> exists, every
+      matched account carries a <code>canonical_id</code>, unmatched rows are set aside for
+      review rather than dropped, and your spot-check confirms a known dual-account person
+      merged correctly.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 3 ============ -->
+  <section class="cycle" id="cycle-3">
+    <div class="cycle-head">
+      <div class="cycle-num">3</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 3</div>
+        <h2>Triage entitlements</h2>
+        <span class="time">≈ 60–90 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>A ledger tells you who has what. <em>Triage</em> is the next question: which of those
+      access grants deserve a closer look? You can't hand a reviewer 1,000 rows and say "check
+      these" — you surface the ones that break a rule.</p>
+      <p>Start with <strong>rule-based</strong> triage: precise, explainable conditions like
+      "an Admin role held by someone who isn't a manager." Rules are fast, cheap, and easy to
+      defend to an auditor. Later this week you'll layer on <strong>agent-based</strong> triage,
+      where Claude reasons about context a fixed rule can't capture. Rules first, judgment
+      second — that order keeps your findings trustworthy.</p>
+      <p>Every finding you generate lands in a structured file, <code>findings.json</code>, that
+      later modules read. A preview of one finding:</p>
+
+      <div class="whatis">
+        <span class="tag">What is JSON?</span>
+        <p>JSON is a plain-text format for structured data — labeled fields inside curly braces.
+        It's how programs pass records to each other. You'll read it easily; each finding is just
+        a set of named fields describing one flagged access grant.</p>
+      </div>
+
+      <div class="code labeled">
+        <span class="kind">findings.json (preview)</span>
+        <button class="copy" type="button">Copy</button>
+        <pre>{
+  "finding_id": "F-0001",
+  "rule": "admin-role-non-manager",
+  "canonical_id": "MERI-00317",
+  "person": "Daniel Reyes",
+  "app": "trial-payments",
+  "role": "Admin",
+  "reason": "Holds Admin but is not a people manager in HR",
+  "severity": "high",
+  "status": "open"
+}</pre>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Ask Claude Code to write the triage rule.</div>
+          <p class="step-why">Why: this is your first automated control — it encodes a policy
+          ("admins should be managers") as a check that runs against every row.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Write a rule that flags every ledger entry where a person holds
+an "Admin" role but is not a manager in the HR data. For each
+flagged entry, produce a finding with: finding_id, rule,
+canonical_id, person, app, role, reason, severity, status.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Run the rule against your reconciled ledger.</div>
+          <p class="step-why">Why: this turns the rule into actual findings you can count and read.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python triage.py</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">python triage.py</span>
+<span class="out">Scanned ledger rows:   571
+Rule: admin-role-non-manager
+Findings generated:      9
+Wrote findings.json</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Zero findings?</strong> Either the data genuinely has none, or the
+              rule isn't reading the manager field correctly. Ask Claude Code to print a few
+              Admin-role rows and show whether it thinks each person is a manager — that reveals
+              which side is wrong.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Open <code>findings.json</code> and confirm it's well-formed.</div>
+          <p class="step-why">Why: later modules depend on this exact structure, so it's worth
+          a 30-second look now.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Show me findings.json and confirm every finding has all nine
+required fields. Flag any that are missing something.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git add .
+git commit -m "Add admin-role-non-manager triage rule and findings"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s4"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 3 when</strong> <code>findings.json</code> exists,
+      contains at least one finding from the admin-role-non-manager rule, and every finding
+      carries all nine fields shown in the preview above.</p>
+    </div>
+  </section>
+
+  <!-- ============ VERIFICATION ============ -->
+  <section class="verify">
+    <h2 class="section-title">Prove it landed</h2>
+    <p>One command checks that your ledger and findings are shaped the way the rest of the
+    week expects. Run it from the repository root:</p>
+    <div class="code labeled">
+      <span class="kind">Terminal</span>
+      <button class="copy" type="button">Copy</button>
+      <pre>pytest tests/test_ledger.py</pre>
+    </div>
+    <p class="step-why">Green means Day 2 is complete. If a test fails, read what it expected —
+    then ask Claude Code to help you close the gap.</p>
+    <div class="terminal">
+<span class="cmd">pytest tests/test_ledger.py</span>
+<span class="out">tests/test_ledger.py ......                                    [100%]
+
+6 passed in 0.42s</span>
+    </div>
+    <label class="done"><input type="checkbox" data-task="verify"> Tests pass — Day 2 done</label>
+  </section>
+
+  <!-- ============ WRAP-UP ============ -->
+  <section>
+    <h2 class="section-title">Wrap-up</h2>
+
+    <div class="panel wrap-recap">
+      <h3>What you built today</h3>
+      <ul>
+        <li>Loaded three fragmented source systems into a workspace you control</li>
+        <li>Reconciled them into a <strong>Ledger</strong> — a single source of truth about who holds what</li>
+        <li>Generated your first automated <strong>finding</strong> and wrote it to a structured <code>findings.json</code></li>
+      </ul>
+    </div>
+
+    <div class="narrative">
+      <p class="tomorrow">Tomorrow you'll teach Meridian's compliance policies to Claude as
+      <em>Skills</em> — turning the rules that today live only in a PDF binder into checks Claude
+      can apply on its own. The regulator's question is about to get a lot easier to answer.</p>
+    </div>
+
+    <div class="panel curious">
+      <h3>If you're curious</h3>
+      <ul class="learn">
+        <li><a href="#">Identity reconciliation, in plain terms</a> — a short primer</li>
+        <li><a href="#">pandas: 10 minutes to DataFrames</a> — the official quick tour</li>
+        <li><a href="#">Why access reviews fail</a> — the fragmentation problem in the wild</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Day 2 of 5 · Prototype skeleton for review
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-day2-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Copy-to-clipboard buttons ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      var text = pre.innerText;
+      var done = function () {
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var r = document.createRange(); r.selectNode(pre);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        try { document.execCommand("copy"); } catch (e) {}
+        sel.removeAllRanges(); done();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
