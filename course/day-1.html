@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 1 — Setup · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    --ink:      #1b2733;   /* primary text, deep slate */
+    --muted:    #5a6673;   /* secondary text */
+    --faint:    #8b95a1;   /* captions, meta */
+    --bg:       #f5f6f8;   /* page background */
+    --card:     #ffffff;   /* surfaces */
+    --border:   #e2e7ec;   /* hairlines */
+    --brand:    #2f4bd0;   /* interactive / cycle spine (indigo) */
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;   /* "What is X?" callout */
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;   /* task block tint (warm paper) */
+    --task-br:  #c9a227;   /* task block spine (amber) */
+    --ok:       #1c7a52;   /* checkpoint / success green */
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;   /* terminal */
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink);
+    color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .day {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600; color: #fff;
+  }
+  .site .day em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto;
+    font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 48px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Day opener ---------- */
+  .opener { margin-top: 36px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif);
+    font-size: 40px; line-height: 1.12; font-weight: 600;
+    margin: 0 0 18px; letter-spacing: -.01em;
+  }
+  .narrative { color: var(--ink); }
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  ul.prereq { list-style: none; margin: 0; padding: 0; }
+  ul.prereq li { padding: 6px 0 6px 30px; position: relative; }
+  ul.prereq li::before {
+    content: "✓"; position: absolute; left: 0; top: 6px;
+    color: var(--ok); font-weight: 700;
+  }
+
+  /* ---------- Cycle ---------- */
+  .cycle { margin-top: 56px; }
+  .cycle-head {
+    display: flex; align-items: flex-start; gap: 18px;
+    border-top: 2px solid var(--ink);
+    padding-top: 16px;
+  }
+  .cycle-num {
+    font-family: var(--serif);
+    font-size: 46px; line-height: .9; font-weight: 600;
+    color: var(--brand); flex: 0 0 auto; min-width: 54px;
+  }
+  .cycle-head .meta { padding-top: 2px; }
+  .cycle-head .eyebrow {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+  }
+  .cycle-head h2 {
+    font-family: var(--serif);
+    font-size: 27px; font-weight: 600; margin: 2px 0 4px;
+  }
+  .cycle-head .time {
+    display: inline-block; font-size: 12.5px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px;
+  }
+
+  /* Concept block */
+  .concept { margin: 22px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg);
+    border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px; margin: 16px 0;
+    font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk);
+    display: block; margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0; color: #2c3a4a; }
+
+  /* Task block */
+  .task {
+    background: var(--task-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 8px;
+    margin: 20px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 6px;
+  }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step;
+    padding: 16px 0 16px 44px;
+    position: relative;
+    border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px;
+    margin-top: 12px; font-size: 14px; color: var(--muted);
+    cursor: pointer; user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* Code block */
+  .code {
+    position: relative;
+    background: #f2f4f7;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff;
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 3px 8px; cursor: pointer; opacity: 0;
+    transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700;
+    pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* Terminal output */
+  .terminal {
+    background: var(--term-bg);
+    border-radius: 6px; margin: 12px 0;
+    padding: 14px 16px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    color: var(--term-fg); overflow-x: auto;
+  }
+  .terminal .cmd::before { content: "$ "; color: var(--term-pmt); }
+  .terminal .cmd { color: #fff; }
+  .terminal .out { color: var(--term-dim); white-space: pre; }
+
+  /* Stuck? details */
+  details.stuck {
+    margin: 10px 0 2px; border: 1px solid var(--border);
+    border-radius: 6px; background: #fff;
+  }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px;
+    font-size: 14px; font-weight: 600; color: var(--brand);
+    list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 8px; }
+
+  /* Checkpoint */
+  .checkpoint {
+    background: var(--ok-bg);
+    border: 1px solid #c5e6d5;
+    border-radius: var(--radius);
+    padding: 16px 18px 16px 46px;
+    margin: 22px 0 0; position: relative;
+  }
+  .checkpoint::before {
+    content: "✓"; position: absolute; left: 16px; top: 15px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .checkpoint .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 2px;
+  }
+  .checkpoint p { margin: 0; color: #234a37; }
+
+  /* Verification + wrap */
+  .verify { border-top: 2px solid var(--ink); padding-top: 22px; }
+  .wrap-recap ul { padding-left: 20px; }
+  .tomorrow {
+    font-family: var(--serif); font-size: 19px; line-height: 1.5;
+    color: #33414f; border-left: 3px solid #c9a227;
+    padding-left: 18px; margin: 8px 0 0;
+  }
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Small screens */
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 30px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .cycle-num { font-size: 36px; min-width: 42px; }
+    .counter { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="day">Day 1 — <em>Setup</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ DAY OPENER ============ -->
+  <section class="opener">
+    <div class="kicker">Foundations · Module 0</div>
+    <h1>Everything you need, working.</h1>
+
+    <div class="narrative">
+      <p class="lede">Welcome. Over the next five days, you're going to become the person
+      who can walk into any client's User Access Review mess and build them a working
+      access-review system in a week. Today is setup.</p>
+      <p>You already own the hard part — you understand access, entitlements, segregation
+      of duties, and what an auditor actually wants to see. What you may not have yet is a
+      working bench: the handful of free tools that turn Claude into your coding partner.
+      By the end of today, every one of them will be installed, verified, and talking to
+      the Meridian project you'll build on all week.</p>
+      <p>This is the odd day out — eight hours instead of six, and it starts from zero. We
+      go slowly and explain every tool the first time you meet it. Nothing today assumes
+      you've written code before.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll build today</h3>
+      <p>Not a system yet — a <strong>foundation</strong>. Four tools installed and proven
+      to work (git, Python, Claude Code, and a green smoke test), plus your first real
+      conversation with Claude Code against the <code>meridian-capstone</code> project kit.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll learn</h3>
+      <ul class="learn">
+        <li>What an <em>agentic system</em> actually is — and the five building blocks you'll assemble by Friday</li>
+        <li>What git, VS Code, and the terminal are, and why every engineer lives in them</li>
+        <li>What Python and a <em>virtual environment</em> are, and why isolation matters</li>
+        <li>What an API key is, and how to store it safely so it never leaks into git</li>
+        <li>What Claude Code is — your "coding partner" — and how to run your first prompt</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h3>Before you start</h3>
+      <ul class="prereq">
+        <li>A laptop you can install software on — Windows or Mac both work</li>
+        <li>An email address you can receive a verification message at</li>
+        <li>Roughly eight hours, and a willingness to run commands you don't fully understand yet</li>
+        <li>No prior coding experience required — <em>that's the point</em></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 1 ============ -->
+  <section class="cycle" id="cycle-1">
+    <div class="cycle-head">
+      <div class="cycle-num">1</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 1</div>
+        <h2>What we're building</h2>
+        <span class="time">≈ 60 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>By Friday you'll have built a system that reads a company's raw access data,
+      applies that company's compliance policies, flags the risky grants, and writes a
+      clean list of findings a reviewer can act on — and then you'll prove it works at a
+      <em>second</em> company it was never built for. That's the arc. Each day adds one
+      capability.</p>
+
+      <div class="whatis">
+        <span class="tag">What is an agentic system?</span>
+        <p>An ordinary program follows fixed instructions: "if column A equals X, flag it."
+        An <em>agentic</em> system hands a goal to an AI model that can reason, use tools,
+        read files, and decide its own next step — "review these access grants against this
+        policy and tell me what's wrong." You describe the outcome; the agent works out the
+        how. This week you build one, piece by piece.</p>
+      </div>
+
+      <p>Meet <strong>Meridian Life Sciences</strong> — a mid-size pharmaceutical company,
+      47 applications, 2,300 employees, and a compliance team drowning in spreadsheets. They
+      are your client all week. Their access data is fragmented, their policies live in a PDF
+      binder, and a regulator is asking questions nobody can answer quickly. You're going to
+      fix that.</p>
+
+      <p>Keep this mental model — the five building blocks you'll complete by Day 5:</p>
+      <ul class="learn">
+        <li><strong>The Ledger</strong> (Day 2) — one trustworthy record of who has what access</li>
+        <li><strong>Skills</strong> (Day 3) — the company's policies, written so Claude can apply them</li>
+        <li><strong>Subagents</strong> (Day 4) — specialists that split the work so it scales</li>
+        <li><strong>The pipeline</strong> — the whole thing running end to end against real data</li>
+        <li><strong>Generalization</strong> (Day 5) — proof it transfers to a brand-new client</li>
+      </ul>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Open a plain notebook — paper or a blank text file — to jot thoughts in all week.</div>
+          <p class="step-why">Why: you'll meet a lot of new terms today. A place to park
+          questions and "wait, why?" moments keeps you moving instead of stuck.</p>
+          <label class="done"><input type="checkbox" data-task="c1-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Write down, in your own words, one access-review headache from your real job.</div>
+          <p class="step-why">Why: this course is only useful if it maps onto your work.
+          Naming a real problem now gives you something to test everything you build against.</p>
+          <label class="done"><input type="checkbox" data-task="c1-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Copy the five building blocks into your notebook and leave room to check each off.</div>
+          <p class="step-why">Why: it's your progress map for the week. You'll return to it every morning.</p>
+          <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 1 when</strong> you can say, in one sentence, what an
+      agentic system is, name Meridian as your client, and have the five building blocks written
+      somewhere you'll see them all week. No code yet — that starts next.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 2 ============ -->
+  <section class="cycle" id="cycle-2">
+    <div class="cycle-head">
+      <div class="cycle-num">2</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 2</div>
+        <h2>Your development environment</h2>
+        <span class="time">≈ 90 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Three tools sit under everything an engineer does. You'll install two of them now and
+      meet the third. None is complicated once you know what it's <em>for</em>.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a terminal?</span>
+        <p>The terminal (also "command line" or "shell") is a window where you type commands
+        as text instead of clicking buttons. It looks intimidating and isn't — it's just a
+        different door into your computer. On Windows it's called PowerShell or Terminal; on
+        Mac it's Terminal. You'll run everything this week from here.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is VS Code?</span>
+        <p>Visual Studio Code is a free text editor built for code. It's where you'll read the
+        files Claude Code writes, open the terminal, and see your whole project in one window.
+        Think of it as the room you work in.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is git?</span>
+        <p>git is a tool that tracks the history of your files. Every time you finish a piece
+        of work, you take a labeled snapshot called a <em>commit</em> — a permanent save point
+        you can always return to. It's the single most important safety net you have: commit
+        often, and no mistake is ever fatal. Here are the four commands that make up almost
+        everything you'll do with it:</p>
+      </div>
+
+      <p>The full git vocabulary — you'll practice each one below:</p>
+      <ul class="learn">
+        <li><code>git init</code> — start tracking a folder ("this project's history begins now")</li>
+        <li><code>git status</code> — ask "what have I changed since my last save point?"</li>
+        <li><code>git add .</code> — <em>stage</em> your changes: mark which files go into the next snapshot</li>
+        <li><code>git commit -m "..."</code> — take the snapshot, with a short message describing it</li>
+      </ul>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Install VS Code, then open it.</div>
+          <p class="step-why">Why: it's your workspace for the rest of the week. Download from
+          the official site and run the installer for your operating system.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://code.visualstudio.com/download</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Windows:</strong> choose the "User Installer" for your architecture
+              (almost always x64). <strong>Mac:</strong> unzip and drag VS Code into
+              Applications. If it won't open on Mac, right-click the app and choose "Open" once
+              to clear the security prompt.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Open the built-in terminal in VS Code.</div>
+          <p class="step-why">Why: keeping your editor and terminal in one window is how you'll
+          work all week. Use the menu: <strong>Terminal → New Terminal</strong>.</p>
+          <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Install git, then verify it.</div>
+          <p class="step-why">Why: <code>--version</code> is the universal "are you installed and
+          reachable?" check. If it prints a version number, the tool is ready.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://git-scm.com/downloads</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git --version</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">git --version</span>
+<span class="out">git version 2.45.1</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"command not found"?</strong> Close the terminal completely and open a
+              new one — freshly installed tools often aren't visible until you do. If it still
+              fails on Windows, reboot; the installer updates a system setting that needs a
+              restart to take effect.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Create a throwaway practice folder and start tracking it with git.</div>
+          <p class="step-why">Why: you'll practice the full commit cycle once, on files that don't
+          matter, so it's muscle memory before it counts. <code>git init</code> tells git to begin
+          recording this folder's history.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>mkdir git-practice
+cd git-practice
+git init</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Create a file, check the status, then make your very first commit.</div>
+          <p class="step-why">Why: this is the loop you'll repeat hundreds of times.
+          <code>status</code> shows what changed, <code>add</code> stages it, <code>commit</code>
+          snapshots it with a message. Do it once here and it stops being scary.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>echo "hello" > notes.txt
+git status
+git add .
+git commit -m "My first commit"</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">git status</span>
+<span class="out">Untracked files:
+  notes.txt
+nothing added to commit but untracked files present</span>
+<span class="cmd">git commit -m "My first commit"</span>
+<span class="out">[main (root-commit) a1b2c3d] My first commit
+ 1 file changed, 1 insertion(+)</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s5"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>git asks for your name and email?</strong> That's normal on first use —
+              it wants to label your commits. Run the two <code>git config --global</code> lines
+              it suggests, then commit again. Ask Claude Code later if the message is unclear.</p>
+            </div>
+          </details>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 2 when</strong> VS Code is open, <code>git --version</code>
+      prints a number, and you've made at least one real commit in your practice folder. You now
+      know the commit loop — from here on we'll just say "commit."</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 3 ============ -->
+  <section class="cycle" id="cycle-3">
+    <div class="cycle-head">
+      <div class="cycle-num">3</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 3</div>
+        <h2>Python and a clean sandbox</h2>
+        <span class="time">≈ 90 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>The access-review code you build this week runs on Python. You won't need to master
+      the language — Claude Code writes most of it — but it has to be installed, and it has to
+      run in a clean, isolated space so this project's tools never collide with anything else
+      on your machine.</p>
+
+      <div class="whatis">
+        <span class="tag">What is Python?</span>
+        <p>Python is a programming language known for being readable and beginner-friendly. It's
+        the standard language for data work, which is why we use it for access reviews. When you
+        run <code>python something.py</code>, you're asking Python to execute the instructions in
+        that file.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is a virtual environment (venv)?</span>
+        <p>A venv is a private sandbox for one project's Python packages. Without it, everything
+        you install piles into one shared space and projects start breaking each other. With it,
+        this project's tools live in their own folder. When the venv is <em>active</em>, your
+        terminal prompt usually shows <code>(venv)</code> at the start of the line.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Install Python, then verify it.</div>
+          <p class="step-why">Why: same <code>--version</code> check as git. On Windows, tick
+          <strong>"Add Python to PATH"</strong> in the installer — it saves a headache later.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://www.python.org/downloads</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python --version</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">python --version</span>
+<span class="out">Python 3.12.4</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"command not found" or wrong version?</strong> On Mac, try
+              <code>python3 --version</code> instead. On Windows, if it opens the Microsoft Store,
+              you skipped "Add to PATH" — re-run the installer and tick that box.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Create a virtual environment for this course.</div>
+          <p class="step-why">Why: this makes the sandbox. It creates a <code>venv/</code> folder
+          that will hold every package you install this week.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m venv venv</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Activate the venv.</div>
+          <p class="step-why">Why: creating it isn't enough — you have to step inside. Look for
+          <code>(venv)</code> to appear at the front of your prompt.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal · Mac</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>source venv/bin/activate</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal · Windows</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>venv\Scripts\activate</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Windows blocks the script?</strong> If you see a message about "running
+              scripts is disabled," you need to allow local scripts once. Ask Claude Code — it'll
+              give you the exact one-line command for your setup and explain what it does.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Install one package to confirm the sandbox works.</div>
+          <p class="step-why">Why: <code>requests</code> is a tiny, harmless package. If it installs
+          into your active venv without error, your Python setup is sound.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pip install requests</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">pip install requests</span>
+<span class="out">Successfully installed requests-2.32.3 ...</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s4"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 3 when</strong> <code>python --version</code> prints a
+      3.x number, your prompt shows <code>(venv)</code>, and <code>pip install requests</code>
+      finishes with "Successfully installed." Your Python bench is clean and isolated.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 4 ============ -->
+  <section class="cycle" id="cycle-4">
+    <div class="cycle-head">
+      <div class="cycle-num">4</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 4</div>
+        <h2>API keys and Claude Code</h2>
+        <span class="time">≈ 90 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Now the star of the week. Claude Code is a program that turns Claude into a working
+      coding partner living right in your terminal — it reads your files, writes and edits code,
+      runs commands, and explains what it did, all from plain-English instructions. To use it,
+      it needs a key that proves the requests are yours.</p>
+
+      <div class="whatis">
+        <span class="tag">What is an API key?</span>
+        <p>An API key is a long secret string — like a password for programs. It tells Anthropic's
+        servers "these requests belong to this account." Anyone who has your key can spend against
+        your account, so it must be treated like a password: never shared, never posted, never
+        committed to git.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is a .env file?</span>
+        <p>A <code>.env</code> file is a plain-text file that holds secrets like API keys, kept
+        <em>out</em> of your code. Programs read from it at runtime. The golden rule: a
+        <code>.env</code> file must never enter git. You keep it out by listing it in a special
+        <code>.gitignore</code> file, which tells git "pretend these files don't exist."</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is Claude Code?</span>
+        <p>Your coding partner. You type what you want in plain English — "load these three files
+        and tell me what's in them" — and Claude Code does the actual coding, shows you the
+        result, and waits for your next instruction. You stay the decision-maker; it does the
+        typing. It's how a non-engineer builds real software.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Create an API key at the Anthropic Console.</div>
+          <p class="step-why">Why: this is the credential Claude Code uses. Sign in, open
+          <strong>API Keys</strong>, and create one. Copy it the moment it appears — you won't
+          be able to see it again.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://console.anthropic.com/settings/keys</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>No account yet?</strong> Create one with your email — creating accounts
+              and entering passwords is something you do yourself, never Claude. Your instructor
+              will confirm billing is set up for the course before you generate a key.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Store the key in a <code>.env</code> file — and make sure git ignores it.</div>
+          <p class="step-why">Why: this is the single most important security habit of the week.
+          The key goes in <code>.env</code>; <code>.env</code> goes in <code>.gitignore</code>;
+          neither the key nor the file ever reaches git.</p>
+          <div class="code labeled">
+            <span class="kind">.env (create this file — replace with your real key)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxxxxxxxxx</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">.gitignore (add this line)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>.env</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>How do I know it's really ignored?</strong> Run <code>git status</code>.
+              If <code>.env</code> does <em>not</em> appear in the list, git is correctly ignoring
+              it. If it does appear, your <code>.gitignore</code> line is misspelled or in the
+              wrong folder.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Install the Claude Code CLI.</div>
+          <p class="step-why">Why: this puts the <code>claude</code> command on your machine.
+          Follow the official install instructions for your operating system.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://docs.claude.com/claude-code</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>claude --version</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Start Claude Code and send your first prompt.</div>
+          <p class="step-why">Why: this is the moment it becomes real. Launch <code>claude</code>,
+          then ask it something simple. Read its answer — you're now working with your coding partner.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>claude</pre>
+          </div>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>In one short paragraph, explain what you can help me do as my
+coding partner this week. Assume I've never written code before.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s4"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Authentication error?</strong> Claude Code can't find your key. Confirm
+              your <code>.env</code> file is in the folder you launched <code>claude</code> from,
+              and that the line reads <code>ANTHROPIC_API_KEY=</code> with no spaces around the
+              equals sign.</p>
+            </div>
+          </details>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 4 when</strong> <code>claude --version</code> prints a
+      number, your key lives in a <code>.env</code> that git ignores, and Claude Code has answered
+      your first prompt. Your coding partner is online.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 5 ============ -->
+  <section class="cycle" id="cycle-5">
+    <div class="cycle-head">
+      <div class="cycle-num">5</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 5</div>
+        <h2>Module 0 — the Meridian kit</h2>
+        <span class="time">≈ 90 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Everything you build this week lives in one project: <code>meridian-capstone</code>. It's
+      a ready-made kit — sample data, a bootstrap script, a smoke test, and a place for your code.
+      You'll pull a copy to your machine, prove it runs, and take your first look inside.</p>
+
+      <div class="whatis">
+        <span class="tag">What is cloning a repository?</span>
+        <p>A <em>repository</em> (or "repo") is a project folder that git tracks. <em>Cloning</em>
+        it means downloading your own full copy, history and all, with one command. From then on
+        it's yours to change locally.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is a smoke test?</span>
+        <p>A smoke test is the simplest possible "does it turn on?" check — named for plugging in
+        a device and seeing whether it smokes. It doesn't test everything; it confirms the basics
+        work before you build on top of them. Green smoke test = safe to proceed.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Clone the <code>meridian-capstone</code> repository, then move into it.</div>
+          <p class="step-why">Why: this downloads the kit you'll build on all week. Your instructor
+          will give you the exact repository address to use in place of the placeholder below.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git clone &lt;meridian-capstone-url&gt;
+cd meridian-capstone</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Run the bootstrap script.</div>
+          <p class="step-why">Why: bootstrap sets up the kit — it creates the project's venv and
+          installs everything the smoke test needs, so you don't have to do it by hand.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>./bootstrap.sh</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"permission denied"?</strong> The script isn't marked runnable yet. Ask
+              Claude Code: "bootstrap.sh gives permission denied — how do I make it executable and
+              run it?" On Windows, use the <code>bootstrap.ps1</code> version the kit provides.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Run the smoke test and confirm it's green.</div>
+          <p class="step-why">Why: this is today's finish line. Green means the kit is installed
+          correctly and every tool you set up is working together.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python smoke_test.py</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">python smoke_test.py</span>
+<span class="out">✓ Python version OK
+✓ Dependencies installed
+✓ Sample data readable  (findings.json, 1043 rows)
+✓ Claude API reachable
+
+SMOKE TEST PASSED</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Look at the sample <code>findings.json</code>.</div>
+          <p class="step-why">Why: this is the shape of the output you'll be producing all week —
+          worth a first look so it's familiar tomorrow.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Show me the first two entries in the sample findings.json and
+explain, field by field, what each one means.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s4"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Ask Claude Code your first "hello world" question against the kit.</div>
+          <p class="step-why">Why: this proves your partner can see the project. It's the first of
+          hundreds of times you'll point Claude Code at a folder and ask it to make sense of things.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Summarize what's in this folder for me — what are the main files
+and folders, and what does each one seem to be for?</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s5"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 5 when</strong> the smoke test prints
+      <strong>SMOKE TEST PASSED</strong>, you've read a couple of sample findings, and Claude Code
+      has described the project folder back to you.</p>
+    </div>
+  </section>
+
+  <!-- ============ VERIFICATION ============ -->
+  <section class="verify">
+    <h2 class="section-title">Prove it landed</h2>
+    <p>Four tools, one check each. Run these from the <code>meridian-capstone</code> folder — every
+    line should print a version, and the smoke test should end green. This is your end-of-day
+    proof that the whole bench works together:</p>
+    <div class="code labeled">
+      <span class="kind">Terminal</span>
+      <button class="copy" type="button">Copy</button>
+      <pre>git --version
+python --version
+claude --version
+python smoke_test.py</pre>
+    </div>
+    <div class="terminal">
+<span class="cmd">python smoke_test.py</span>
+<span class="out">SMOKE TEST PASSED</span>
+    </div>
+    <p class="step-why">All four printing cleanly means Day 1 is complete. If any one fails, fix
+    that one before tomorrow — ask Claude Code to help you read the error.</p>
+    <label class="done"><input type="checkbox" data-task="verify"> All four tools verified — Day 1 done</label>
+  </section>
+
+  <!-- ============ WRAP-UP ============ -->
+  <section>
+    <h2 class="section-title">Wrap-up</h2>
+
+    <div class="panel wrap-recap">
+      <h3>What you built today</h3>
+      <ul>
+        <li>A working development environment — VS Code, git, Python, and an isolated venv</li>
+        <li>Claude Code installed, keyed, and answering prompts as your coding partner</li>
+        <li>An API key stored safely in <code>.env</code>, kept out of git for good</li>
+        <li>The <code>meridian-capstone</code> kit cloned and passing its smoke test</li>
+      </ul>
+    </div>
+
+    <div class="narrative">
+      <p class="tomorrow">You're set up. Tomorrow you build the <em>Ledger</em> — you'll pull
+      Meridian's fragmented HR, Active Directory, and application data into one trustworthy record
+      of who has access to what, and generate your first automated finding.</p>
+    </div>
+
+    <div class="panel curious">
+      <h3>If you're curious</h3>
+      <ul class="learn">
+        <li><a href="#">git in fifteen minutes</a> — the whole commit loop, gently explained</li>
+        <li><a href="#">Why virtual environments exist</a> — the dependency mess they prevent</li>
+        <li><a href="#">Keeping secrets out of git</a> — <code>.env</code>, <code>.gitignore</code>, and why it matters</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Day 1 of 5 · Prototype skeleton for review
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-day1-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Copy-to-clipboard buttons ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      var text = pre.innerText;
+      var done = function () {
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var r = document.createRange(); r.selectNode(pre);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        try { document.execCommand("copy"); } catch (e) {}
+        sel.removeAllRanges(); done();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
