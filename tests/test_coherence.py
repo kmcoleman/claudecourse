@@ -193,3 +193,20 @@ def _check_coherence_for_seed(tmp_path, seed):
             f"{app!r} was supposed to be omitted from prior review, "
             "but appears in the final prior_review.csv"
         )
+
+
+def test_generate_emits_self_contained_reference_files(tmp_path):
+    import json
+    from datetime import date
+    from meridian.generate import generate, quarter_bounds
+    out = tmp_path / "2026-Q3"
+    generate(20260715, "2026-Q3", str(out), None)
+    apps = json.load(open(out / "applications.json"))
+    assert len(apps) == 22
+    q_start, _ = quarter_bounds("2026-Q3")
+    # at least one app (the new app) is implemented inside the quarter
+    in_quarter = [a for a in apps
+                  if date.fromisoformat(a["implementation_date"]) >= q_start]
+    assert len(in_quarter) >= 1
+    assert (out / "sod_matrix.json").exists()
+    assert (out / "service_accounts.json").exists()

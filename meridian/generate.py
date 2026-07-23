@@ -8,8 +8,9 @@ from datetime import date
 from meridian.answer_key import build_answer_key, write_answer_key
 from meridian.app_selection import choose_apps, coverage_gap_cases, effective_impl_date
 from meridian.cast import assign_narratives
-from meridian.emit import (copy_policies, write_entitlements, write_hr_roster,
-                           write_prior_review, write_tickets)
+from meridian.emit import (copy_policies, write_applications, write_entitlements,
+                           write_hr_roster, write_prior_review, write_service_accounts,
+                           write_sod_matrix, write_tickets)
 from meridian.messes import drift_department_casing, duplicate_some_accounts
 from meridian.narratives import NARRATIVES
 from meridian.population import build_population
@@ -83,6 +84,9 @@ def generate(seed: int, quarter: str, out_dir: str, key_path: str | None = None)
     write_tickets(os.path.join(out_dir, "access_tickets.json"), tickets)
     write_prior_review(os.path.join(out_dir, "prior_review.csv"), prior_rows)
     copy_policies(world.policies_dir, os.path.join(out_dir, "policies"))
+    write_applications(os.path.join(out_dir, "applications.json"), world, selection, q_start)
+    write_sod_matrix(os.path.join(out_dir, "sod_matrix.json"), world)
+    write_service_accounts(os.path.join(out_dir, "service_accounts.json"), world)
 
     clean_count = sum(1 for _p, n in pairs if NARRATIVES[n].finding_class == "clean")
     key = build_answer_key(seed, quarter, cases, clean_count)
