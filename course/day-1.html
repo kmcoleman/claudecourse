@@ -925,8 +925,18 @@ coding partner this week. Assume I've never written code before.</pre>
     <div class="concept">
       <div class="label">Concept</div>
       <p>Everything you build this week lives in one project: <code>meridian-capstone</code>. It's
-      a ready-made kit — sample data, a bootstrap script, a smoke test, and a place for your code.
-      You'll pull a copy to your machine, prove it runs, and take your first look inside.</p>
+      a ready-made kit — sample data, a bootstrap script, a smoke test, a <code>CLAUDE.md</code>
+      rulebook, and a place for your code. You'll pull a copy to your machine, prove it runs, and
+      take your first look inside.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a CLAUDE.md?</span>
+        <p>A <code>CLAUDE.md</code> is the on-ramp document Claude Code reads every time it opens
+        this project — the <em>rules layer</em>, where you tell Claude Code how to behave in this
+        repo. Think of how a compliance program has a rulebook everyone works from: this file is
+        Claude Code's rulebook. Write a rule here once and it applies to every prompt, without you
+        repeating yourself.</p>
+      </div>
 
       <div class="whatis">
         <span class="tag">What is cloning a repository?</span>
@@ -1025,14 +1035,50 @@ and folders, and what does each one seem to be for?</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c5-s5"> Mark done</label>
         </li>
+
+        <li>
+          <div class="step-do">Open the kit's <code>CLAUDE.md</code> and read what's already there.</div>
+          <p class="step-why">Why: this is Claude Code's rulebook for the Meridian project — the
+          rules layer that shapes how it behaves in this repo. Knowing what's already in it tells
+          you what your coding partner is already assuming on every prompt.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Open this project's CLAUDE.md and walk me through each rule that's
+already in it — what it tells you to do, and why it matters here.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s6"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Add one rule of your own to <code>CLAUDE.md</code>, then commit.</div>
+          <p class="step-why">Why: the rules layer is yours to shape. Adding a rule — and watching
+          Claude Code follow it on your next prompt — is how you learn to steer behavior in writing
+          instead of repeating yourself. Then commit your progress, the same loop you learned in
+          Cycle 2.</p>
+          <div class="code labeled">
+            <span class="kind">CLAUDE.md (add a rule like this)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Always show me the exact command you're about to run before
+executing it with Bash.</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git add CLAUDE.md
+git commit -m "Add my own rule to CLAUDE.md"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c5-s7"> Mark done</label>
+        </li>
       </ol>
     </div>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 5 when</strong> the smoke test prints
-      <strong>SMOKE TEST PASSED</strong>, you've read a couple of sample findings, and Claude Code
-      has described the project folder back to you.</p>
+      <strong>SMOKE TEST PASSED</strong>, you've read a couple of sample findings, Claude Code
+      has described the project folder back to you, and you've added your first rule to the kit's
+      <code>CLAUDE.md</code>.</p>
     </div>
   </section>
 

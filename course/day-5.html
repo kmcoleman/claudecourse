@@ -359,9 +359,11 @@
 
     <div class="panel">
       <h3>What you'll build today</h3>
-      <p>A pipeline you trust on <strong>unseen data</strong>: your Day 4 system, run against a freshly
-      generated Q4 quarter, producing a valid <code>findings.json</code> with no code changes — and any
-      place it secretly leaned on Q3's specifics found and removed.</p>
+      <p>A pipeline you trust on <strong>unseen data</strong>: your fully-built-up Day 4 system — rules,
+      skills, tools, subagents, and hooks — run against a freshly generated Q4 quarter, producing a
+      valid <code>findings.json</code> with no code changes, its audit log filling and its
+      secret-guardrail still firing on the new seed, and any place it secretly leaned on Q3's specifics
+      found and removed.</p>
     </div>
 
     <div class="panel">
@@ -377,7 +379,7 @@
     <div class="panel">
       <h3>Before you start</h3>
       <ul class="prereq">
-        <li>Day 4 complete — the full subagent pipeline produces Meridian Q3 findings</li>
+        <li>Day 4 complete — the full pipeline (tools, subagents, and hooks) produces Meridian Q3 findings, with an audit log and a secret-guardrail in place</li>
         <li>Your virtual environment is activated <em>(you'll confirm this in Step 1)</em></li>
         <li>The kit's generator (<code>python -m meridian.generate</code>) is available <em>(you'll run it in Cycle 1)</em></li>
       </ul>
@@ -725,8 +727,10 @@ git commit -m "Replace memorized Q3 specifics with general rules; pipeline runs 
       <div class="label">Concept</div>
       <p>A clean run is necessary but not sufficient — you want the Q4 findings to be as <em>good</em> as
       Q3's, not just present. So you'll do a final clean run, then compare the quality across the two
-      quarters: same rigor, same traceability, same shape? Then you close the week with a short written
-      reflection — the single most useful artifact you'll take back to your real clients.</p>
+      quarters: same rigor, same traceability, same shape? You'll also confirm the <strong>enforcement
+      layer</strong> you built on Day 4 travels — that the audit log fills for Q4 and the
+      secret-guardrail still fires on a seed it has never seen. Then you close the week with a short
+      written reflection — the single most useful artifact you'll take back to your real clients.</p>
     </div>
 
     <div class="task">
@@ -760,6 +764,40 @@ sensibly? Flag any way Q4's are weaker.</pre>
         </li>
 
         <li>
+          <div class="step-do">Confirm the enforcement layer traveled — check the Q4 audit log.</div>
+          <p class="step-why">Why: hooks are only worth anything if they fire on data they've never
+          seen. After the Q4 run, <code>audit/2026-Q4.jsonl</code> should exist and carry a line for
+          every write — the same PreToolUse hook working on the new seed.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Confirm audit/2026-Q4.jsonl exists and has an entry for every write
+from the Q4 run — the PreToolUse audit hook firing on the new seed.
+Show me the last few lines.</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s5"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Confirm the secret-guardrail still blocks on Q4.</div>
+          <p class="step-why">Why: an enforcement layer that only works on Q3 isn't enforcement. Push a
+          fake secret through the Q4 pipeline and confirm the PostToolUse guardrail still catches it.</p>
+          <div class="code prompt labeled">
+            <span class="kind">Claude Code prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>On the Q4 run, try to write a finding whose notes field contains
+sk-fake-secret-12345. Confirm the PostToolUse guardrail blocks the
+write exactly as it did on Q3.</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">findings-writer → Write(findings.json)  [Q4]</span>
+<span class="out">PostToolUse guard: matched secret pattern "sk-" in output
+✗ tool call BLOCKED — write refused</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s6"> Mark done</label>
+        </li>
+
+        <li>
           <div class="step-do">Write your capstone reflection — 3 to 5 sentences.</div>
           <p class="step-why">Why: naming what your pipeline learned versus memorized is how you'll trust
           it at the next real client. Save it in the repo as <code>REFLECTION.md</code>.</p>
@@ -768,6 +806,8 @@ sensibly? Flag any way Q4's are weaker.</pre>
             <button class="copy" type="button">Copy</button>
             <pre>Where did my pipeline memorize Q3 instead of learning the pattern?
 What made each fix a rule rather than a specific value?
+Did all six building blocks — rules, skills, tools, subagents,
+hooks, and generalization — travel to Q4? Which ones surprised me?
 If I ran this against Q5, Q6, Q7 — unseen quarters — what would
 break first, and why?</pre>
           </div>
@@ -791,7 +831,8 @@ git commit -m "Prove transfer to Q4; add capstone reflection"</pre>
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 4 when</strong> Q4 has a complete, well-formed
       <code>findings.json</code> of comparable quality to Q3's, nothing in the pipeline keys off a
-      specific quarter, and your reflection is written and committed.</p>
+      specific quarter, the enforcement layer travels — <code>audit/2026-Q4.jsonl</code> fills and the
+      secret-guardrail still blocks — and your reflection is written and committed.</p>
     </div>
   </section>
 
@@ -827,13 +868,16 @@ tests/test_transfer.py .....                                  [100%]
         <li>A freshly generated <strong>Q4 quarter</strong> — same company, unseen data</li>
         <li>A diagnosis of every place the pipeline memorized Q3, loud crashes and quiet wrong answers alike</li>
         <li>A <strong>generalized pipeline</strong> keyed to rules instead of Q3 specifics</li>
+        <li>Confirmation the <strong>enforcement layer</strong> travels — the Q4 audit log fills and the secret-guardrail still fires on the new seed</li>
         <li>Proof of transfer across quarters — Q4 findings, no code changes — plus your capstone reflection</li>
       </ul>
     </div>
 
     <div class="narrative">
-      <p class="tomorrow">You built an agentic system, taught it a compliance rulebook, decomposed it
-      into subagents, and proved it generalizes to a quarter it had never seen. You're a
+      <p class="tomorrow">You built an agentic system from six building blocks — the <em>rules</em> in
+      its CLAUDE.md, the <em>skills</em> that carry Meridian's policies, the <em>tools</em> it reaches
+      through, the <em>subagents</em> that split the work, the <em>hooks</em> that make it auditable,
+      and the <em>generalization</em> that carried all of it to a quarter it had never seen. You're a
       <em>Claude Certified Architect</em>. Now go apply this to your real clients — that's your
       post-course homework.</p>
     </div>
