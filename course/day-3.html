@@ -346,36 +346,44 @@
     <h1>Teaching Claude the rulebook.</h1>
 
     <div class="narrative">
-      <p class="lede">Yesterday you built the Ledger — Meridian knows who has what. But
-      "having Admin access" isn't automatically a problem. It's a problem when it violates a
-      <em>policy</em>. Today you teach Claude Meridian's compliance policies.</p>
-      <p>Those policies exist — they live in a PDF binder in the compliance office, written in
-      careful prose full of exceptions and intent. The trouble is that a binder can't review
-      anything. Today you translate three of Meridian's real policies into <em>Skills</em>:
-      files that let Claude reason about a grant the way a seasoned reviewer would.</p>
+      <p class="lede">Yesterday you built the Ledger — 15,081 grants, each attached to a person.
+      But holding <code>Admin</code> isn't a problem by itself. It becomes a problem when it
+      violates a <em>policy</em>. Today you teach Claude Meridian's policies.</p>
+
+      <p>You already encoded one rule by hand, and you saw the shape of the work: the rule was
+      the easy part. The exemption, the evidence, and the judgment about what <em>not</em> to
+      report were the actual job. Meridian has five policy documents in
+      <code>data/2026-Q3/policies/</code>, and you've handled exactly one clause of one of them.
+      Today you stop writing them one at a time.</p>
+
+      <p>Three of those policies become <strong>Skills</strong> — Markdown files Claude loads
+      when the work calls for them, and reasons from the way a seasoned reviewer would. By the
+      end of the day every finding you produce will name the clause it came from.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll build today</h3>
       <p>Three <strong>policy Skills</strong> — Segregation of Duties, the Privileged Access
-      Standard, and the Contractor Access Standard — plus an upgraded triage step that makes every
-      finding <em>cite</em> the exact policy clause it came from.</p>
+      Standard, and the Contractor Access Standard — plus an upgraded triage step that rewrites
+      <code>findings.json</code> so every finding carries a populated
+      <code>policy_citations</code> pointing at a clause that actually exists.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll learn</h3>
       <ul class="learn">
-        <li>What a <em>Skill</em> is, and why Claude reads prose rules better than a config table</li>
-        <li>How to turn a written policy into a Skill file Claude can apply consistently</li>
-        <li>How to test a Skill against a single, known access grant before trusting it broadly</li>
-        <li>How to make findings <em>traceable</em> — every flag pointing back to a specific clause</li>
+        <li>What a <em>Skill</em> is, where it has to live, and why Claude reads prose rules better than a config table</li>
+        <li>How to turn a written policy into a Skill without inventing clauses the policy never had</li>
+        <li>How to test a Skill against grants whose right answer you already know</li>
+        <li>How to make findings <em>traceable</em> — every flag pointing back to a real citation</li>
       </ul>
     </div>
 
     <div class="panel">
       <h3>Before you start</h3>
       <ul class="prereq">
-        <li>Day 2 complete — <code>ledger.csv</code> and a first <code>findings.json</code> exist</li>
+        <li>Day 2 complete — <code>identities.csv</code>, <code>ledger.csv</code>, <code>findings.json</code> and <code>exemptions.json</code> sit at the repository root</li>
+        <li><code>pytest tests/test_ledger.py</code> still reports 13 passed</li>
         <li>Your virtual environment is activated <em>(you'll confirm this in Step 1)</em></li>
         <li>Claude Code runs inside the <code>meridian-capstone</code> folder</li>
       </ul>
@@ -397,69 +405,218 @@
       <div class="label">Concept</div>
       <p>A <em>Skill</em> is a file that tells Claude how to think about one specific domain. It
       isn't code and it isn't a settings table — it's written guidance, in plain language, that
-      Claude reads before it reasons about a problem. Give Claude a "Segregation of Duties" Skill
-      and it evaluates access grants the way someone who wrote that policy would.</p>
+      Claude loads when the work calls for it. Give Claude a Segregation of Duties Skill and it
+      evaluates access grants the way the person who wrote that policy would.</p>
 
       <div class="whatis">
         <span class="tag">What is Markdown?</span>
-        <p>Markdown is a lightweight way to write formatted text in a plain file — you mark a
-        heading with <code>#</code>, a bold word with <code>**stars**</code>, a list with dashes.
-        It stays readable as plain text and needs no special program. Skills are written in
-        Markdown, in files that end in <code>.md</code>.</p>
+        <p>Markdown is a lightweight way to write formatted text in a plain file — a heading is a
+        line starting with <code>#</code>, bold is <code>**stars**</code>, a list is a run of
+        lines starting with <code>-</code>. It stays readable as plain text and needs no special
+        program to open. Skills are written in Markdown, in files that end in <code>.md</code>.</p>
       </div>
 
-      <p><strong>Why prose, not a config file?</strong> Compliance rules aren't clean
-      if-then switches. Rules have exceptions; exceptions have their own exceptions; and the
-      policy language carries <em>intent</em> that decides the edge cases. A table can hold "Admin
-      + not-a-manager = flag." It can't hold "unless the grant is a documented break-glass account
-      reviewed quarterly, in which case note it but don't escalate." Prose can. That nuance is
-      exactly what you're paid to apply — and exactly what a Skill lets Claude apply too.</p>
+      <p><strong>Why prose, not a config file?</strong> Compliance rules aren't clean if-then
+      switches. Rules have exceptions, exceptions have conditions, and the policy language
+      carries <em>intent</em> that decides the edge cases. A table can hold "Vendor Admin +
+      AP Manager = flag." It cannot hold "unless the holder is the Controller in Finance &amp;
+      Accounting and the CFO's quarterly payment review is evidenced in Atlas." Prose can. That
+      nuance is exactly what you are paid to apply — and exactly what a Skill lets Claude apply
+      too.</p>
 
-      <p>The kit ships an example Skill so you can see the shape before writing your own.</p>
+      <p><strong>Where a Skill has to live.</strong> This trips up almost everyone the first
+      time. A project Skill is a <em>directory</em> containing a file called
+      <code>SKILL.md</code> — not a loose <code>.md</code> file:</p>
+
+      <div class="code labeled">
+        <span class="kind">Skill layout</span>
+        <button class="copy" type="button">Copy</button>
+        <pre>.claude/skills/sod-policy/SKILL.md      &lt;- loads
+.claude/skills/sod-policy.md           &lt;- silently ignored</pre>
+      </div>
+
+      <p>Every <code>SKILL.md</code> opens with a short YAML block — the <em>frontmatter</em> —
+      carrying two fields. <code>name</code> must be lowercase letters, numbers and hyphens, at
+      most 64 characters, and may not contain the words "anthropic" or "claude".
+      <code>description</code> is the important one: it is the only text Claude sees when
+      deciding whether this Skill is relevant, so it must say both <em>what the Skill does</em>
+      and <em>when to use it</em>, written in the third person. Everything below the frontmatter
+      is ordinary Markdown, and it loads only once the Skill is actually invoked.</p>
+
+      <div class="code labeled">
+        <span class="kind">SKILL.md — the shape you'll follow three times today</span>
+        <button class="copy" type="button">Copy</button>
+        <pre>---
+name: some-policy-name
+description: Evaluates &lt;what&gt; against &lt;which policy&gt;. Use when &lt;the
+  trigger — reviewing entitlements, triaging a grant, ...&gt;.
+---
+
+# &lt;Policy title, as the document names itself&gt;
+
+## Rule
+&lt;What the policy forbids or requires, in the policy's own terms.&gt;
+
+## Exemptions
+&lt;Who is excused, under what conditions, and what evidence is required.&gt;
+
+## How to cite
+&lt;The exact citation string a finding should carry.&gt;</pre>
+      </div>
+
+      <p><strong>The five policies.</strong> They live in <code>data/2026-Q3/policies/</code> and
+      they are short — the longest is under a page. Read all five today; you will encode three of
+      them:</p>
+
+      <ul class="learn">
+        <li><code>access-control-policy.md</code> — the umbrella policy, and <strong>the only one
+        with numbered clauses</strong>. It carries the SoD prohibition and the standing exemption.</li>
+        <li><code>sod-policy.md</code> — three lines. It defers the actual conflict list to the
+        SoD matrix and the exemption to the access control policy. <em>Encode this one.</em></li>
+        <li><code>privileged-access-standard.md</code> — approval-before-grant, a 180-day
+        dormancy rule, and a break-glass carve-out. <em>Encode this one.</em></li>
+        <li><code>contractor-access-standard.md</code> — access ends with the statement of work.
+        <em>Encode this one.</em></li>
+        <li><code>termination-procedure.md</code> — revocation within 24 hours, and the reminder
+        that leave is not termination. Not encoded today, but read it: it is the clearest example
+        in the binder of a policy sentence that exists purely to prevent a false positive.</li>
+      </ul>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Confirm your virtual environment is active.</div>
-          <p class="step-why">Why: same sandbox as yesterday — look for <code>(venv)</code> at the
-          front of your prompt before you run anything.</p>
+          <div class="step-do">Confirm your environment and yesterday's artifacts.</div>
+          <p class="step-why">Why: today rewrites <code>findings.json</code>. Before you change
+          it, confirm the Day 2 version is intact and passing — that's your rollback point.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>source venv/bin/activate</pre>
+            <pre>source venv/bin/activate
+pytest tests/test_ledger.py</pre>
           </div>
+          <p><strong>How you'll know you got it right.</strong> You see <code>(venv)</code> at the
+          front of your prompt, and thirteen tests pass. If the module skips instead, you are in
+          the wrong directory or Day 2's four artifacts aren't at the repository root — fix that
+          before going further, because every Skill you write today is tested against
+          <code>ledger.csv</code>.</p>
           <label class="done"><input type="checkbox" data-task="c1-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Open the example Skill in the kit and read it.</div>
-          <p class="step-why">Why: seeing one good Skill teaches the pattern faster than any
-          description — note how it names the policy, states the rule, then lists the exceptions.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Open the example Skill at .claude/skills/example.md and walk me
-through it section by section. What makes this a good Skill?</pre>
+          <div class="step-do">Read all five policies and inventory what you can actually cite.</div>
+          <p class="step-why">Why: a citation that doesn't resolve to real text is worse than no
+          citation — it fails an audit louder than a blank field. Before you write a single Skill,
+          you need to know exactly which clause identifiers exist in Meridian's binder.</p>
+
+          <p><strong>What you're building.</strong> A short written inventory — in your notebook,
+          not a file — listing, for each of the five policies, the citation strings a finding
+          could legitimately carry. This takes about ten minutes of reading and it prevents the
+          single most common failure of the whole day.</p>
+
+          <p><strong>What the source material looks like.</strong> Only the Access Control Policy
+          uses numbered clauses. The other four are titled prose with no internal numbering at
+          all:</p>
+          <div class="terminal">
+<span class="out">access-control-policy.md        ACP-1, ACP-4, ACP-4.1, ACP-4.2, ACP-6
+sod-policy.md                  no clause numbers  (cite the document title)
+privileged-access-standard.md  no clause numbers  (cite the document title)
+contractor-access-standard.md  no clause numbers  (cite the document title)
+termination-procedure.md       no clause numbers  (cite the document title)</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> You can answer these three
+          questions from your notes, without reopening the files:</p>
+          <ul class="learn">
+            <li>Which clause <em>forbids</em> one person holding conflicting duties, and which
+            separate clause grants the standing exemption? (They are two different numbers, and
+            findings need both.)</li>
+            <li>What does the Privileged Access Standard require <em>in addition to</em> the
+            180-day activity rule — and does the break-glass carve-out excuse both requirements
+            or only one?</li>
+            <li>What condition must a contractor's extension meet, and by <em>when</em>?</li>
+          </ul>
+          <p class="step-why">If you found yourself about to write "§2.3" or "Section 4" for any
+          policy other than the ACP, stop and reread. Those numbers do not exist, and a Skill that
+          invents them will produce findings no reviewer can follow.</p>
+
+          <p><strong>Suggested workflow.</strong> Read the five files yourself first — all five
+          together are shorter than this page. Then use Claude Code to check your reading rather
+          than replace it: ask it to list every clause identifier that literally appears across
+          the policy directory, and compare its answer to your notes. Where it names something you
+          didn't find, go look. Where you found something it missed, that's worth knowing too.</p>
+
           <label class="done"><input type="checkbox" data-task="c1-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Can't find the policies?</strong> They ship inside the quarter's export,
+              at <code>data/2026-Q3/policies/</code> — not at the repository root. There is no
+              <code>world/</code> or <code>policies/</code> folder above them.</p>
+              <p><strong>The policies seem too short to matter?</strong> That's the point, and
+              it's realistic. Meridian's binder is terse; the difficulty was never volume, it's
+              that each sentence carries a condition. "Break-glass accounts are exempt from the
+              dormancy rule <em>when registered and documented</em>" is one sentence and three
+              separate tests.</p>
+              <p><strong>Claude summarises the policy instead of quoting it?</strong> Ask for
+              literal quoted text with the file it came from. A summary is exactly what you can't
+              cite — you need the words the document actually uses.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">In your notebook, note one Meridian policy that has a real exception.</div>
-          <p class="step-why">Why: you're about to write Skills for three of them. Naming an
-          exception now proves to yourself why prose beats a table here.</p>
+          <div class="step-do">Create the Skills directory and confirm Claude can see it.</div>
+          <p class="step-why">Why: <code>.claude/skills/</code> does not exist in the kit yet. It
+          has a discovery quirk that will otherwise cost you half of Cycle 2 — better to hit it
+          now, on an empty directory, than later while debugging a Skill you think is broken.</p>
+
+          <p><strong>What you're building.</strong> An empty <code>.claude/skills/</code>
+          directory at the repository root, and a confirmed answer to the question "does this
+          Claude Code session know the directory exists?"</p>
+
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>mkdir -p .claude/skills</pre>
+          </div>
+
+          <p><strong>The quirk, stated plainly.</strong> Claude Code watches the Skills directory
+          for changes, so once it exists you can add and edit Skills freely and they take effect
+          immediately. But creating the <em>top-level</em> Skills directory when it did not exist
+          at session start requires restarting Claude Code before that directory is watched. You
+          just created it. So restart your session now.</p>
+
+          <p><strong>How you'll know you got it right.</strong> After restarting, ask Claude Code
+          which Skills it currently has available for this project. The honest answer at this
+          point is "none" — the directory is empty. What you're confirming is that it reports an
+          empty Skills directory rather than no Skills directory. Tomorrow's debugging depends on
+          you trusting that answer.</p>
+
           <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Not sure whether a restart is really needed?</strong> It costs you ten
+              seconds and removes a variable. Do it. The failure it prevents — a correctly written
+              Skill that Claude never loads — looks identical to a badly written Skill, and you
+              will burn a lot of time telling them apart.</p>
+              <p><strong>Should this directory be committed?</strong> Yes. Skills are project
+              artifacts and belong in version control alongside the code that depends on them.
+              Anyone who clones this repository should get your policy Skills with it.</p>
+            </div>
+          </details>
         </li>
       </ol>
     </div>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 1 when</strong> you can explain in a sentence what a Skill
-      is, you've read the example Skill's structure, and you can name one policy exception a plain
-      table couldn't capture.</p>
+      <p><strong>You're done with Cycle 1 when</strong> you can name the three policies you'll
+      encode and say why prose beats a lookup table for each, your citation inventory shows that
+      only the ACP carries clause numbers, and an empty <code>.claude/skills/</code> exists in a
+      restarted session.</p>
     </div>
   </section>
 
@@ -476,120 +633,221 @@ through it section by section. What makes this a good Skill?</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p><em>Segregation of Duties</em> (SoD) is the principle that no single person should control
-      a whole risky process end to end — the person who <em>enters</em> an invoice shouldn't also
-      be able to <em>approve</em> it. Meridian's SoD policy, and the conflicting role pairs it points
-      to in the SoD matrix, run to a few pages of prose. You'll turn the relevant part into a Skill.</p>
-      <p>Take a Finance &amp; Accounting employee from your Day 2 ledger. Their entitlements in
-      Atlas ERP carry two roles: <strong>AP Clerk</strong> (enter an invoice) and <strong>AP
-      Manager</strong> (approve it). One human, both halves of the payment — and this person is a
-      clerk, not the Controller, so no exemption covers it. That's a textbook SoD violation, and it's
-      the case you'll test your Skill against.</p>
+      <p><em>Segregation of Duties</em> is the principle that no single person should control a
+      whole risky process end to end. The person who creates a vendor shouldn't also approve that
+      vendor's payments. Meridian states the prohibition in <strong>ACP-4.1</strong> and delegates
+      the actual list of conflicting pairs to the SoD matrix at
+      <code>data/2026-Q3/sod_matrix.json</code>, which defines six conflicts — including the
+      <code>Vendor Admin</code> + <code>AP Manager</code> pair in Atlas ERP, rated
+      <strong>critical</strong>, with the reason recorded as "Create a vendor, then approve its
+      payment."</p>
 
-      <div class="code labeled">
-        <span class="kind">.claude/skills/sod.md (target shape)</span>
-        <button class="copy" type="button">Copy</button>
-        <pre># Segregation of Duties
+      <p><strong>The exemption is the whole lesson.</strong> ACP-4.2 says that where business
+      necessity requires conflicting roles, the CFO may grant a written exemption with a
+      compensating control — and it names one standing case: the <strong>Controller</strong> in
+      Finance &amp; Accounting may hold both <code>AP Manager</code> and <code>Vendor Admin</code>
+      in Atlas ERP, compensated by a quarterly manual payment review by the CFO, evidenced in
+      Atlas. The clause closes with a sentence worth copying into your Skill nearly verbatim:
+      access held under ACP-4.2 is <strong>not</strong> a finding.</p>
 
-## Rule
-Flag any person who holds a conflicting pair of roles from the SoD
-matrix — for example **AP Clerk + AP Manager** in Atlas ERP (enter an
-invoice, then approve it) — evaluating all roles under one canonical
-identity together.
+      <p>You already know what this Skill has to reproduce, because you did it by hand yesterday.
+      Five accounts in your ledger hold both roles in Atlas ERP. Three are Controllers and are
+      exempt. Two are real conflicts:</p>
 
-## Exceptions
-- ACP-4.2 documented exemption: the Controller in Finance &amp; Accounting
-  may hold AP Manager + Vendor Admin under a CFO-signed compensating
-  control (quarterly payment review). Access held under ACP-4.2 is not a finding.
+      <div class="terminal">
+<span class="out">A000042  Patrick Ramos      Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
+A000089  Amanda Garrison    Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
+A000168  April Tyler        Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
+A000251  Michelle Mercado   Senior Accountant, F&amp;A            -> FINDING
+A000615  James Hernandez    Field Services, terminated         -> FINDING</span>
+          </div>
 
-## Citation format
-When flagging, cite: "SoD Skill, §<clause>".</pre>
-      </div>
+      <p>Yesterday those two findings carried whatever citation you typed. Today they carry
+      citations a Skill produced from the policy text — and the three exemptions carry the clause
+      that suppressed them. Same answer, defensible provenance.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Ask Claude Code to draft the SoD Skill from Meridian's policy text.</div>
-          <p class="step-why">Why: you describe the policy in plain terms; Claude drafts the Skill
-          file. You stay the reviewer — you'll refine it next.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-<!-- TODO: verify with Kevin — sod-policy.md says "See the SoD matrix for conflicting
-     role pairs," but the current generator ships only the 5 policy .md files and does NOT
-     export a SoD matrix (world/sod_matrix.yaml is never copied into the kit). Students
-     therefore have no matrix file to read; the AP Clerk + AP Manager pair below is the only
-     worked example the course supplies. Either the generator should emit the matrix, or the
-     course should stop pointing students at it. -->
-            <pre>Read policies/sod-policy.md (it names the conflicting role pairs
-via a SoD matrix) plus the ACP-4.2 exemption in
-policies/access-control-policy.md. Draft a Skill that flags anyone
-holding a conflicting role pair (e.g. AP Clerk + AP Manager in
-Atlas ERP), evaluating all roles under one canonical identity.
-Include the ACP-4.2 Controller exemption. Number the clauses so
-findings can cite them.</pre>
-          </div>
+          <div class="step-do">Draft the SoD Skill from the policy text.</div>
+          <p class="step-why">Why: you describe the policy and its intent; Claude drafts the file.
+          You stay the reviewer — the next step is where your expertise actually lands.</p>
+
+          <p><strong>What you're building.</strong> A first draft of a <code>SKILL.md</code> for
+          Segregation of Duties, following the shape from Cycle 1: frontmatter with
+          <code>name</code> and <code>description</code>, then the rule, the exemption, and the
+          citation format. Don't save it to its final location yet — read it first.</p>
+
+          <p><strong>What the source material is.</strong> Three files, and the Skill should draw
+          on all three: <code>sod-policy.md</code> for the framing,
+          <code>access-control-policy.md</code> for ACP-4.1 and the full text of ACP-4.2, and
+          <code>sod_matrix.json</code> for the conflicting pairs and their severities. The matrix
+          also carries the exemption in structured form — app, roles, department, title, clause,
+          and compensating control — which is worth pointing the Skill at rather than restating
+          from memory.</p>
+
+          <p><strong>How you'll know the draft is worth refining.</strong> It should cite ACP-4.1
+          for the prohibition and ACP-4.2 for the exemption as two distinct references, and it
+          should describe conflicts by reference to the matrix rather than hardcoding one pair.
+          If the draft names only <code>Vendor Admin</code> + <code>AP Manager</code>, it will
+          miss the other five conflicts in the matrix the moment the data changes.</p>
+
+          <p><strong>Suggested workflow.</strong> Point Claude Code at the three source files and
+          describe the outcome you want — a Skill that decides whether a person's combined roles
+          violate SoD, applies the ACP-4.2 exemption, and emits a citation. Tell it the file
+          layout requirement explicitly (a directory containing <code>SKILL.md</code>), because
+          that's the part it can't infer from the policy. Ask it to show you the draft rather than
+          write it to disk.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Review and refine the draft.</div>
-          <p class="step-why">Why: this is where your expertise matters most. Read the draft the
-          way you'd read a junior analyst's work — is the intent right? Are the exceptions complete?</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>The ACP-4.2 exemption should only apply to the Controller in
-Finance & Accounting, and only with the CFO's quarterly
-compensating-control review on record. Update the Skill to say
-that, and add a clause number for it.</pre>
-          </div>
+          <div class="step-do">Review the draft against the three failure modes.</div>
+          <p class="step-why">Why: this is the step that separates a Skill you can defend from one
+          that merely runs. Read the draft the way you'd read a junior analyst's first attempt.</p>
+
+          <p><strong>What you're checking for.</strong> Drafted policy Skills fail in three
+          recognisable ways, and this one will probably show at least one of them:</p>
+          <ul class="learn">
+            <li><strong>Over-generalised.</strong> "Flag any user holding two or more privileged
+            roles." That isn't the policy. It would flag most of Meridian's IT department and
+            bury your two real findings in noise. The conflict list is the matrix's job, not the
+            Skill's invention.</li>
+            <li><strong>Under-generalised.</strong> "Flag AP Manager + Vendor Admin in Atlas ERP."
+            True, but hardcoded — it silently ignores the five other conflicts the matrix defines,
+            including the two cross-application ones. The Skill should reason <em>from</em> the
+            matrix.</li>
+            <li><strong>Invented citations.</strong> "SoD Policy §2.3." There is no §2.3 — there
+            are no section numbers in <code>sod-policy.md</code> at all. This is the failure your
+            Cycle 1 inventory exists to catch, and it is the most dangerous of the three because
+            the output looks more rigorous, not less.</li>
+          </ul>
+
+          <p><strong>Then tighten the exemption.</strong> ACP-4.2 is narrow and the draft will
+          usually widen it. It applies to the Controller title, in Finance &amp; Accounting, for
+          that specific role pair, in Atlas ERP, with a compensating control on record. An
+          exemption that checks only the department, or only the title, will clear accounts it
+          shouldn't. Make the Skill state every condition, and make it require that a suppressed
+          conflict still be recorded — not silently dropped.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Read the revised Skill and ask
+          yourself: if I handed this to a new analyst with no other context, would they reach the
+          same five-account answer you already know? Every rule should trace to a sentence in the
+          policy files, and every citation string should be one you inventoried in Cycle 1.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
-        </li>
-
-        <li>
-          <div class="step-do">Save the Skill to <code>.claude/skills/sod.md</code>.</div>
-          <p class="step-why">Why: Skills live in this folder so Claude Code can find and apply them.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Save the finished Skill to .claude/skills/sod.md.</pre>
-          </div>
-          <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
-        </li>
-
-        <li>
-          <div class="step-do">Test the Skill against the AP Clerk + AP Manager grant.</div>
-          <p class="step-why">Why: never trust a new Skill on all your data first. Test it on one
-          case you already understand, where you know the right answer.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Using the SoD Skill, evaluate the Finance & Accounting employee who
-holds both AP Clerk and AP Manager in Atlas ERP. Is this a
-violation? Cite the clause.</pre>
-          </div>
-          <div class="terminal">
-<span class="cmd">claude</span>
-<span class="out">VIOLATION — one person holds AP Clerk and AP Manager in Atlas ERP
-(enter an invoice, then approve it). ACP-4.2 exemption does not apply
-(this person is a clerk, not the Controller). Citation: SoD Skill, §2.3</span>
-          </div>
-          <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Claude misses the second role?</strong> It may be evaluating each
-              entitlement row separately. Remind it: "group every role under one canonical_id and
-              evaluate them together as one person."</p>
+              <p><strong>Claude cites a clause you can't find?</strong> Ask it to quote the
+              surrounding sentence and name the file. If it can't, the clause doesn't exist and
+              the Skill needs correcting — this is the failure mode worth being ruthless about.</p>
+              <p><strong>The Skill is getting long?</strong> Length is a cost, not a virtue: once
+              loaded, every line sits in context. If it's drifting past a page, you're probably
+              explaining things Claude already knows — what an invoice is, why fraud is bad. Cut
+              to what's specific to Meridian.</p>
+              <p><strong>Unsure how much latitude to give?</strong> Match the specificity to the
+              risk. The conflict list and the exemption conditions are exact and belong stated
+              exactly. How to word a rationale is a judgment call and can stay loose.</p>
             </div>
           </details>
         </li>
 
         <li>
-          <div class="step-do">Commit your work.</div>
+          <div class="step-do">Save the Skill and confirm Claude actually loads it.</div>
+          <p class="step-why">Why: a Skill in the wrong place fails silently. Confirm loading as
+          its own step, before you start trusting its answers.</p>
+
+          <p><strong>What you're building.</strong> The finished file at exactly this path:</p>
+          <div class="code labeled">
+            <span class="kind">Target path</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>.claude/skills/sod-policy/SKILL.md</pre>
+          </div>
+
+          <p><strong>How you'll know you got it right.</strong> Three checks, in order:</p>
+          <ul class="learn">
+            <li>The path is a directory named <code>sod-policy</code> containing
+            <code>SKILL.md</code>. A file at <code>.claude/skills/sod-policy.md</code> is not
+            an error — it is simply never loaded, which is worse.</li>
+            <li>The frontmatter parses: <code>name: sod-policy</code>, and a
+            <code>description</code> that states what the Skill evaluates <em>and</em> when it
+            applies. "Handles SoD" is too thin to route on.</li>
+            <li>Claude Code lists the Skill as available. Since you created
+            <code>.claude/skills/</code> during this session's lifetime in Cycle 1, a Skill added
+            inside it now should appear without another restart — if it doesn't, restart once
+            more before assuming the file is wrong.</li>
+          </ul>
+
+          <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Test the Skill against the five Atlas ERP accounts.</div>
+          <p class="step-why">Why: never turn a new Skill loose on 15,081 rows. Test it where you
+          already know the answer — and you know this one exactly.</p>
+
+          <p><strong>What you're building.</strong> Evidence that the Skill reproduces yesterday's
+          result from the policy rather than from your hardcoded rule. Work from
+          <code>ledger.csv</code>, evaluating each of the five accounts that hold both
+          <code>AP Manager</code> and <code>Vendor Admin</code> in Atlas ERP.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Exactly this split, with the
+          reasoning attached to each:</p>
+          <div class="terminal">
+<span class="out">A000042, A000089, A000168   exempt   ACP-4.2 — Controller, F&amp;A, CFO
+                                              compensating control on record
+A000251, A000615            finding  ACP-4.1 — conflicting duties, critical
+                                              (SoD matrix: Atlas ERP pair)</span>
+          </div>
+          <p class="step-why">Four things to check in the output, beyond the account list:</p>
+          <ul class="learn">
+            <li>The two findings cite <strong>ACP-4.1</strong> (or the SoD Policy), not an invented
+            section number.</li>
+            <li>The three exemptions cite <strong>ACP-4.2</strong> specifically, and are
+            <em>reported as suppressed</em> rather than omitted in silence.</li>
+            <li>Severity is <strong>critical</strong> — that comes from the matrix, not from the
+            Skill's own judgment.</li>
+            <li>A000615 is flagged <em>despite</em> being a terminated Field Services account
+            rather than a finance one. The conflict is about the roles held, not the department;
+            a Skill that quietly scoped itself to Finance would drop this one.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Ask Claude Code to apply the Skill to those
+          accounts as they appear in your ledger, and to show its reasoning and citation per
+          account rather than a bare verdict. Compare against the block above line by line. If a
+          Controller comes back as a finding, or Michelle Mercado comes back exempt, the
+          exemption's conditions are wrong — go back to the Skill text, not the data.</p>
+
+          <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Only one role comes back per account?</strong> The Skill is probably being
+              applied row by row. An SoD conflict only exists when a person's roles are considered
+              together — the Skill needs to say that grants are evaluated grouped by identity, not
+              per grant.</p>
+              <p><strong>All five come back as findings?</strong> The exemption isn't firing. Check
+              whether it's matching on title <em>and</em> department, and whether the titles in
+              your ledger read the way the Skill expects — Day 2's department column had 31
+              spellings for 12 real departments, and title matching is just as brittle.</p>
+              <p><strong>All five come back exempt?</strong> The exemption is matching too
+              loosely — probably on department alone. Only three of these five people are
+              Controllers.</p>
+              <p><strong>You get a different set of five accounts?</strong> That's a ledger
+              problem, not a Skill problem. Re-run <code>pytest tests/test_ledger.py</code>; if
+              Day 2's findings tests fail, fix that first.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Commit your first Skill.</div>
+          <p class="step-why">Why: this is the first artifact of the module and the template for
+          the next two. Snapshot it before you start the second.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
@@ -603,9 +861,11 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 2 when</strong> <code>.claude/skills/sod.md</code> exists,
-      and Claude correctly flags the AP Clerk + AP Manager grant as an SoD violation with a
-      clause citation.</p>
+      <p><strong>You're done with Cycle 2 when</strong>
+      <code>.claude/skills/sod-policy/SKILL.md</code> exists with valid frontmatter, Claude loads
+      it, and applying it to your ledger returns findings on A000251 and A000615 citing ACP-4.1
+      while suppressing A000042, A000089 and A000168 under ACP-4.2 — with the suppressions
+      recorded rather than dropped.</p>
     </div>
   </section>
 
@@ -622,76 +882,208 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>You know the pattern now: read the policy, draft the Skill, refine the exceptions, test on
-      a known case, save. Two more policies, same rhythm — and you should move noticeably faster the
-      second and third time.</p>
-      <p><strong>Privileged Access Standard:</strong> a privileged role requires an approved access
-      request (a ticket) before it's granted, and it must show activity within 180 days or be reviewed
-      for removal — a dormancy check that lives <em>inside</em> this standard. Registered, documented
-      break-glass accounts are exempt from that dormancy rule. <strong>Contractor Access Standard:</strong>
-      a contractor's access ends on their statement-of-work (SOW) end date; any extension needs a new
-      approved ticket referencing the renewed SOW <em>before</em> the old one lapses. Both are prose
-      policies with their own exceptions, and both become Skills.</p>
+      <p>You know the rhythm now: read the policy, draft, review for the three failure modes, save
+      to the right path, test on known cases. The second and third times should be noticeably
+      faster — that speed-up <em>is</em> the skill you're building. What changes is the shape of
+      the exceptions.</p>
+
+      <p><strong>The Privileged Access Standard carries two separate requirements</strong>, and
+      reading it carelessly collapses them into one. Privileged roles need an approved access
+      request before they're granted, <em>and</em> must show activity within 180 days or be
+      reviewed for removal. The break-glass carve-out — "break-glass accounts are exempt from the
+      dormancy rule when registered and documented" — excuses only the <em>second</em>. A
+      registered break-glass account still needs its approving ticket. Note also that the
+      exemption is conditional: "registered and documented" means the account appears in
+      <code>data/2026-Q3/service_accounts.json</code>, which is a thing to check rather than
+      assume.</p>
+
+      <!-- TODO: verify with Kevin — the kit never states a review "as of" date anywhere
+           (not in CLAUDE.md, README, or the contract), so this course standardises on
+           quarter end, 2026-09-30. That choice is safe here: the dormant-privileged set is
+           the same 5 grants whether you evaluate as of 2026-07-23, 2026-08-16 or 2026-09-30,
+           and the latest last_login in the export is exactly 2026-09-30. Worth pinning down
+           in the kit itself so Day 4/5 don't drift. -->
+      <p>What counts as privileged isn't a guess either — <code>applications.json</code> lists
+      <code>privileged_roles</code> per application. Across your ledger that's <strong>105
+      privileged grants</strong>. Measured against quarter end, <strong>2026-09-30</strong>, five
+      of them have been dormant beyond 180 days:</p>
+
+      <div class="terminal">
+<span class="out">A000365  gabriel.villa     Vault / Admin              2025-12-09   295d
+A000605  debbie.gonzalez   Vault / Admin              2025-11-29   305d
+A000768  robert.miller     Vault / Admin              2025-09-30   365d
+A000963  emergency.admin   Active Directory / Domain Admin  2026-01-05   268d
+A001015  emergency.admin   Active Directory / Domain Admin  2025-10-19   346d</span>
+      </div>
+
+      <p>The two <code>emergency.admin</code> accounts are registered break-glass — both appear in
+      <code>service_accounts.json</code> and both hold an approved ticket. They are exempt from
+      the dormancy rule and must be recorded as exemptions, not reported. That leaves
+      <strong>three findings</strong>. All three are Vault Admins, and all three happen to hold
+      <em>no</em> approving ticket at all — so they breach both halves of the standard. Vault has
+      77 Admin grants in total; these are the only three that are stale.</p>
+
+      <p><strong>The Contractor Access Standard hides its trap in the data, not the text.</strong>
+      The rule is one sentence: access ends on the statement-of-work end date, and an extension
+      requires a new approved ticket referencing the renewed SOW, dated before the prior end date.
+      Meridian has 117 contractors. Every one of them is <code>status: active</code> in HR — so a
+      rule keyed on employment status finds nothing. Only three carry a <code>term_date</code>,
+      and all three are in the past:</p>
+
+      <div class="terminal">
+<span class="out">E01143  Anita Richardson    SOW ended 2026-09-10   A001143            12 grants
+E01163  Jennifer Gallagher  SOW ended 2026-09-14   A001163            11 grants
+E00175  Jamie Alvarez       SOW ended 2026-09-11   A000175 + A000577  23 grants</span>
+      </div>
+
+      <p>Four accounts, 46 grants, and seven logins recorded <em>after</em> the SOW lapsed. Two
+      details will catch a careless Skill. Jamie Alvarez holds <strong>two</strong> accounts, and
+      both lapse with the same SOW — the second is easy to miss. And each of the three contractors
+      has an approved ticket dated a few days <em>before</em> their end date, which looks exactly
+      like a renewal. It isn't: every one of those tickets grants <code>VPN / User</code> and
+      references no SOW. Meridian's ticket records have no SOW field at all, so no ticket in this
+      dataset can satisfy the renewal condition. A Skill that treats "an approved ticket before
+      the end date" as an extension will clear all three contractors and report nothing.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Draft and save the Privileged Access Review Skill.</div>
-          <p class="step-why">Why: same flow as SoD. Point Claude at the policy, refine, and save to
-          the Skills folder.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Read policies/privileged-access-standard.md. Draft a Skill that
-flags privileged roles granted without an approved ticket, and
-privileged access dormant beyond 180 days (registered break-glass
-accounts exempt). Number the clauses. Save it to
-.claude/skills/privileged-access.md.</pre>
-          </div>
+          <div class="step-do">Draft, review and save the Privileged Access Standard Skill.</div>
+          <p class="step-why">Why: same flow as SoD, with one new demand — the Skill must keep two
+          requirements distinct and attach the carve-out to only one of them.</p>
+
+          <p><strong>What you're building.</strong> A Skill at
+          <code>.claude/skills/privileged-access-standard/SKILL.md</code> that determines whether
+          a privileged grant breaches the approval requirement, the dormancy requirement, or
+          both — and that applies the break-glass exemption to dormancy alone.</p>
+
+          <p><strong>What the source material is.</strong> The standard itself;
+          <code>applications.json</code> for which roles are privileged;
+          <code>service_accounts.json</code> for which accounts are registered; and
+          <code>access_tickets.json</code> for approvals. The review date is quarter end,
+          <strong>2026-09-30</strong>, which puts the dormancy cutoff at
+          <strong>2026-04-03</strong>.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Before testing against data, read
+          the Skill and confirm it would answer these correctly: a registered break-glass account
+          dormant 300 days with an approved ticket (exempt, record it); the same account with no
+          ticket (still a finding — for the missing approval, not the dormancy); a normal user's
+          privileged role dormant 200 days (finding). If the Skill can't distinguish the second
+          case from the first, the carve-out is attached to the wrong requirement.</p>
+
           <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Everything privileged comes back dormant?</strong> Check the date
+              handling. Day 2 normalised <code>granted_date</code> to ISO, but dormancy reads
+              <code>last_login</code> — confirm you're comparing real dates against 2026-09-30 and
+              not comparing strings.</p>
+              <p><strong>The Skill treats every service account as break-glass?</strong>
+              <code>service_accounts.json</code> lists five accounts, and only
+              <code>emergency.admin</code> is a break-glass admin. Being a service account isn't
+              the same as being registered break-glass.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Test the Privileged Access Skill on one known account.</div>
-          <p class="step-why">Why: same discipline — confirm on a case you understand before you
-          trust it on the whole dataset. <code>emergency.admin</code> is a good one: it looks dormant,
-          but it's a registered break-glass account, so the Skill should <em>not</em> flag it.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Using the Privileged Access Skill, evaluate emergency.admin — a
-break-glass Domain Admin account in Active Directory with no login
-in ~300 days. Should the 180-day dormancy rule flag it? Cite the
-clause.</pre>
+          <div class="step-do">Test it on the five dormant privileged grants.</div>
+          <p class="step-why">Why: this is the exemption test. Two of the five must survive it,
+          and for the right reason.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Three findings and two recorded
+          exemptions, split exactly this way:</p>
+          <div class="terminal">
+<span class="out">A000365, A000605, A000768   finding    dormant &gt;180d, Vault Admin, and no
+                                       approving ticket on record
+A000963, A001015           exempt     registered break-glass
+                                       (service_accounts.json) — dormancy
+                                       waived, approval ticket present</span>
           </div>
+          <p class="step-why">Then check the reasoning, not just the verdict. Ask the Skill why
+          the <code>emergency.admin</code> accounts are exempt: the answer must reference their
+          registration, not merely their name. A Skill that pattern-matches on the string
+          "emergency" has learned the wrong rule and will clear any account someone names
+          <code>emergency.something</code>.</p>
+
           <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>emergency.admin is flagged as dormant?</strong> The exemption isn't
+              firing. Check that the Skill actually reads
+              <code>data/2026-Q3/service_accounts.json</code> — this is the most common version of
+              the missing-join failure, where the rule is right but the Skill never looks up the
+              fact it depends on.</p>
+              <p><strong>You get more than five dormant grants?</strong> You're likely treating
+              every role as privileged. Only roles listed under <code>privileged_roles</code> in
+              <code>applications.json</code> count — 105 grants of the 15,081 in your ledger.</p>
+              <p><strong>You get fewer than five?</strong> Check the cutoff arithmetic. 180 days
+              before 2026-09-30 is 2026-04-03; a grant last used in early 2026 is dormant even
+              though it looks recent.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Draft, save, and spot-test the Contractor Access Standard Skill.</div>
-          <p class="step-why">Why: the third time should feel routine. Draft from the policy, save
-          to <code>.claude/skills/contractor-access.md</code>, and test it on one contractor whose
-          SOW has already lapsed.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Read policies/contractor-access-standard.md. Draft a Skill that
-flags contractor access still active past its SOW end date, unless
-a new approved ticket references a renewed SOW. Number the clauses.
-Save to .claude/skills/contractor-access.md, then test it on the
-contractor whose term_date is about three weeks past.</pre>
+          <div class="step-do">Draft, save and test the Contractor Access Standard Skill.</div>
+          <p class="step-why">Why: the third time should feel routine. The difficulty here isn't
+          the rule — it's that the data offers a plausible-looking reason to dismiss every real
+          finding.</p>
+
+          <p><strong>What you're building.</strong> A Skill at
+          <code>.claude/skills/contractor-access-standard/SKILL.md</code> that flags contractor
+          access surviving its SOW end date, and that accepts an extension only when a new
+          approved ticket references a renewed SOW and predates the prior end date.</p>
+
+          <p><strong>What the data requires.</strong> This rule cannot be evaluated from
+          <code>ledger.csv</code> alone. Whether an account belongs to a contractor, and when that
+          contractor's SOW ended, live in <code>hr_roster.csv</code> —
+          <code>employment_type</code> and <code>term_date</code>. The Skill has to reach the HR
+          side of the join you built yesterday. If it only ever sees entitlement rows, it will
+          find nothing and report success.</p>
+
+          <p><strong>How you'll know you got it right.</strong> All four accounts flagged:</p>
+          <div class="terminal">
+<span class="out">A001143  anita.richardson     SOW ended 2026-09-10
+A001163  jennifer.gallagher   SOW ended 2026-09-14
+A000175  jamie.alvarez        SOW ended 2026-09-11
+A000577  jamie.alvarez        SOW ended 2026-09-11   &lt;- second account, same SOW</span>
           </div>
+          <p class="step-why">And two negative checks that matter more than the positive one:</p>
+          <ul class="learn">
+            <li>The three <code>VPN / User</code> tickets did <strong>not</strong> clear anyone.
+            Ask the Skill what it made of them; the answer should be that they grant one
+            application's access and reference no renewed SOW, so they don't extend anything.</li>
+            <li>None of the other 114 contractors are flagged. They have no
+            <code>term_date</code>, meaning no lapsed SOW — absence of an end date is not an
+            expired one.</li>
+          </ul>
+
           <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Not sure the Skill is being applied?</strong> Ask Claude to quote the exact
-              clause it used and the dates it read — the SOW end date and any vouching ticket. A
-              manager's after-the-fact vouch in a ticket does <em>not</em> satisfy the standard; only
-              a new ticket referencing a renewed SOW does. If the call looks wrong, the Skill's
-              wording — not the data — is usually the fix.</p>
+              <p><strong>Zero contractor findings?</strong> Almost always the missing join. The
+              tell is a confident "no violations found" that arrives suspiciously fast. Ask the
+              Skill to state, for one named contractor, which file it read the SOW end date from —
+              if it can't name <code>hr_roster.csv</code>, it never reached HR data at all.</p>
+              <p><strong>All 117 contractors flagged?</strong> The opposite error: treating
+              contractor status alone as the violation. Every contractor at Meridian is
+              <code>status: active</code>; only the three with a past <code>term_date</code> have
+              actually lapsed.</p>
+              <p><strong>Only three accounts flagged?</strong> You've missed
+              <code>A000577</code> — Jamie Alvarez's second account. The Skill is probably
+              resolving one account per person. Day 2's identity work is what makes both
+              reachable; the SOW governs the person, so it lapses every account they hold.</p>
+              <p><strong>The Skill cleared the contractors on the strength of a ticket?</strong>
+              Reread the standard's condition. An extension needs a ticket referencing the
+              <em>renewed SOW</em>. A manager approving VPN access three days before someone's
+              contract ends is not an SOW renewal, and treating it as one is precisely the
+              judgment error the exercise is built around.</p>
             </div>
           </details>
         </li>
@@ -712,8 +1104,10 @@ git commit -m "Add privileged-access and contractor-access policy Skills"</pre>
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 3 when</strong> three Skills live in
-      <code>.claude/skills/</code> — <code>sod.md</code>, <code>privileged-access.md</code>, and
-      <code>contractor-access.md</code> — and each has passed a spot-test on a known account.</p>
+      <code>.claude/skills/</code>, each as a directory containing <code>SKILL.md</code>; the
+      privileged Skill returns three findings and exempts both <code>emergency.admin</code>
+      accounts by registration; and the contractor Skill flags all four lapsed accounts without
+      being talked out of it by the VPN tickets.</p>
     </div>
   </section>
 
@@ -730,85 +1124,168 @@ git commit -m "Add privileged-access and contractor-access policy Skills"</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Yesterday's triage produced findings from one hard-coded rule. Today you rewire it so it
-      applies your three Skills and — crucially — makes every finding <em>cite the clause it came
-      from</em>. A finding an auditor can trace back to a specific policy clause is worth ten a
-      reviewer has to take on faith.</p>
-      <p>The change is one new field on every finding: <code>policy_reference</code>. Here's the
-      shape you're aiming for:</p>
+      <p>Yesterday's triage applied one hardcoded rule and produced two findings. Today it applies
+      three Skills and produces findings in three categories — each one carrying the clause it
+      came from. The pipeline shape barely changes; what changes is that a reviewer can now follow
+      any finding back to a sentence in the binder.</p>
+
+      <p><strong>Why citations are the deliverable.</strong> An uncited finding asks a reviewer to
+      trust you. A cited one lets them check you. When Meridian's auditor asks why James Hernandez
+      appears on this list and three Controllers don't, "ACP-4.1" and "ACP-4.2" answer the
+      question completely. That is the difference between a report that survives review and one
+      that generates a meeting.</p>
+
+      <p><strong>The contract hasn't changed.</strong> Findings still validate against
+      <code>src/meridian_capstone/contract/findings.schema.json</code>, which sets
+      <code>additionalProperties: false</code> — you cannot invent fields. The field you're
+      populating already exists and is called <code>policy_citations</code>: an array of strings.
+      Yesterday it held whatever you typed. Today it holds citations the Skills produced:</p>
 
       <div class="code labeled">
-        <span class="kind">findings.json (with citation)</span>
+        <span class="kind">findings.json — one cited finding, contract shape</span>
         <button class="copy" type="button">Copy</button>
         <pre>{
-  "finding_id": "F-0007",
-  "canonical_id": "MRE-00317",
-  "person": "&lt;name assigned at seed time&gt;",
+  "scope": "account",
+  "account_id": "A000251",
+  "employee_id": "E00251",
   "app": "Atlas ERP",
-  "role": "AP Clerk + AP Manager",
-  "reason": "Holds AP Clerk and AP Manager — can enter an invoice and approve it",
-  "policy_reference": "SoD Skill, §2.3",
-  "severity": "high",
-  "status": "open"
+  "entitlement": "AP Manager + Vendor Admin",
+  "category": "sod_conflict",
+  "severity": "critical",
+  "recommendation": "revoke",
+  "rationale": "Holds both halves of the vendor-payment cycle; not the
+                Controller, so ACP-4.2 does not apply.",
+  "evidence": [
+    {"source": "ledger.csv",
+     "detail": "A000251 holds AP Manager and Vendor Admin in Atlas ERP"},
+    {"source": "sod_matrix.json",
+     "detail": "Atlas ERP Vendor Admin + AP Manager, severity critical"}
+  ],
+  "policy_citations": ["ACP-4.1", "SoD Policy"],
+  "confidence": 0.95
 }</pre>
       </div>
+
+      <p>The three categories you'll produce are all already in the schema's enum:
+      <code>sod_conflict</code>, <code>dormant_privileged</code>, and
+      <code>contractor_overstay</code>. Exemptions continue to live in the
+      <code>exemptions.json</code> sidecar you built yesterday, because the contract has no field
+      for them — today that file grows from three entries to five.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Update the triage step to apply all three Skills.</div>
-          <p class="step-why">Why: triage should now run each grant past every relevant policy Skill,
-          not a single rule.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Update triage.py so that for each ledger entry it evaluates the
-grant against the SoD, privileged-access, and contractor-access
-Skills, and emits a finding for each violation.</pre>
-          </div>
+          <div class="step-do">Update triage to apply all three Skills.</div>
+          <p class="step-why">Why: triage stops being one rule and becomes a pass over the ledger
+          that consults each relevant policy.</p>
+
+          <p><strong>What you're building.</strong> A triage step that, for the whole Q3 ledger,
+          evaluates SoD conflicts, privileged access, and contractor access, and emits a finding
+          per violation in the contract shape. Keep the deterministic work deterministic: which
+          accounts hold conflicting pairs, which grants are privileged, which contractors have
+          lapsed — that's a join over files, and it was yesterday's lesson. The Skills supply the
+          judgment on top: does this breach the policy, is it excused, and what does it cite.</p>
+
+          <p><strong>How you'll know you got it right.</strong> The run completes over the full
+          ledger — all 15,081 rows in scope, not a sample — and produces findings in all three
+          categories. If one category comes back empty, that Skill isn't reaching triage; fix that
+          before tuning anything else.</p>
+
+          <p><strong>Suggested workflow.</strong> Describe the pipeline you want rather than the
+          code: read the ledger, determine the candidate populations for each policy, apply the
+          matching Skill to each candidate, and collect the results into the contract shape. Ask
+          Claude Code to report per-category counts as it goes — those counts are how you'll catch
+          a Skill that silently matched nothing.</p>
+
           <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Add the <code>policy_reference</code> field to every finding.</div>
-          <p class="step-why">Why: this is the day's whole point — traceability. Each finding must
-          carry the exact Skill and clause that produced it.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Add a policy_reference field to every finding, formatted like
-"SoD Skill, §2.3", holding the specific Skill and clause the
-finding came from.</pre>
+          <div class="step-do">Populate <code>policy_citations</code> on every finding.</div>
+          <p class="step-why">Why: this is the day's whole point. A finding without a citation is
+          the thing you set out today to stop producing.</p>
+
+          <p><strong>What you're building.</strong> Every finding in <code>findings.json</code>
+          carrying a non-empty <code>policy_citations</code> array whose entries resolve to real
+          text in <code>data/2026-Q3/policies/</code>. And every entry in
+          <code>exemptions.json</code> naming the clause that suppressed it.</p>
+
+          <p><strong>What a good citation set looks like</strong>, given that only the ACP is
+          numbered:</p>
+          <div class="terminal">
+<span class="out">sod_conflict         ["ACP-4.1", "SoD Policy"]
+  suppressed         ["ACP-4.2"]                 -> exemptions.json
+dormant_privileged   ["Privileged Access Standard"]
+  suppressed         ["Privileged Access Standard"]  (break-glass carve-out)
+contractor_overstay  ["Contractor Access Standard"]</span>
           </div>
+          <p class="step-why">Cite the document title where a policy has no clause numbers. That
+          is honest and it resolves. A fabricated "§3.1" resolves to nothing and is the one
+          outcome worse than a blank field.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Count them: the number of findings
+          with a non-empty <code>policy_citations</code> equals the total number of findings.
+          Then spot-check by hand — take one citation from each category, open the policy file,
+          and confirm the sentence is there.</p>
+
           <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Schema validation fails on an unknown field?</strong> The contract sets
+              <code>additionalProperties: false</code>. Fields like <code>finding_id</code>,
+              <code>policy_reference</code> or <code>status</code> aren't in it. Use
+              <code>policy_citations</code>, and put anything the contract can't hold in the
+              exemptions sidecar.</p>
+              <p><strong>Some findings have an empty citation array?</strong> Ask which Skill
+              produced them. Usually one Skill's citation instruction is vaguer than the other
+              two's — tighten its "how to cite" section rather than patching the output.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Run the pipeline and read the cited findings.</div>
-          <p class="step-why">Why: this is your proof. Every finding should now name its policy source.</p>
-          <div class="code labeled">
-            <span class="kind">Terminal</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>python triage.py</pre>
-          </div>
+          <div class="step-do">Run the full Q3 pass and verify the totals.</div>
+          <p class="step-why">Why: your proof. Every number here is knowable in advance, so any
+          deviation is a real signal rather than a judgment call.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Nine findings across three
+          categories, five recorded exemptions, and full citation coverage:</p>
           <div class="terminal">
-<span class="cmd">python triage.py</span>
-<span class="out">Applied Skills:  sod, privileged-access, contractor-access
-Scanned ledger rows:   15234
-Findings generated:     34
-  with policy_reference: 34 / 34
-Wrote findings.json</span>
+<span class="out">category              findings   accounts
+sod_conflict                 2   A000251, A000615
+dormant_privileged           3   A000365, A000605, A000768
+contractor_overstay          4   A001143, A001163, A000175, A000577
+                          ----
+total                        9   with policy_citations: 9 / 9
+
+exemptions.json              5   A000042, A000089, A000168   (ACP-4.2)
+                                 A000963, A001015            (break-glass)</span>
           </div>
+          <!-- TODO: verify with Kevin — contractor_overstay granularity is genuinely
+               ambiguous. Per-account (4 findings) reads best because the SOW governs the
+               person, and the schema allows scope=account with entitlement=null. Per-grant
+               (46 findings) is equally contract-valid. tests/test_skills.py asserts on the
+               *set of account_ids* so either scoping passes; only the prose below picks a
+               default. Confirm which one the Day 4/5 numbers should assume. -->
+          <p class="step-why">If you scoped contractor findings per grant rather than per account,
+          your contractor count will be 46 rather than 4 — that is defensible, but say so in your
+          notes and expect the account set to be the same four. Everything else should match
+          exactly.</p>
+
           <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Some findings have an empty <code>policy_reference</code>?</strong> A Skill
-              flagged something without citing a clause. Ask Claude: "which findings are missing a
-              policy_reference, and which Skill produced them?" — then tighten that Skill's citation
-              instruction.</p>
+              <p><strong>More findings than expected?</strong> Look at which category grew. An
+              inflated <code>dormant_privileged</code> usually means every role is being treated
+              as privileged; an inflated <code>contractor_overstay</code> usually means contractor
+              status alone is being read as a violation.</p>
+              <p><strong>The Controllers are back?</strong> Yesterday's exemption regressed while
+              you were rewiring triage. <code>tests/test_ledger.py</code> catches this — run it
+              alongside today's tests.</p>
             </div>
           </details>
         </li>
@@ -828,30 +1305,44 @@ git commit -m "Wire Skills into triage; findings now cite policy clauses"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 4 when</strong> <code>findings.json</code> regenerates from
-      all three Skills and <em>every</em> finding carries a <code>policy_reference</code> pointing to
-      a specific Skill and clause — for example <code>"SoD Skill, §2.3"</code>.</p>
+      <p><strong>You're done with Cycle 4 when</strong> <code>findings.json</code> regenerates
+      from all three Skills with findings in <code>sod_conflict</code>,
+      <code>dormant_privileged</code> and <code>contractor_overstay</code>, every finding carries
+      a <code>policy_citations</code> entry that resolves to real policy text, and
+      <code>exemptions.json</code> records all five suppressions.</p>
     </div>
   </section>
 
   <!-- ============ VERIFICATION ============ -->
   <section class="verify">
     <h2 class="section-title">Prove it landed</h2>
-    <p>One command confirms your Skills are in place and every finding is traceable to a clause. Run
+    <p>One command checks the three Skills — their location, their frontmatter, and the rules they
+    encode — then checks that every finding cites a clause and that the exemptions survived. Run
     it from the repository root:</p>
     <div class="code labeled">
       <span class="kind">Terminal</span>
       <button class="copy" type="button">Copy</button>
       <pre>pytest tests/test_skills.py</pre>
     </div>
-    <p class="step-why">Green means Day 3 is complete. If a test fails, read what it expected — a
-    missing Skill or an uncited finding is the usual culprit.</p>
     <div class="terminal">
 <span class="cmd">pytest tests/test_skills.py</span>
-<span class="out">tests/test_skills.py .......                                   [100%]
+<span class="out">tests/test_skills.py ...................                       [100%]
 
-7 passed in 0.51s</span>
+19 passed in 0.04s</span>
     </div>
+    <p class="step-why">Nineteen passed means Day 3 is complete. Run
+    <code>pytest tests/test_ledger.py</code> too — today rewrote <code>findings.json</code>, and
+    Day 2's checks must still hold. Two other results are worth recognising:</p>
+    <ul class="learn">
+      <li><strong>"1 skipped"</strong> means no <code>.claude/skills/</code> directory was found,
+      so the module skipped entirely. That is not a pass — you're either in the wrong directory or
+      the Skills never got created.</li>
+      <li><strong>A failure</strong> names what it expected and, where the wrong answer is
+      predictable, what that wrong answer means. A missing <code>SKILL.md</code> will tell you it
+      found a flat <code>.md</code> file instead; a contractor set of three will tell you which
+      account you dropped. Read the message before changing code, then hand Claude Code the exact
+      assertion that failed rather than a description of it.</li>
+    </ul>
     <label class="done"><input type="checkbox" data-task="verify"> Tests pass — Day 3 done</label>
   </section>
 
@@ -862,25 +1353,48 @@ git commit -m "Wire Skills into triage; findings now cite policy clauses"</pre>
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>Three policy <strong>Skills</strong> — SoD, privileged access, and contractor access — in prose Claude can apply</li>
-        <li>A tested SoD Skill that correctly flags the AP Clerk + AP Manager violation in Atlas ERP</li>
-        <li>An upgraded triage step where every finding <strong>cites its policy clause</strong></li>
+        <li><strong>Read the binder properly.</strong> Five policies, and an inventory of what can
+        actually be cited — the discovery that only the Access Control Policy carries clause
+        numbers, and that the other four must be cited by title.</li>
+        <li><strong>Three policy Skills.</strong> Segregation of Duties, the Privileged Access
+        Standard, and the Contractor Access Standard, each a directory with a
+        <code>SKILL.md</code>, each tested against grants whose answer you already knew.</li>
+        <li><strong>Three exemptions you didn't trip over.</strong> The Controllers under ACP-4.2,
+        the two registered break-glass accounts under the dormancy carve-out, and the three VPN
+        tickets that were designed to look like SOW renewals and aren't.</li>
+        <li><strong>Nine cited findings.</strong> Two SoD conflicts, three dormant privileged
+        grants, four lapsed contractor accounts — every one naming a clause a reviewer can open
+        and read.</li>
       </ul>
+      <p style="margin-top:14px">Worth noticing: the hardest judgments today were all about what
+      <em>not</em> to report. Three Controllers, two break-glass accounts, and 114 contractors
+      whose access is perfectly fine. A review that flags them is worse than useless — and the
+      only reason yours doesn't is that the exceptions are written down where Claude can read
+      them.</p>
     </div>
 
     <div class="narrative">
-      <p class="tomorrow">Your system now understands Meridian's compliance rulebook. Tomorrow you
-      learn how Claude Code uses <em>tools</em>, decompose your pipeline into <em>subagents</em> so it
-      stops choking on Meridian's full 15,000 entitlements, and build the enforcement layer —
-      <em>hooks</em> — that makes the whole run audit-ready.</p>
+      <p class="tomorrow">Your system now knows Meridian's rulebook, but it still reads it the
+      same way every time: one process, one context, everything in one pass. Tomorrow you take
+      this pipeline apart. You'll learn how Claude Code uses <em>tools</em> to fetch facts on
+      demand instead of holding all 15,081 grants in mind at once, decompose triage into
+      <em>subagents</em> that each own one policy, and add <em>hooks</em> — the enforcement layer
+      that makes a run auditable whether or not anyone was watching.</p>
     </div>
 
     <div class="panel curious">
       <h3>If you're curious</h3>
       <ul class="learn">
-        <li><a href="#">Why prose beats config for compliance rules</a> — the exceptions problem</li>
-        <li><a href="#">Segregation of Duties in practice</a> — classic request/approve conflicts</li>
-        <li><a href="#">Writing a Skill Claude applies consistently</a> — structure and citation tips</li>
+        <li><a href="https://code.claude.com/docs/en/skills">Extend Claude with skills</a> — the
+        reference for everything you used today: where Skills live, the frontmatter fields, and
+        how discovery works (Claude Code docs)</li>
+        <li><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices">Skill
+        authoring best practices</a> — the "degrees of freedom" idea is the useful one here:
+        matching how prescriptive a rule is to how fragile the task is, which is exactly the
+        judgment behind ACP-4.2 (Claude docs)</li>
+        <li><a href="https://www.markdownguide.org/basic-syntax/">Markdown basic syntax</a> — a
+        short, practical reference for headings, bold and lists; enough to write any Skill in this
+        course (Markdown Guide)</li>
       </ul>
     </div>
   </section>
