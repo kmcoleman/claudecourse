@@ -43,10 +43,17 @@ def generate(seed: int, quarter: str, out_dir: str, key_path: str | None = None)
 
     hr_rows, iam_rows, tickets, prior_narrative, cases = [], [], [], [], []
     hire_by_account: dict[str, date] = {}
-    counter = 1
-    for person, narrative_name in pairs:
-        account_id = f"A{counter:06d}"
-        counter += 1
+    # Decouple account_id numbering from employee_id / pair order. Population
+    # order fixes employee_ids (E00001..), and walking `pairs` sequentially for
+    # account_ids used to make A0000NN <-> E000NN, letting students shortcut the
+    # reconciliation by matching digits. Draw account numbers from an
+    # independently shuffled 1..N sequence instead: the *set* of account_ids is
+    # unchanged (row counts/ID range preserved), only the person<->number
+    # mapping is scrambled, and it stays deterministic under `seed`.
+    account_numbers = list(range(1, len(pairs) + 1))
+    rng.shuffle(account_numbers)
+    for (person, narrative_name), number in zip(pairs, account_numbers):
+        account_id = f"A{number:06d}"
         hire_by_account[account_id] = person.hire_date
         result = NARRATIVES[narrative_name].emit(person, world, rng, faker, q_end, account_id)
         hr_rows.extend(result.hr_rows)
