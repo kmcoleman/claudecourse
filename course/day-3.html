@@ -346,7 +346,7 @@
     <h1>Teaching Claude the rulebook.</h1>
 
     <div class="narrative">
-      <p class="lede">Yesterday you built the Ledger — 15,081 grants, each attached to a person.
+      <p class="lede">Yesterday you built the Ledger — 15,158 grants, each attached to a person.
       But holding <code>Admin</code> isn't a problem by itself. It becomes a problem when it
       violates a <em>policy</em>. Today you teach Claude Meridian's policies.</p>
 
@@ -655,11 +655,11 @@ termination-procedure.md       no clause numbers  (cite the document title)</spa
       exempt. Two are real conflicts:</p>
 
       <div class="terminal">
-<span class="out">A000042  Patrick Ramos      Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
-A000089  Amanda Garrison    Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
-A000168  April Tyler        Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
-A000251  Michelle Mercado   Senior Accountant, F&amp;A            -> FINDING
-A000615  James Hernandez    Field Services, terminated         -> FINDING</span>
+<span class="out">A000674  Patrick Ramos      Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
+A001125  Amanda Garrison    Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
+A000387  April Tyler        Controller, Finance &amp; Accounting   -> exempt, ACP-4.2
+A001115  Michelle Mercado   Senior Accountant, F&amp;A            -> FINDING
+A000384  James Hernandez    Field Services, terminated         -> FINDING</span>
           </div>
 
       <p>Yesterday those two findings carried whatever citation you typed. Today they carry
@@ -787,7 +787,7 @@ A000615  James Hernandez    Field Services, terminated         -> FINDING</span>
 
         <li>
           <div class="step-do">Test the Skill against the five Atlas ERP accounts.</div>
-          <p class="step-why">Why: never turn a new Skill loose on 15,081 rows. Test it where you
+          <p class="step-why">Why: never turn a new Skill loose on 15,158 rows. Test it where you
           already know the answer — and you know this one exactly.</p>
 
           <p><strong>What you're building.</strong> Evidence that the Skill reproduces yesterday's
@@ -798,9 +798,9 @@ A000615  James Hernandez    Field Services, terminated         -> FINDING</span>
           <p><strong>How you'll know you got it right.</strong> Exactly this split, with the
           reasoning attached to each:</p>
           <div class="terminal">
-<span class="out">A000042, A000089, A000168   exempt   ACP-4.2 — Controller, F&amp;A, CFO
+<span class="out">A000674, A001125, A000387   exempt   ACP-4.2 — Controller, F&amp;A, CFO
                                               compensating control on record
-A000251, A000615            finding  ACP-4.1 — conflicting duties, critical
+A001115, A000384            finding  ACP-4.1 — conflicting duties, critical
                                               (SoD matrix: Atlas ERP pair)</span>
           </div>
           <p class="step-why">Four things to check in the output, beyond the account list:</p>
@@ -811,7 +811,7 @@ A000251, A000615            finding  ACP-4.1 — conflicting duties, critical
             <em>reported as suppressed</em> rather than omitted in silence.</li>
             <li>Severity is <strong>critical</strong> — that comes from the matrix, not from the
             Skill's own judgment.</li>
-            <li>A000615 is flagged <em>despite</em> being a terminated Field Services account
+            <li>A000384 is flagged <em>despite</em> being a terminated Field Services account
             rather than a finance one. The conflict is about the roles held, not the department;
             a Skill that quietly scoped itself to Finance would drop this one.</li>
           </ul>
@@ -863,8 +863,8 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 2 when</strong>
       <code>.claude/skills/sod-policy/SKILL.md</code> exists with valid frontmatter, Claude loads
-      it, and applying it to your ledger returns findings on A000251 and A000615 citing ACP-4.1
-      while suppressing A000042, A000089 and A000168 under ACP-4.2 — with the suppressions
+      it, and applying it to your ledger returns findings on A001115 and A000384 citing ACP-4.1
+      while suppressing A000674, A001125 and A000387 under ACP-4.2 — with the suppressions
       recorded rather than dropped.</p>
     </div>
   </section>
@@ -909,11 +909,11 @@ git commit -m "Add Segregation of Duties policy Skill"</pre>
       of them have been dormant beyond 180 days:</p>
 
       <div class="terminal">
-<span class="out">A000365  gabriel.villa     Vault / Admin              2025-12-09   295d
-A000605  debbie.gonzalez   Vault / Admin              2025-11-29   305d
-A000768  robert.miller     Vault / Admin              2025-09-30   365d
-A000963  emergency.admin   Active Directory / Domain Admin  2026-01-05   268d
-A001015  emergency.admin   Active Directory / Domain Admin  2025-10-19   346d</span>
+<span class="out">A000012  gabriel.villa     Vault / Admin              2025-11-14   320d
+A000742  debbie.gonzalez   Vault / Admin              2025-10-27   338d
+A000598  robert.miller     Vault / Admin              2025-09-14   381d
+A001159  emergency.admin   Active Directory / Domain Admin  2025-12-21   283d
+A001199  emergency.admin   Active Directory / Domain Admin  2025-10-01   364d</span>
       </div>
 
       <p>The two <code>emergency.admin</code> accounts are registered break-glass — both appear in
@@ -931,9 +931,9 @@ A001015  emergency.admin   Active Directory / Domain Admin  2025-10-19   346d</s
       and all three are in the past:</p>
 
       <div class="terminal">
-<span class="out">E01143  Anita Richardson    SOW ended 2026-09-10   A001143            12 grants
-E01163  Jennifer Gallagher  SOW ended 2026-09-14   A001163            11 grants
-E00175  Jamie Alvarez       SOW ended 2026-09-11   A000175 + A000577  23 grants</span>
+<span class="out">E01143  Anita Richardson    SOW ended 2026-09-12   A001185            11 grants
+E01163  Jennifer Gallagher  SOW ended 2026-09-15   A001195            13 grants
+E00175  Jamie Alvarez       SOW ended 2026-09-15   A000741 + A000686  22 grants</span>
       </div>
 
       <p>Four accounts, 46 grants, and seven logins recorded <em>after</em> the SOW lapsed. Two
@@ -997,9 +997,9 @@ E00175  Jamie Alvarez       SOW ended 2026-09-11   A000175 + A000577  23 grants<
           <p><strong>How you'll know you got it right.</strong> Three findings and two recorded
           exemptions, split exactly this way:</p>
           <div class="terminal">
-<span class="out">A000365, A000605, A000768   finding    dormant &gt;180d, Vault Admin, and no
+<span class="out">A000012, A000742, A000598   finding    dormant &gt;180d, Vault Admin, and no
                                        approving ticket on record
-A000963, A001015           exempt     registered break-glass
+A001159, A001199           exempt     registered break-glass
                                        (service_accounts.json) — dormancy
                                        waived, approval ticket present</span>
           </div>
@@ -1020,7 +1020,7 @@ A000963, A001015           exempt     registered break-glass
               fact it depends on.</p>
               <p><strong>You get more than five dormant grants?</strong> You're likely treating
               every role as privileged. Only roles listed under <code>privileged_roles</code> in
-              <code>applications.json</code> count — 105 grants of the 15,081 in your ledger.</p>
+              <code>applications.json</code> count — 105 grants of the 15,158 in your ledger.</p>
               <p><strong>You get fewer than five?</strong> Check the cutoff arithmetic. 180 days
               before 2026-09-30 is 2026-04-03; a grant last used in early 2026 is dormant even
               though it looks recent.</p>
@@ -1048,10 +1048,10 @@ A000963, A001015           exempt     registered break-glass
 
           <p><strong>How you'll know you got it right.</strong> All four accounts flagged:</p>
           <div class="terminal">
-<span class="out">A001143  anita.richardson     SOW ended 2026-09-10
-A001163  jennifer.gallagher   SOW ended 2026-09-14
-A000175  jamie.alvarez        SOW ended 2026-09-11
-A000577  jamie.alvarez        SOW ended 2026-09-11   &lt;- second account, same SOW</span>
+<span class="out">A001185  anita.richardson     SOW ended 2026-09-12
+A001195  jennifer.gallagher   SOW ended 2026-09-15
+A000741  jamie.alvarez        SOW ended 2026-09-15
+A000686  jamie.alvarez        SOW ended 2026-09-15   &lt;- second account, same SOW</span>
           </div>
           <p class="step-why">And two negative checks that matter more than the positive one:</p>
           <ul class="learn">
@@ -1076,7 +1076,7 @@ A000577  jamie.alvarez        SOW ended 2026-09-11   &lt;- second account, same 
               <code>status: active</code>; only the three with a past <code>term_date</code> have
               actually lapsed.</p>
               <p><strong>Only three accounts flagged?</strong> You've missed
-              <code>A000577</code> — Jamie Alvarez's second account. The Skill is probably
+              <code>A000686</code> — Jamie Alvarez's second account. The Skill is probably
               resolving one account per person. Day 2's identity work is what makes both
               reachable; the SOW governs the person, so it lapses every account they hold.</p>
               <p><strong>The Skill cleared the contractors on the strength of a ticket?</strong>
@@ -1146,7 +1146,7 @@ git commit -m "Add privileged-access and contractor-access policy Skills"</pre>
         <button class="copy" type="button">Copy</button>
         <pre>{
   "scope": "account",
-  "account_id": "A000251",
+  "account_id": "A001115",
   "employee_id": "E00251",
   "app": "Atlas ERP",
   "entitlement": "AP Manager + Vendor Admin",
@@ -1157,7 +1157,7 @@ git commit -m "Add privileged-access and contractor-access policy Skills"</pre>
                 Controller, so ACP-4.2 does not apply.",
   "evidence": [
     {"source": "ledger.csv",
-     "detail": "A000251 holds AP Manager and Vendor Admin in Atlas ERP"},
+     "detail": "A001115 holds AP Manager and Vendor Admin in Atlas ERP"},
     {"source": "sod_matrix.json",
      "detail": "Atlas ERP Vendor Admin + AP Manager, severity critical"}
   ],
@@ -1189,7 +1189,7 @@ git commit -m "Add privileged-access and contractor-access policy Skills"</pre>
           judgment on top: does this breach the policy, is it excused, and what does it cite.</p>
 
           <p><strong>How you'll know you got it right.</strong> The run completes over the full
-          ledger — all 15,081 rows in scope, not a sample — and produces findings in all three
+          ledger — all 15,158 rows in scope, not a sample — and produces findings in all three
           categories. If one category comes back empty, that Skill isn't reaching triage; fix that
           before tuning anything else.</p>
 
@@ -1255,14 +1255,14 @@ contractor_overstay  ["Contractor Access Standard"]</span>
           categories, five recorded exemptions, and full citation coverage:</p>
           <div class="terminal">
 <span class="out">category              findings   accounts
-sod_conflict                 2   A000251, A000615
-dormant_privileged           3   A000365, A000605, A000768
-contractor_overstay          4   A001143, A001163, A000175, A000577
+sod_conflict                 2   A001115, A000384
+dormant_privileged           3   A000012, A000742, A000598
+contractor_overstay          4   A001185, A001195, A000741, A000686
                           ----
 total                        9   with policy_citations: 9 / 9
 
-exemptions.json              5   A000042, A000089, A000168   (ACP-4.2)
-                                 A000963, A001015            (break-glass)</span>
+exemptions.json              5   A000674, A001125, A000387   (ACP-4.2)
+                                 A001159, A001199            (break-glass)</span>
           </div>
           <!-- TODO: verify with Kevin — contractor_overstay granularity is genuinely
                ambiguous. Per-account (4 findings) reads best because the SOW governs the
@@ -1377,7 +1377,7 @@ git commit -m "Wire Skills into triage; findings now cite policy clauses"</pre>
       <p class="tomorrow">Your system now knows Meridian's rulebook, but it still reads it the
       same way every time: one process, one context, everything in one pass. Tomorrow you take
       this pipeline apart. You'll learn how Claude Code uses <em>tools</em> to fetch facts on
-      demand instead of holding all 15,081 grants in mind at once, decompose triage into
+      demand instead of holding all 15,158 grants in mind at once, decompose triage into
       <em>subagents</em> that each own one policy, and add <em>hooks</em> — the enforcement layer
       that makes a run auditable whether or not anyone was watching.</p>
     </div>

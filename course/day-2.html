@@ -516,8 +516,8 @@ department     one department, four spellings
   'Customer Care'   ' Customer Care '   'CUSTOMER CARE'   'customer care'
 
 entitlements   a duplicate hiding behind the format split
-  A000025  kara.morgan  Box  Member  07/21/2026     &lt;- same grant,
-  A000025  kara.morgan  Box  Member  2026-07-21     &lt;- recorded twice</span>
+  A000323  jessica.schultz  Box  Member  07/21/2026     &lt;- same grant,
+  A000323  jessica.schultz  Box  Member  2026-07-21     &lt;- recorded twice</span>
           </div>
 
           <p><strong>How you'll know you got it right.</strong> Both files load without error and
@@ -527,22 +527,22 @@ entitlements   a duplicate hiding behind the format split
 <span class="cmd">python explore.py</span>
 <span class="out">hr_roster      (1190, 9)     employee_id, full_name, email, department, title,
                             hire_date, term_date, employment_type, status
-entitlements   (15111, 7)    account_id, account_name, app, role, granted_date,
+entitlements   (15188, 7)    account_id, account_name, app, role, granted_date,
                             granted_by, last_login</span>
           </div>
           <p class="step-why">Then the three messes, and a couple of distributions, should
           measure out to these — verify each one against your own output:</p>
           <ul class="learn">
             <li><strong>22 distinct apps</strong> in <code>entitlements</code> — from Active
-            Directory (1,210 grants) down to Procure (15). Atlas ERP, the accounting system, has
-            just 63.</li>
+            Directory (1,210 grants) down to MeridianPay (15). Atlas ERP, the accounting system, has
+            just 62.</li>
             <li><code>granted_date</code> splits into <strong>two formats</strong>: about
-            <strong>7,486</strong> rows ISO (<code>YYYY-MM-DD</code>) and <strong>7,625</strong>
-            rows US (<code>MM/DD/YYYY</code>) — 15,111 in total, roughly half and half.</li>
-            <li><code>department</code> shows <strong>31 distinct spellings</strong> that collapse
+            <strong>7,538</strong> rows ISO (<code>YYYY-MM-DD</code>) and <strong>7,650</strong>
+            rows US (<code>MM/DD/YYYY</code>) — 15,188 in total, roughly half and half.</li>
+            <li><code>department</code> shows <strong>32 distinct spellings</strong> that collapse
             to <strong>12 real departments</strong> once you strip surrounding spaces and
             lowercase. (Customer Care alone accounts for four of those spellings.)</li>
-            <li><code>entitlements</code> has <strong>7 exact-duplicate rows</strong>
+            <li><code>entitlements</code> has <strong>10 exact-duplicate rows</strong>
             (<code>df.duplicated().sum()</code>) — plus more that hide behind the date-format
             split and won't show up in an exact-match count.</li>
           </ul>
@@ -608,7 +608,7 @@ git commit -m "Load and explore HR roster and entitlements data"</pre>
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 1 when</strong> both files load without error, their
-      shapes match <code>(1190, 9)</code> and <code>(15111, 7)</code>, you've measured all three
+      shapes match <code>(1190, 9)</code> and <code>(15188, 7)</code>, you've measured all three
       messes against the targets above, and you've made your first commit.</p>
     </div>
   </section>
@@ -633,7 +633,7 @@ git commit -m "Load and explore HR roster and entitlements data"</pre>
 
       <p><strong>There is no shared key, only a name.</strong> HR identifies people by
       <code>employee_id</code> (<code>E00251</code>). Entitlements identifies accounts by
-      <code>account_id</code> (<code>A000251</code>) and <code>account_name</code>
+      <code>account_id</code> (<code>A001115</code>) and <code>account_name</code>
       (<code>michelle.mercado</code>). Nothing in either file points at the other. The only
       bridge is a human name — spelled <code>Michelle Mercado</code> on the HR side and
       <code>michelle.mercado</code> on the access side. So your matching key has to be
@@ -676,16 +676,16 @@ git commit -m "Load and explore HR roster and entitlements data"</pre>
       confident wrong answer.</p>
 
       <p><strong>And the order of operations matters more than the code.</strong> Cycle 1 found
-      7 exact-duplicate rows in <code>entitlements.csv</code>. That number is a lie of
-      omission. There are really 30 duplicated grants — but 23 of them were recorded twice with
+      10 exact-duplicate rows in <code>entitlements.csv</code>. That number is a lie of
+      omission. There are really 30 duplicated grants — but 20 of them were recorded twice with
       the date written in a different format each time, so the rows aren't byte-identical and an
       exact-match check walks straight past them. Normalise <code>granted_date</code>
-      <em>first</em> and all 30 become visible. De-duplicate first and 23 survive into your
+      <em>first</em> and all 30 become visible. De-duplicate first and 20 survive into your
       ledger forever, quietly inflating every count you report for the rest of the week. Same
       two operations, opposite results:</p>
       <div class="terminal">
-<span class="out">de-duplicate, then normalise dates   ->  15,104 rows   (23 twins survived)
-normalise dates, then de-duplicate   ->  15,081 rows   (correct)</span>
+<span class="out">de-duplicate, then normalise dates   ->  15,178 rows   (20 twins survived)
+normalise dates, then de-duplicate   ->  15,158 rows   (correct)</span>
       </div>
       <p>This is the single easiest thing to get wrong today, and nothing downstream will warn
       you. Get the order right and the rest of Cycle 2 is bookkeeping.</p>
@@ -714,7 +714,7 @@ normalise dates, then de-duplicate   ->  15,081 rows   (correct)</span>
           the cases that decide whether your function is honest:</p>
           <div class="terminal">
 <span class="out">deriving the key      HR full_name -&gt; matching key
-  'Michelle Mercado'    -&gt; michelle.mercado    matches A000251
+  'Michelle Mercado'    -&gt; michelle.mercado    matches A001115
 
 the three collisions
   jacob.miller       2 accounts, 2 different employees   -&gt; ambiguous
@@ -745,7 +745,7 @@ names that never match on the dot pattern
             hold multiple accounts, you're matching too loosely.</li>
             <li>The 5 service accounts (<code>marcus.pipeline</code> ×3,
             <code>emergency.admin</code> ×2) carry <strong>no</strong> <code>employee_id</code>.</li>
-            <li><code>A000409</code> and <code>A000648</code> are both
+            <li><code>A000450</code> and <code>A001148</code> are both
             <code>jacob.miller</code> and must <strong>not</strong> end up with the same
             <code>employee_id</code>.</li>
           </ul>
@@ -755,10 +755,11 @@ names that never match on the dot pattern
           and the hard rule that all 1,200 accounts survive to the output. Then read the summary
           it prints against the numbers above. When a count is off, hand it the specific
           discrepancy — that's the conversation that teaches you what your matcher is actually
-          doing. One caution: you may notice that <code>A000251</code> and <code>E00251</code>
-          share their digits. That is an accident of how this export was generated, not a
-          property of Meridian's systems — real exports have no such gift. Matching on it will
-          make these tests pass and teach you nothing, so derive the key from the name.</p>
+          doing. One caution: don't go looking for a shortcut in the IDs themselves.
+          <code>account_id</code> and <code>employee_id</code> are assigned independently — the
+          digits of Michelle Mercado's <code>A001115</code> have nothing to do with her
+          <code>E00251</code>, just as in a real export. The derived name is the only bridge
+          between the two files, so build your key from the name and nothing else.</p>
 
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
           <details class="stuck">
@@ -802,49 +803,49 @@ names that never match on the dot pattern
           <p><strong>What the data looks like.</strong> The pair you met in Cycle 1 is the whole
           lesson. These are one grant recorded twice, and only the date column disagrees:</p>
           <div class="terminal">
-<span class="out">A000025  kara.morgan  Box  Member  07/21/2026  helpdesk  2026-07-04
-A000025  kara.morgan  Box  Member  2026-07-21  helpdesk  2026-07-04
+<span class="out">A000323  jessica.schultz  Box  Member  07/21/2026  helpdesk  2026-07-08
+A000323  jessica.schultz  Box  Member  2026-07-21  helpdesk  2026-07-08
 
-  exact-duplicate rows before normalising granted_date:   7
+  exact-duplicate rows before normalising granted_date:  10
   exact-duplicate rows after  normalising granted_date:  30</span>
           </div>
 
           <p><strong>How you'll know you got it right.</strong></p>
           <ul class="learn">
-            <li><code>ledger.csv</code> has <strong>exactly 15,081 rows</strong>. Two wrong
-            answers are worth recognising on sight: <strong>15,111</strong> means you
-            de-duplicated nothing, and <strong>15,104</strong> means you de-duplicated before
-            normalising and 23 format-twins survived.</li>
+            <li><code>ledger.csv</code> has <strong>exactly 15,158 rows</strong>. Two wrong
+            answers are worth recognising on sight: <strong>15,188</strong> means you
+            de-duplicated nothing, and <strong>15,178</strong> means you de-duplicated before
+            normalising and 20 format-twins survived.</li>
             <li>No two rows share an <code>(account_id, app, role)</code>.</li>
             <li>Every <code>granted_date</code> matches <code>YYYY-MM-DD</code> — no slashes
             left anywhere in the column.</li>
-            <li><code>A000025</code> (<code>kara.morgan</code>) holds <strong>14</strong> rows,
-            down from 15, with exactly one <code>Box</code> / <code>Member</code> grant.</li>
+            <li><code>A000323</code> (<code>jessica.schultz</code>) holds <strong>11</strong> rows,
+            down from 12, with exactly one <code>Box</code> / <code>Member</code> grant.</li>
             <li>Every <code>account_id</code> in the ledger appears in
             <code>identities.csv</code>.</li>
-            <li>Grouped by <code>match_status</code>, the ledger splits <strong>13,307</strong>
-            matched, <strong>1,548</strong> unmatched, <strong>221</strong> ambiguous,
-            <strong>5</strong> service. Those 1,769 unresolved rows are roughly one grant in
+            <li>Grouped by <code>match_status</code>, the ledger splits <strong>13,388</strong>
+            matched, <strong>1,544</strong> unmatched, <strong>221</strong> ambiguous,
+            <strong>5</strong> service. Those 1,765 unresolved rows are roughly one grant in
             nine — worth sitting with before you report any number as complete.</li>
           </ul>
 
           <p><strong>Suggested workflow.</strong> Ask for the three steps as three named steps
           in one function so the order is visible in the code you're reviewing, and ask it to
-          print the row count after each. Watching 15,111 become 15,081 — and seeing exactly
+          print the row count after each. Watching 15,188 become 15,158 — and seeing exactly
           where — is the point of the exercise.</p>
 
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>15,104 rows?</strong> The classic. You de-duplicated first. Move the
+              <p><strong>15,178 rows?</strong> The classic. You de-duplicated first. Move the
               date normalisation above it and re-run.</p>
               <p><strong>Dates came out wrong — some in 2026, some in the future?</strong>
               <code>05/31/2026</code> is unambiguous, but <code>07/21/2026</code> parsed as
               day-first becomes an invalid date and parsed inconsistently produces silent
               nonsense. Convert explicitly with the known format rather than letting a parser
               guess, and sanity-check the min and max date afterwards.</p>
-              <p><strong>Row count grew past 15,111 after attaching identities?</strong> The
+              <p><strong>Row count grew past 15,188 after attaching identities?</strong> The
               identity join fanned out. <code>identities.csv</code> has one row per
               <code>account_id</code> by construction — if it doesn't, fix Step 1 before
               continuing.</p>
@@ -867,10 +868,10 @@ A000025  kara.morgan  Box  Member  2026-07-21  helpdesk  2026-07-04
 
           <p><strong>How you'll know you got it right.</strong></p>
           <ul class="learn">
-            <li><strong>One person, one identity.</strong> <code>A000025</code> resolves to a
+            <li><strong>One person, one identity.</strong> <code>A000323</code> resolves to a
             single <code>employee_id</code>, and all 14 of its grants carry it.</li>
-            <li><strong>Two people, not merged.</strong> <code>A000409</code> and
-            <code>A000648</code> are both <code>jacob.miller</code>. Neither is confidently
+            <li><strong>Two people, not merged.</strong> <code>A000450</code> and
+            <code>A001148</code> are both <code>jacob.miller</code>. Neither is confidently
             assigned to the other's employee, and your table says so out loud.</li>
             <li><strong>Two accounts, one person.</strong> Both <code>james.hernandez</code>
             accounts resolve to <code>E00023</code> — and look at that HR row while you're
@@ -917,8 +918,8 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
       <p><strong>You're done with Cycle 2 when</strong> <code>identities.csv</code> holds all
       1,200 accounts with at least 1,055 resolved to a real <code>employee_id</code> and the
       rest honestly labelled ambiguous, unmatched, or service; <code>ledger.csv</code> holds
-      <strong>15,081</strong> rows with no repeated <code>(account_id, app, role)</code> and
-      every date in ISO form; and your spot-checks confirm that <code>kara.morgan</code>
+      <strong>15,158</strong> rows with no repeated <code>(account_id, app, role)</code> and
+      every date in ISO form; and your spot-checks confirm that <code>jessica.schultz</code>
       collapsed to one identity while the two <code>jacob.miller</code> accounts did not
       collapse into each other.</p>
     </div>
@@ -938,7 +939,7 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
     <div class="concept">
       <div class="label">Concept</div>
       <p>A ledger tells you who has what. <em>Triage</em> is the next question: which of those
-      15,081 grants deserve a reviewer's attention? You can't hand someone the whole ledger and
+      15,158 grants deserve a reviewer's attention? You can't hand someone the whole ledger and
       say "check this." Triage is the act of narrowing it — applying a stated rule to surface
       the access that is likely to be a problem, and leaving a trail that explains why.</p>
 
@@ -989,7 +990,7 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
         <button class="copy" type="button">Copy</button>
         <pre>{
   "scope": "account",
-  "account_id": "A000251",
+  "account_id": "A001115",
   "employee_id": "E00251",
   "app": "Atlas ERP",
   "entitlement": "AP Manager + Vendor Admin",
@@ -1001,7 +1002,7 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
                 not the Controller, so the ACP-4.2 exemption does not apply.",
   "evidence": [
     {"source": "entitlements",
-     "detail": "A000251 holds Atlas ERP/AP Manager and Atlas ERP/Vendor Admin"},
+     "detail": "A001115 holds Atlas ERP/AP Manager and Atlas ERP/Vendor Admin"},
     {"source": "hr_roster",
      "detail": "title=Senior Accountant, department=Finance &amp; Accounting"}
   ],
@@ -1023,7 +1024,7 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
           <div class="step-do">Find the SoD conflicts in the ledger.</div>
           <p class="step-why">Why: this is your first automated control. Before you worry about
           output shape or exemptions, get the raw list of accounts the rule fires on — and see
-          how few of 15,081 rows it takes to answer the regulator's question.</p>
+          how few of 15,158 rows it takes to answer the regulator's question.</p>
 
           <p><strong>What you're building.</strong> A check that reads <code>ledger.csv</code>,
           groups the Atlas ERP grants by <code>account_id</code>, and reports every account
@@ -1046,8 +1047,8 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
           <p><strong>How you'll know you got it right.</strong></p>
           <ul class="learn">
             <li>The rule fires on <strong>exactly 5 accounts</strong>:
-            <code>A000042</code>, <code>A000089</code>, <code>A000168</code>,
-            <code>A000251</code>, <code>A000615</code>.</li>
+            <code>A000674</code>, <code>A001125</code>, <code>A000387</code>,
+            <code>A001115</code>, <code>A000384</code>.</li>
             <li>Look at the role counts again once you have that list. There are only 5
             <code>Vendor Admin</code> grants in Meridian, and <strong>every single one</strong>
             is held by someone who also holds <code>AP Manager</code>. The overlap isn't a
@@ -1099,11 +1100,11 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
           <p><strong>What the data looks like.</strong> Join each of the five accounts back to
           its HR row through <code>identities.csv</code> and the picture separates itself:</p>
           <div class="terminal">
-<span class="out">A000042  Patrick Ramos      Controller          Finance &amp; Accounting  active
-A000089  Amanda Garrison    Controller          Finance &amp; Accounting  active
-A000168  April Tyler        Controller          Finance &amp; Accounting  active
-A000251  Michelle Mercado   Senior Accountant   Finance &amp; Accounting  active
-A000615  James Hernandez    Ranger/warden       FIELD SERVICES        terminated</span>
+<span class="out">A000674  Patrick Ramos      Controller          Finance &amp; Accounting  active
+A001125  Amanda Garrison    Controller          Finance &amp; Accounting  active
+A000387  April Tyler        Controller          Finance &amp; Accounting  active
+A001115  Michelle Mercado   Senior Accountant   Finance &amp; Accounting  active
+A000384  James Hernandez    Ranger/warden       FIELD SERVICES        terminated</span>
           </div>
           <p class="step-why">Three Controllers — exactly the role ACP-4.2 names. Then a Senior
           Accountant who is close to the exemption but is not it. Then something else entirely:
@@ -1113,10 +1114,10 @@ A000615  James Hernandez    Ranger/warden       FIELD SERVICES        terminated
           <p><strong>How you'll know you got it right.</strong></p>
           <ul class="learn">
             <li><code>findings.json</code> exists at the repository root and contains
-            <strong>exactly 2</strong> findings — <code>A000251</code> and
-            <code>A000615</code>.</li>
+            <strong>exactly 2</strong> findings — <code>A001115</code> and
+            <code>A000384</code>.</li>
             <li><code>exemptions.json</code> contains <strong>exactly 3</strong> —
-            <code>A000042</code>, <code>A000089</code>, <code>A000168</code> — each citing
+            <code>A000674</code>, <code>A001125</code>, <code>A000387</code> — each citing
             <code>ACP-4.2</code>.</li>
             <li>No Controller appears in <code>findings.json</code>. That's the false-positive
             check, and it's the one this cycle is really about.</li>
@@ -1127,7 +1128,7 @@ A000615  James Hernandez    Ranger/warden       FIELD SERVICES        terminated
             actual rows behind it, and a <code>rationale</code> that says why ACP-4.2 doesn't
             apply to this person.</li>
             <li>Match the exemption on <strong>both</strong> title and department, and normalise
-            before comparing. <code>A000615</code>'s department is recorded as
+            before comparing. <code>A000384</code>'s department is recorded as
             <code>FIELD SERVICES</code> — the same casing drift you measured in Cycle 1, still
             live, still able to break a comparison.</li>
           </ul>
@@ -1136,7 +1137,7 @@ A000615  James Hernandez    Ranger/warden       FIELD SERVICES        terminated
           matrix's <code>exemptions</code> block rather than as a hardcoded "if Controller" —
           the clause, the title, and the department are all in the file, and next week's rules
           will want the same mechanism. Then read both output files yourself before you trust
-          them. And read <code>A000615</code>'s HR row properly: this account belongs to the same
+          them. And read <code>A000384</code>'s HR row properly: this account belongs to the same
           <code>james.hernandez</code> collision you untangled in Cycle 2, it is a second account
           for an employee who left, and it holds payment approval in a system their job never
           touched. It is the most serious thing in today's data, and you only see it because the
@@ -1233,7 +1234,7 @@ git commit -m "Add SoD triage rule with ACP-4.2 exemption handling"</pre>
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 3 when</strong> <code>findings.json</code> validates
       against the contract and holds <strong>exactly the two</strong> real SoD conflicts —
-      <code>A000251</code> and <code>A000615</code> — with no Controller among them; and
+      <code>A001115</code> and <code>A000384</code> — with no Controller among them; and
       <code>exemptions.json</code> records the <strong>three</strong> Controllers you cleared,
       each citing <code>ACP-4.2</code>.</p>
     </div>
@@ -1264,7 +1265,7 @@ git commit -m "Add SoD triage rule with ACP-4.2 exemption handling"</pre>
       somewhere other than the repository root — not a pass.</li>
       <li><strong>A failure</strong> is meant to be readable. Each one names the number it
       expected and, where a wrong answer is predictable, what that wrong answer means — a ledger
-      of 15,104 rows will tell you outright that you de-duplicated before normalising dates.
+      of 15,178 rows will tell you outright that you de-duplicated before normalising dates.
       Read the message before you change any code; then hand Claude Code the exact assertion
       that failed rather than a description of it.</li>
     </ul>
@@ -1278,12 +1279,12 @@ git commit -m "Add SoD triage rule with ACP-4.2 exemption handling"</pre>
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li><strong>Loaded the mess.</strong> 1,190 HR rows and 15,111 entitlement grants, and —
+        <li><strong>Loaded the mess.</strong> 1,190 HR rows and 15,188 entitlement grants, and —
         more usefully — a measured account of what was wrong with them: two date formats, 31
         department spellings hiding 12 departments, and duplicates that an exact-match check
         couldn't see.</li>
         <li><strong>Built the Ledger.</strong> A canonical identity table covering all 1,200
-        accounts, and 15,081 de-duplicated grants attached to the people who hold them — with
+        accounts, and 15,158 de-duplicated grants attached to the people who hold them — with
         the unresolved 145 labelled honestly rather than quietly dropped.</li>
         <li><strong>Produced your first findings.</strong> A rule that found five SoD conflicts,
         a policy exemption that cleared three of them, and two findings in the contract shape

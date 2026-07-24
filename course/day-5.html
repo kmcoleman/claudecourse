@@ -423,7 +423,7 @@
         <p>Your pipeline <em>learned the pattern</em> if it flags whoever holds Vendor Admin + AP
         Manager this quarter, exempts whoever the current Controller is, and catches whichever contractor
         is now past SOW. It <em>memorized Q3</em> if it leans on a specific Q3 name, account ID, path, or
-        exact count — <code>if account_id in {"A000042", "A000089", "A000168"}</code>, or
+        exact count — <code>if account_id in {"A000674", "A001125", "A000387"}</code>, or
         <code>assert len(findings) == 9</code>. Memorization passes Q3 and fails silently on Q4.</p>
       </div>
     </div>
@@ -478,8 +478,8 @@
 
           <p><strong>How you'll know you got it right.</strong> You can point to the same categories
           carrying an entirely different cast. In Q3 the two SoD conflicts were Michelle Mercado
-          (A000251) and James Hernandez (A000615); in Q4 they're two different Senior Accountants —
-          <em>David Roberts (A000019) and Catherine Berry (A000629)</em>. Same pattern (a Senior
+          (A001115) and James Hernandez (A000384); in Q4 they're two different Senior Accountants —
+          <em>David Roberts (A000523) and Catherine Berry (A000276)</em>. Same pattern (a Senior
           Accountant in Finance &amp; Accounting holding Vendor Admin + AP Manager); completely
           different people. If your comparison shows the apps or policies changing, something is wrong —
           those are the fixed part of the world.</p>
@@ -581,12 +581,12 @@
 
           <p><strong>How you'll know what happened.</strong> Note precisely what you got: a crash (and
           on what), or a clean file. If it's clean, don't celebrate yet — open it and read the account
-          IDs. If you see A000251 or A000615 in a Q4 result, the run is reading Q3 data.</p>
+          IDs. If you see A001115 or A000384 in a Q4 result, the run is reading Q3 data.</p>
           <div class="terminal">
 <span class="cmd">python -m meridian_capstone.contract.run_review data/2026-Q4 &gt; findings.2026-Q4.json</span>
 <span class="cmd">grep -o 'A00[0-9]*' findings.2026-Q4.json | sort -u | head</span>
-<span class="out">A000251   ← Michelle Mercado — a Q3 account, in a Q4 run
-A000615   ← James Hernandez — Q3 again
+<span class="out">A001115   ← Michelle Mercado — a Q3 account, in a Q4 run
+A000384   ← James Hernandez — Q3 again
 ... the pipeline answered from data/2026-Q3</span>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
@@ -706,7 +706,7 @@ git commit -m "Diagnose Q3-specific assumptions blocking transfer to Q4"</pre>
         <span class="kind">policy-applier (memorized → pattern)</span>
         <button class="copy" type="button">Copy</button>
         <pre># WRONG — memorized Q3 (these are the Q3 Controllers' account IDs)
-if account_id in {"A000042", "A000089", "A000168"}:
+if account_id in {"A000674", "A001125", "A000387"}:
     exempt = True
 
 # RIGHT — the rule, works every quarter
@@ -737,7 +737,7 @@ if (title == "Controller"
           MCP lookups agree.</p>
 
           <p><strong>How you'll know you got it right.</strong> A Q4 run now returns Q4 accounts — you no
-          longer see A000251 or A000615 anywhere in <code>findings.2026-Q4.json</code>. Both halves of
+          longer see A001115 or A000384 anywhere in <code>findings.2026-Q4.json</code>. Both halves of
           the pipeline are in the same quarter.</p>
 
           <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
@@ -794,14 +794,14 @@ if (title == "Controller"
           <div class="terminal">
 <span class="cmd">python -m meridian_capstone.contract.run_review data/2026-Q4 &gt; findings.2026-Q4.json</span>
 <span class="out">category              findings   accounts (Q4 cast)
-sod_conflict                 2   A000019 David Roberts, A000629 Catherine Berry
-dormant_privileged           3   A000154, A000321, A000614   (all Vault / Admin)
-contractor_overstay          3   A000655, A000807, A000879
+sod_conflict                 2   A000523 David Roberts, A000276 Catherine Berry
+dormant_privileged           3   A000820, A000690, A000879   (all Vault / Admin)
+contractor_overstay          3   A000749, A000133, A000157
                           ----
 total                        8   with policy_citations: 8 / 8
 
-exemptions.2026-Q4.json      5   A000217, A000689, A000965   (ACP-4.2 Controllers)
-                                 A000106, A000205            (break-glass)
+exemptions.2026-Q4.json      5   A000518, A000895, A001168   (ACP-4.2 Controllers)
+                                 A000504, A001045            (break-glass)
 Controllers: exempt, not flagged
 no Q3 accounts present</span>
           </div>

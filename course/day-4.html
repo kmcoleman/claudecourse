@@ -348,7 +348,7 @@
     <div class="narrative">
       <p class="lede">Your pipeline works. It reconciles the Ledger, applies three policy Skills, and
       writes nine cited findings. But it does all of that the same way it did on day one: one Claude,
-      one context, everything held in mind at once — 1,190 people, about 1,200 accounts, 15,081 grants
+      one context, everything held in mind at once — 1,190 people, about 1,200 accounts, 15,158 grants
       across 22 apps. Today you take it apart.</p>
 
       <p>Not because it's broken — because that shape doesn't survive contact with scale. A single
@@ -446,7 +446,7 @@
 
       <p><strong>Two ways to reach the data, and they're not interchangeable.</strong> The bulk Ledger
       you built in Day 2 comes from <em>files</em> read in one pass — that's the right tool for the
-      deterministic join over all 15,081 grants. The MCP server is the opposite: targeted,
+      deterministic join over all 15,158 grants. The MCP server is the opposite: targeted,
       judgment-time lookups about a single account or person, the kind a reviewer makes while deciding
       one case. Reconciliation is files; judgment is MCP. You'll use both today.</p>
     </div>
@@ -597,7 +597,7 @@ get_sod_matrix               the structured SoD conflict pairs and exemptions</s
         system prompt.</p>
       </div>
 
-      <p><strong>Why decompose?</strong> A single context asked to reason about 15,081 grants at once
+      <p><strong>Why decompose?</strong> A single context asked to reason about 15,158 grants at once
       runs out of room — it loses track, mixes cases, and slows down. Split the work and each specialist
       keeps a small, clean context: the ledger-reader thinks only about fetching facts, the
       policy-applier thinks only about the Skills, the findings-writer thinks only about output shape.
@@ -727,14 +727,14 @@ get_sod_matrix               the structured SoD conflict pairs and exemptions</s
           <code>meridian-systems</code> server (so Claude knows when to delegate), and a
           <code>tools</code> list limited to the MCP tools plus <code>Read</code> — no
           <code>Write</code>, no <code>Bash</code>. Then have the orchestrator delegate to it to pull the
-          full picture for <strong>A000251</strong>, Michelle Mercado.</p>
+          full picture for <strong>A001115</strong>, Michelle Mercado.</p>
 
-          <p><strong>How you'll know you got it right.</strong> The reader returns A000251's account via
+          <p><strong>How you'll know you got it right.</strong> The reader returns A001115's account via
           <code>get_account</code>, and among its roles you see both <code>Vendor Admin</code> and
           <code>AP Manager</code> — the pair that made it a finding yesterday:</p>
           <div class="terminal">
-<span class="cmd">orchestrator → ledger-reader: gather facts for A000251</span>
-<span class="out">ledger-reader → meridian-systems.get_account("A000251")
+<span class="cmd">orchestrator → ledger-reader: gather facts for A001115</span>
+<span class="out">ledger-reader → meridian-systems.get_account("A001115")
 ← account_name michelle.mercado · 14 entitlement rows
   roles include: Vendor Admin, AP Manager  (Atlas ERP)
 round-trip OK</span>
@@ -781,7 +781,7 @@ git commit -m "Add ledger-reader specialist over Meridian MCP"</pre>
       <p><strong>You're done with Cycle 2 when</strong> <code>.claude/agents/ledger-reader.md</code>
       exists with valid frontmatter and a tool list restricted to read-only MCP access, the
       <code>meridian-systems</code> server is connected, and the orchestrator has delegated to the
-      reader to round-trip one account — you asked about A000251 and its real entitlements came back
+      reader to round-trip one account — you asked about A001115 and its real entitlements came back
       through MCP.</p>
     </div>
   </section>
@@ -835,9 +835,9 @@ git commit -m "Add ledger-reader specialist over Meridian MCP"</pre>
           has no clause numbers). Its <code>tools</code> are <code>Read</code> plus the Skills; it has
           no writing tools and no MCP access.</p>
 
-          <p><strong>How you'll know it's scoped right.</strong> Handed A000251's facts it returns a
+          <p><strong>How you'll know it's scoped right.</strong> Handed A001115's facts it returns a
           <code>sod_conflict</code> citing <code>ACP-4.1</code>; handed a Controller
-          (A000042/A000089/A000168) it returns an <em>exemption</em> citing <code>ACP-4.2</code>, not a
+          (A000674/A001125/A000387) it returns an <em>exemption</em> citing <code>ACP-4.2</code>, not a
           finding. If it ever fetches data or writes a file, its toolset is too wide — that's the
           reader's job and the writer's job respectively.</p>
 
@@ -988,7 +988,7 @@ git commit -m "Add policy-applier and findings-writer specialists"</pre>
           problem or two — that's the point of running it at full scale.</p>
 
           <p><strong>What you're building.</strong> A complete <code>findings.json</code> produced by
-          the orchestrator and its three specialists over all 15,081 grants — not the Day 3 monolith,
+          the orchestrator and its three specialists over all 15,158 grants — not the Day 3 monolith,
           the team. Run it through <code>run_review</code> with no limit and let it complete or stop on
           the first real error.</p>
 
@@ -1037,14 +1037,14 @@ git commit -m "Add policy-applier and findings-writer specialists"</pre>
           the same account sets as Day 3, full citation coverage, and five recorded exemptions:</p>
           <div class="terminal">
 <span class="out">category              findings   accounts
-sod_conflict                 2   A000251, A000615
-dormant_privileged           3   A000365, A000605, A000768
-contractor_overstay          4   A001143, A001163, A000175, A000577
+sod_conflict                 2   A001115, A000384
+dormant_privileged           3   A000012, A000742, A000598
+contractor_overstay          4   A001185, A001195, A000741, A000686
                           ----
 total                        9   with policy_citations: 9 / 9
 
-exemptions.json              5   A000042, A000089, A000168   (ACP-4.2)
-                                 A000963, A001015            (break-glass)</span>
+exemptions.json              5   A000674, A001125, A000387   (ACP-4.2)
+                                 A001159, A001199            (break-glass)</span>
           </div>
           <p class="step-why">If your contractor findings came out as 46 rather than 4, you scoped them
           per grant instead of per account — defensible, and the account set is still the same four, but
