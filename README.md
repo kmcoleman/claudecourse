@@ -21,6 +21,8 @@ claudecourse/
 ├── .mcp.json       KIT  — meridian-systems MCP server wiring (MERIDIAN_DATA_DIR=data/2026-Q3)
 ├── .env.example    KIT  — API-key template
 ├── CLAUDE.md       KIT  — student-facing project rules
+├── index.html      KIT  — course portal + world-data browser
+│                          (generated: `python scripts/build_portal.py`)
 ├── README.student.md  KIT — the README the student repo ships as README.md
 ├── pyproject.toml  KIT  — meridian_capstone package + deps (generator deps in the
 │                          optional `course-source` extra)
@@ -29,7 +31,8 @@ claudecourse/
 │   └── 2026-Q4/    KIT  — pre-generated Day 5 transfer quarter (committed; ships to students)
 ├── src/            KIT  — meridian_capstone package (contract + MCP server)
 ├── tests/          KIT  — the green light (`pytest -m "not api"`)
-├── scripts/        KIT  — bootstrap.sh / bootstrap.ps1
+├── scripts/        KIT  — bootstrap.sh / bootstrap.ps1; build_portal.py
+│                          (+ portal.template.html → index.html)
 ├── examples/       KIT  — sample_findings.json
 │
 ├── course/         ANSWER — day-1..5 HTML
