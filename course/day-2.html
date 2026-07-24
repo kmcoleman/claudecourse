@@ -626,84 +626,281 @@ git commit -m "Load and explore HR roster and entitlements data"</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Now you connect the three tables into one. This is a <em>join</em>: matching rows
-      from different tables that describe the same thing. The trouble is deciding what
-      "the same" means when the systems disagree.</p>
-      <p>Usernames feel like the obvious key — but they aren't unique or stable. People get
-      renamed after marriage, hold a second admin account, or inherit a username a former
-      employee once used. If you join on username alone, you'll merge two people or split
-      one person in two.</p>
-      <p>The fix is a <em>canonical identity</em>: one durable ID per real human that every
-      system's record points back to. Building that mapping — and being honest about the
-      rows you can't confidently match — is the heart of reconciliation.</p>
+      <p>Cycle 1 left you with two files that describe the same organisation and share no
+      key. <em>Reconciliation</em> is the work of building the missing link: deciding, row by
+      row, which account belongs to which human — and being honest about the ones you can't
+      decide.</p>
+
+      <p><strong>There is no shared key, only a name.</strong> HR identifies people by
+      <code>employee_id</code> (<code>E00251</code>). Entitlements identifies accounts by
+      <code>account_id</code> (<code>A000251</code>) and <code>account_name</code>
+      (<code>michelle.mercado</code>). Nothing in either file points at the other. The only
+      bridge is a human name — spelled <code>Michelle Mercado</code> on the HR side and
+      <code>michelle.mercado</code> on the access side. So your matching key has to be
+      <em>derived</em>: lowercase the HR name, drop punctuation, join the parts with a dot,
+      and compare. That derivation is where all the trouble lives.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a join — and a canonical identity?</span>
+        <p>A <em>join</em> matches rows from two tables that describe the same thing. A
+        <em>canonical identity</em> is the answer the join produces: one durable ID per real
+        human that every system's record points back to. Here the canonical ID is HR's
+        <code>employee_id</code> — HR is the system of record for "who is a person at
+        Meridian," so every account you can confidently place gets stamped with one.</p>
+      </div>
+
+      <p><strong>Why a name is a bad key.</strong> Meridian has 1,200 accounts but only 1,188
+      distinct <code>account_name</code>s, and 1,190 HR people with only 1,180 distinct
+      names. Both sides collide. Eleven <code>account_name</code>s are shared by more than one
+      account, and they are not all the same problem — they fall into three kinds, and each
+      wants a different answer:</p>
+      <ul class="learn">
+        <li><strong>Two humans, one name.</strong> <code>jacob.miller</code> is two accounts
+        <em>and</em> two different employees. A name-based join cannot tell you which is which.
+        Guessing merges two people; picking the first match silently assigns one person's
+        access to another. The correct output is <em>ambiguous</em>.</li>
+        <li><strong>One human, two accounts.</strong> <code>james.hernandez</code> is two
+        accounts and exactly one employee — a second account nobody cleaned up. Both should
+        resolve to the same person. (Hold onto this one; it comes back in Cycle 3.)</li>
+        <li><strong>Not a human at all.</strong> <code>marcus.pipeline</code> (three accounts)
+        and <code>emergency.admin</code> (two) are service accounts — automation and break-glass
+        logins with no employee behind them. The kit ships the known list in
+        <code>data/2026-Q3/service_accounts.json</code>. Forcing these onto a person is worse
+        than leaving them unresolved.</li>
+      </ul>
+
+      <p>So a reconciliation that reports one number — "matched" — is hiding the interesting
+      part. Yours should report at least four outcomes: <strong>matched</strong>,
+      <strong>ambiguous</strong>, <strong>unmatched</strong>, and <strong>service</strong>. An
+      auditor can work with an honest "we could not determine this." They cannot work with a
+      confident wrong answer.</p>
+
+      <p><strong>And the order of operations matters more than the code.</strong> Cycle 1 found
+      7 exact-duplicate rows in <code>entitlements.csv</code>. That number is a lie of
+      omission. There are really 30 duplicated grants — but 23 of them were recorded twice with
+      the date written in a different format each time, so the rows aren't byte-identical and an
+      exact-match check walks straight past them. Normalise <code>granted_date</code>
+      <em>first</em> and all 30 become visible. De-duplicate first and 23 survive into your
+      ledger forever, quietly inflating every count you report for the rest of the week. Same
+      two operations, opposite results:</p>
+      <div class="terminal">
+<span class="out">de-duplicate, then normalise dates   ->  15,104 rows   (23 twins survived)
+normalise dates, then de-duplicate   ->  15,081 rows   (correct)</span>
+      </div>
+      <p>This is the single easiest thing to get wrong today, and nothing downstream will warn
+      you. Get the order right and the rest of Cycle 2 is bookkeeping.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Ask Claude Code to write a reconciliation function.</div>
-          <p class="step-why">Why: you describe the matching logic in plain English; Claude
-          Code turns it into code you can run and inspect.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Write a function reconcile_identities() that merges the
-entitlements accounts onto the HR roster to build one ledger.
-The entitlements rows have no employee_id, so match each account
-to a person by name (account_name is firstname.lastname; HR has
-the full name and email). Assign each matched person a
-canonical_id. Keep accounts you can't confidently match in a
-separate list so we can review them — don't silently drop them.</pre>
+          <div class="step-do">Build the canonical identity table.</div>
+          <p class="step-why">Why: this is the bridge the two exports never had. Every count,
+          every finding, every report for the rest of the week resolves through this one table.</p>
+
+          <p><strong>What you're building.</strong> A reconciliation function, and the file it
+          writes: <code>identities.csv</code> at the repository root, <strong>one row per
+          <code>account_id</code></strong> — all 1,200 of them, including the ones you can't
+          place. Each row records the account, the name it was recorded under, the
+          <code>employee_id</code> you resolved it to (blank when you couldn't), how you
+          resolved it, and a <code>match_status</code> of <code>matched</code>,
+          <code>ambiguous</code>, <code>unmatched</code>, or <code>service</code>. The rule that
+          matters: <strong>no account may be dropped.</strong> An account you can't place is a
+          row with an empty <code>employee_id</code>, never a row that vanished.</p>
+
+          <p><strong>What the data looks like.</strong> The join key has to be derived from
+          HR's <code>full_name</code>, and the three collision archetypes from the Concept are
+          the cases that decide whether your function is honest:</p>
+          <div class="terminal">
+<span class="out">deriving the key      HR full_name -&gt; matching key
+  'Michelle Mercado'    -&gt; michelle.mercado    matches A000251
+
+the three collisions
+  jacob.miller       2 accounts, 2 different employees   -&gt; ambiguous
+  james.hernandez    2 accounts, 1 employee              -&gt; both -&gt; E00023
+  marcus.pipeline    3 accounts, no employee             -&gt; service
+
+names that never match on the dot pattern
+  jwilliams   philiph   sstokes      &lt;- initials, not firstname.lastname
+  jill.smith  jacob.hall             &lt;- nickname or a name HR spells differently</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> Every one of these is exact —
+          the export is seed-locked. Check each against your own output:</p>
+          <ul class="learn">
+            <li><code>identities.csv</code> has <strong>exactly 1,200 rows</strong>, one per
+            <code>account_id</code>, and the set of IDs equals the set in
+            <code>entitlements.csv</code>. If you have fewer, you dropped accounts.</li>
+            <li>Matching on the derived <code>firstname.lastname</code> key alone resolves
+            <strong>1,055 accounts</strong>, leaves <strong>18 ambiguous</strong> (10 shared
+            names), <strong>122 unmatched</strong>, and <strong>5 service</strong> accounts —
+            1,200 in total. 1,055 is your floor, not your ceiling: a smarter matcher may resolve
+            more, but never by guessing at an ambiguous name.</li>
+            <li>Every non-blank <code>employee_id</code> you write actually exists in
+            <code>hr_roster.csv</code>. A resolved ID that HR has never heard of means your key
+            derivation is producing garbage.</li>
+            <li>Exactly <strong>one</strong> employee ends up holding two accounts —
+            <code>E00023</code>, both named <code>james.hernandez</code>. If dozens of employees
+            hold multiple accounts, you're matching too loosely.</li>
+            <li>The 5 service accounts (<code>marcus.pipeline</code> ×3,
+            <code>emergency.admin</code> ×2) carry <strong>no</strong> <code>employee_id</code>.</li>
+            <li><code>A000409</code> and <code>A000648</code> are both
+            <code>jacob.miller</code> and must <strong>not</strong> end up with the same
+            <code>employee_id</code>.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Describe the outcome to Claude Code, not the
+          algorithm: the two files, the fact that they share no key, the four statuses you want,
+          and the hard rule that all 1,200 accounts survive to the output. Then read the summary
+          it prints against the numbers above. When a count is off, hand it the specific
+          discrepancy — that's the conversation that teaches you what your matcher is actually
+          doing. One caution: you may notice that <code>A000251</code> and <code>E00251</code>
+          share their digits. That is an accident of how this export was generated, not a
+          property of Meridian's systems — real exports have no such gift. Matching on it will
+          make these tests pass and teach you nothing, so derive the key from the name.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p>If Claude Code's first attempt drops unmatched rows or crashes on missing
-              values, tell it exactly what you saw: "some entitlement accounts don't match any
-              HR name and the function errored — handle those as unmatched instead of failing."</p>
+              <p><strong>Your row count is under 1,200?</strong> An inner join is silently
+              deleting the accounts that don't match. Reconciliation keeps every account and
+              records the failure; it never resolves the problem by discarding it.</p>
+              <p><strong>Your row count is over 1,200?</strong> The opposite failure: a join on
+              a non-unique key fans out. Ten HR names are shared by two people each, so a plain
+              join emits two rows for those accounts. Detect the multiple-candidate case before
+              you join and mark it ambiguous instead.</p>
+              <p><strong>Matched count far above 1,055?</strong> Something is matching that
+              shouldn't — usually a fuzzy or partial-string match that maps
+              <code>jill.smith</code> onto any Smith. Ask Claude Code to print twenty matches
+              with the HR name beside the account name and read them yourself; wrong matches are
+              obvious to a human and invisible to a count.</p>
+              <p><strong>Matched count far below 1,055?</strong> Your key derivation is off.
+              Compare a handful of derived keys against the raw <code>account_name</code> —
+              case, punctuation, and stray whitespace are the usual culprits, and HR names carry
+              the same drift you measured in Cycle 1.</p>
+              <p><strong>Not sure whether a name is a person or a robot?</strong> Don't guess —
+              <code>data/2026-Q3/service_accounts.json</code> is the shipped list.</p>
             </div>
           </details>
         </li>
 
         <li>
-          <div class="step-do">Run the reconciliation and look at the summary.</div>
-          <p class="step-why">Why: you need to know how many identities matched cleanly and
-          how many need a human eye before you trust the ledger.</p>
-          <div class="code labeled">
-            <span class="kind">Terminal</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>python reconcile.py</pre>
-          </div>
+          <div class="step-do">Normalise the dates, then de-duplicate, then build the ledger.</div>
+          <p class="step-why">Why: this is the order-of-operations trap from the Concept. Do
+          these three steps in the wrong order and 23 phantom grants live in your ledger for the
+          rest of the week without a single error message.</p>
+
+          <p><strong>What you're building.</strong> <code>ledger.csv</code> at the repository
+          root — the file the rest of the course reads. One row per <em>distinct</em> grant:
+          take <code>entitlements.csv</code>, convert every <code>granted_date</code> to ISO
+          <code>YYYY-MM-DD</code>, collapse rows that repeat the same
+          <code>(account_id, app, role)</code>, and attach the <code>employee_id</code> and
+          <code>match_status</code> from <code>identities.csv</code>.</p>
+
+          <p><strong>What the data looks like.</strong> The pair you met in Cycle 1 is the whole
+          lesson. These are one grant recorded twice, and only the date column disagrees:</p>
           <div class="terminal">
-<span class="cmd">python reconcile.py</span>
-<span class="out">Canonical identities:     1198
-Matched account records:  1451
-Unmatched (needs review):   36
-Ledger written to:  ledger.csv</span>
+<span class="out">A000025  kara.morgan  Box  Member  07/21/2026  helpdesk  2026-07-04
+A000025  kara.morgan  Box  Member  2026-07-21  helpdesk  2026-07-04
+
+  exact-duplicate rows before normalising granted_date:   7
+  exact-duplicate rows after  normalising granted_date:  30</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong></p>
+          <ul class="learn">
+            <li><code>ledger.csv</code> has <strong>exactly 15,081 rows</strong>. Two wrong
+            answers are worth recognising on sight: <strong>15,111</strong> means you
+            de-duplicated nothing, and <strong>15,104</strong> means you de-duplicated before
+            normalising and 23 format-twins survived.</li>
+            <li>No two rows share an <code>(account_id, app, role)</code>.</li>
+            <li>Every <code>granted_date</code> matches <code>YYYY-MM-DD</code> — no slashes
+            left anywhere in the column.</li>
+            <li><code>A000025</code> (<code>kara.morgan</code>) holds <strong>14</strong> rows,
+            down from 15, with exactly one <code>Box</code> / <code>Member</code> grant.</li>
+            <li>Every <code>account_id</code> in the ledger appears in
+            <code>identities.csv</code>.</li>
+            <li>Grouped by <code>match_status</code>, the ledger splits <strong>13,307</strong>
+            matched, <strong>1,548</strong> unmatched, <strong>221</strong> ambiguous,
+            <strong>5</strong> service. Those 1,769 unresolved rows are roughly one grant in
+            nine — worth sitting with before you report any number as complete.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Ask for the three steps as three named steps
+          in one function so the order is visible in the code you're reviewing, and ask it to
+          print the row count after each. Watching 15,111 become 15,081 — and seeing exactly
+          where — is the point of the exercise.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>15,104 rows?</strong> The classic. You de-duplicated first. Move the
+              date normalisation above it and re-run.</p>
+              <p><strong>Dates came out wrong — some in 2026, some in the future?</strong>
+              <code>05/31/2026</code> is unambiguous, but <code>07/21/2026</code> parsed as
+              day-first becomes an invalid date and parsed inconsistently produces silent
+              nonsense. Convert explicitly with the known format rather than letting a parser
+              guess, and sanity-check the min and max date afterwards.</p>
+              <p><strong>Row count grew past 15,111 after attaching identities?</strong> The
+              identity join fanned out. <code>identities.csv</code> has one row per
+              <code>account_id</code> by construction — if it doesn't, fix Step 1 before
+              continuing.</p>
+              <p><strong>Unsure which duplicate to keep?</strong> For this data it doesn't
+              matter — the twins are identical apart from date formatting. Keep the first and
+              move on; note the choice so it's defensible later.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Spot-check the results.</div>
-          <p class="step-why">Why: reconciliation is a judgment call, not a guarantee. Pick a
-          few people and confirm the merge looks right — and look at what landed in the
-          unmatched list.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Pick a person in the ledger and show me all their entitlement
-rows — is every app-role they hold linked to the same
-canonical_id? Then show me three accounts that didn't match any
-HR person, and tell me why each one failed to match.</pre>
-          </div>
+          <div class="step-do">Spot-check the reconciliation by hand.</div>
+          <p class="step-why">Why: the counts can all be right while the matching is wrong.
+          Counts tell you how many; only looking at rows tells you whether the right person got
+          the right access.</p>
+
+          <p><strong>What you're building.</strong> Nothing new on disk — a few minutes of
+          reading. Pull up four specific cases and satisfy yourself that each landed the way the
+          Concept says it should.</p>
+
+          <p><strong>How you'll know you got it right.</strong></p>
+          <ul class="learn">
+            <li><strong>One person, one identity.</strong> <code>A000025</code> resolves to a
+            single <code>employee_id</code>, and all 14 of its grants carry it.</li>
+            <li><strong>Two people, not merged.</strong> <code>A000409</code> and
+            <code>A000648</code> are both <code>jacob.miller</code>. Neither is confidently
+            assigned to the other's employee, and your table says so out loud.</li>
+            <li><strong>Two accounts, one person.</strong> Both <code>james.hernandez</code>
+            accounts resolve to <code>E00023</code> — and look at that HR row while you're
+            there. It will matter in Cycle 3.</li>
+            <li><strong>The unmatched are explainable.</strong> Read ten of the 122. You should
+            be able to say which pattern broke each one — an initials-style handle like
+            <code>jwilliams</code>, or a first name HR spells differently. "I don't know why
+            this failed" on a large share of them means your matcher has a bug, not the data.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Ask Claude Code to print each case as rows you
+          can read, not as a verdict — you are the one checking, and a summary that says "looks
+          correct" is not evidence. When something looks wrong, the useful next question is
+          which side is wrong: the HR row, the account, or your matching rule.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Everything looks fine and you're suspicious?</strong> Good instinct.
+              Sort the unmatched list alphabetically and skim it. Clusters of similar-looking
+              names usually mean one systematic gap rather than 122 unrelated ones.</p>
+            </div>
+          </details>
         </li>
 
         <li>
           <div class="step-do">Commit your progress.</div>
+          <p class="step-why">Why: this is the first artefact the rest of the week depends on.
+          Commit it before you start changing it in Cycle 3.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
@@ -717,10 +914,13 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 2 when</strong> <code>ledger.csv</code> exists, every
-      matched account carries a <code>canonical_id</code>, unmatched rows are set aside for
-      review rather than dropped, and your spot-check confirms one person's app-roles all
-      rolled up under a single canonical identity.</p>
+      <p><strong>You're done with Cycle 2 when</strong> <code>identities.csv</code> holds all
+      1,200 accounts with at least 1,055 resolved to a real <code>employee_id</code> and the
+      rest honestly labelled ambiguous, unmatched, or service; <code>ledger.csv</code> holds
+      <strong>15,081</strong> rows with no repeated <code>(account_id, app, role)</code> and
+      every date in ISO form; and your spot-checks confirm that <code>kara.morgan</code>
+      collapsed to one identity while the two <code>jacob.miller</code> accounts did not
+      collapse into each other.</p>
     </div>
   </section>
 
@@ -738,96 +938,282 @@ git commit -m "Reconcile identities into a unified ledger"</pre>
     <div class="concept">
       <div class="label">Concept</div>
       <p>A ledger tells you who has what. <em>Triage</em> is the next question: which of those
-      access grants deserve a closer look? You can't hand a reviewer 15,000 rows and say "check
-      these" — you surface the ones that break a rule.</p>
-      <p>Start with <strong>rule-based</strong> triage: precise, explainable conditions like
-      "an Admin role held by someone who isn't a manager." Rules are fast, cheap, and easy to
-      defend to an auditor. Later this week you'll layer on <strong>agent-based</strong> triage,
-      where Claude reasons about context a fixed rule can't capture. Rules first, judgment
-      second — that order keeps your findings trustworthy.</p>
-      <p>Every finding you generate lands in a structured file, <code>findings.json</code>, that
-      later modules read. A preview of one finding:</p>
+      15,081 grants deserve a reviewer's attention? You can't hand someone the whole ledger and
+      say "check this." Triage is the act of narrowing it — applying a stated rule to surface
+      the access that is likely to be a problem, and leaving a trail that explains why.</p>
+
+      <p><strong>Rules first, judgment second.</strong> You'll start with a
+      <strong>rule-based</strong> check: a precise, mechanical condition you can write down and
+      an auditor can re-run. Rules are cheap, deterministic, and defensible — asked "why was
+      this flagged," you point at the clause. Later this week you'll add
+      <strong>agent-based</strong> triage, where Claude weighs context a fixed condition can't
+      express. That order is deliberate. A rule you understand is the thing you'll use to judge
+      whether the agent is right; build the muscle before you add the judgment.</p>
+
+      <p><strong>Your first rule: segregation of duties.</strong> Meridian's SoD matrix
+      (<code>data/2026-Q3/sod_matrix.json</code>) lists role pairs that no single person should
+      hold. The sharpest one is in Atlas ERP, the accounting system: <code>Vendor Admin</code>
+      creates and edits vendor records; <code>AP Manager</code> approves payments to them. One
+      person holding both can invent a vendor and pay it. The matrix rates that
+      <strong>critical</strong>, and <code>ACP-4.1</code> is the clause it violates.</p>
+
+      <p><strong>But a rule that fires is not yet a finding.</strong>
+      <code>ACP-4.2</code> grants a standing written exemption: the <strong>Controller</strong>
+      in Finance &amp; Accounting <em>may</em> hold both roles, because the job requires it and
+      the CFO performs a quarterly manual payment review as a compensating control. The policy is
+      explicit — access held under ACP-4.2 <em>is not a finding</em>. Report a Controller and
+      you've handed your reviewer a false positive, and spent some of the credibility you'll
+      need when a real one lands.</p>
+
+      <p>That gap between "the rule fired" and "this is a finding" is the whole reason triage
+      output needs a <em>reviewer judgment</em> layer rather than just a rule. And a suppressed
+      conflict can't simply disappear: a reviewer has to be able to see what you suppressed and
+      on what authority. So today's triage writes <strong>two</strong> files — the findings, and
+      the exemptions you applied to get there.</p>
 
       <div class="whatis">
-        <span class="tag">What is JSON?</span>
-        <p>JSON is a plain-text format for structured data — labeled fields inside curly braces.
-        It's how programs pass records to each other. You'll read it easily; each finding is just
-        a set of named fields describing one flagged access grant.</p>
+        <span class="tag">What is JSON — and why a fixed schema?</span>
+        <p>JSON is a plain-text format for structured data — labelled fields inside curly
+        braces, the way programs pass records to each other. Your findings go into
+        <code>findings.json</code> in a shape that is <em>already fixed</em>: the kit ships the
+        contract at <code>src/meridian_capstone/contract/findings.schema.json</code>, and every
+        later module — the reviewer report, the agent, the MCP server — reads that shape.
+        It is strict on purpose. Extra fields are rejected, so if a field you want isn't in the
+        contract, the answer is to express it with the fields that are there.</p>
       </div>
 
+      <p>One finding, in the shape the contract requires:</p>
+
       <div class="code labeled">
-        <span class="kind">findings.json (preview)</span>
+        <span class="kind">findings.json (one entry)</span>
         <button class="copy" type="button">Copy</button>
         <pre>{
-  "finding_id": "F-0001",
-  "rule": "admin-role-non-manager",
-  "canonical_id": "MRE-00317",
-  "person": "marcus.pipeline",
+  "scope": "account",
+  "account_id": "A000251",
+  "employee_id": "E00251",
   "app": "Atlas ERP",
-  "role": "ERP Admin",
-  "reason": "Holds ERP Admin but is not a people manager in HR",
-  "severity": "high",
-  "status": "open"
+  "entitlement": "AP Manager + Vendor Admin",
+  "category": "sod_conflict",
+  "severity": "critical",
+  "recommendation": "revoke",
+  "rationale": "Holds both AP Manager and Vendor Admin in Atlas ERP - can
+                create a vendor and approve its payment. Senior Accountant,
+                not the Controller, so the ACP-4.2 exemption does not apply.",
+  "evidence": [
+    {"source": "entitlements",
+     "detail": "A000251 holds Atlas ERP/AP Manager and Atlas ERP/Vendor Admin"},
+    {"source": "hr_roster",
+     "detail": "title=Senior Accountant, department=Finance &amp; Accounting"}
+  ],
+  "policy_citations": ["ACP-4.1"],
+  "confidence": 0.95
 }</pre>
       </div>
+
+      <p>Note what's carrying the weight there. <code>evidence</code> is not decoration — it's
+      the pointer back to the rows that triggered the rule, and a finding a reviewer can't trace
+      is a finding they'll ignore. <code>rationale</code> has to say why the exemption
+      <em>doesn't</em> apply, because that's the first question anyone will ask.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Ask Claude Code to write the triage rule.</div>
-          <p class="step-why">Why: this is your first automated control — it encodes a policy
-          ("admins should be managers") as a check that runs against every row.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Write a rule that flags every ledger entry where a person holds
-an "Admin" role but is not a manager in the HR data. For each
-flagged entry, produce a finding with: finding_id, rule,
-canonical_id, person, app, role, reason, severity, status.</pre>
-          </div>
-          <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
-        </li>
+          <div class="step-do">Find the SoD conflicts in the ledger.</div>
+          <p class="step-why">Why: this is your first automated control. Before you worry about
+          output shape or exemptions, get the raw list of accounts the rule fires on — and see
+          how few of 15,081 rows it takes to answer the regulator's question.</p>
 
-        <li>
-          <div class="step-do">Run the rule against your reconciled ledger.</div>
-          <p class="step-why">Why: this turns the rule into actual findings you can count and read.</p>
-          <div class="code labeled">
-            <span class="kind">Terminal</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>python triage.py</pre>
-          </div>
+          <p><strong>What you're building.</strong> A check that reads <code>ledger.csv</code>,
+          groups the Atlas ERP grants by <code>account_id</code>, and reports every account
+          holding <strong>both</strong> <code>AP Manager</code> and <code>Vendor Admin</code>.
+          No JSON yet, no exemption logic yet — just the accounts, printed, so you can look at
+          them.</p>
+
+          <p><strong>What the data looks like.</strong> Atlas ERP is small and that's the point:
+          63 grants in the whole quarter, across five roles. The conflicting pair is rare on one
+          side and common on the other:</p>
           <div class="terminal">
-<span class="cmd">python triage.py</span>
-<span class="out">Scanned ledger rows:   15234
-Rule: admin-role-non-manager
-Findings generated:      9
-Wrote findings.json</span>
+<span class="out">Atlas ERP           63 grants
+  AP Manager        22
+  GL Accountant     21
+  AP Clerk          12
+  Vendor Admin       5   &lt;- the entire population of the scarce half
+  ERP Admin          3</span>
           </div>
-          <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+
+          <p><strong>How you'll know you got it right.</strong></p>
+          <ul class="learn">
+            <li>The rule fires on <strong>exactly 5 accounts</strong>:
+            <code>A000042</code>, <code>A000089</code>, <code>A000168</code>,
+            <code>A000251</code>, <code>A000615</code>.</li>
+            <li>Look at the role counts again once you have that list. There are only 5
+            <code>Vendor Admin</code> grants in Meridian, and <strong>every single one</strong>
+            is held by someone who also holds <code>AP Manager</code>. The overlap isn't a
+            handful of stragglers — it's the entire role. Worth noticing before you decide how
+            severe this is.</li>
+            <li>Run it against the raw <code>entitlements.csv</code> instead of your ledger and
+            you get the same 5 — the duplicates don't change this answer. That's luck, not
+            design; a rule that counted grants rather than checking membership would have been
+            wrong. Use the ledger.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Describe the conflict in business terms —
+          create a vendor, approve its payment — and let the code follow. Read the SoD matrix
+          yourself first: it's a small JSON file listing six conflicts, and knowing what else is
+          in there tells you how much of this week's work is already specified.</p>
+
+          <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Zero findings?</strong> Either the data genuinely has none, or the
-              rule isn't reading the manager field correctly. Ask Claude Code to print a few
-              Admin-role rows and show whether it thinks each person is a manager — that reveals
-              which side is wrong.</p>
+              <p><strong>Zero results?</strong> Almost always a string mismatch — check the role
+              values in your ledger against the matrix exactly, including capitalisation and
+              spacing. Print the distinct Atlas ERP roles and compare them side by side.</p>
+              <p><strong>More than 5?</strong> You're probably matching a role by substring, so
+              <code>AP Manager</code> also catches <code>AP Clerk</code>-adjacent text, or you're
+              grouping by <code>account_name</code> rather than <code>account_id</code> — and
+              you know from Cycle 2 that names aren't unique.</p>
+              <p><strong>Grouping by employee instead of account?</strong> Reasonable instinct,
+              but it changes the answer: one of the five belongs to an employee who also owns a
+              second account. Group by <code>account_id</code> for now — the conflict lives in
+              an account's role set.</p>
             </div>
           </details>
         </li>
 
         <li>
-          <div class="step-do">Open <code>findings.json</code> and confirm it's well-formed.</div>
-          <p class="step-why">Why: later modules depend on this exact structure, so it's worth
-          a 30-second look now.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Show me findings.json and confirm every finding has all nine
-required fields. Flag any that are missing something.</pre>
+          <div class="step-do">Apply the ACP-4.2 exemption and write both output files.</div>
+          <p class="step-why">Why: five hits, but not five findings. This step is where a rule
+          becomes triage — you decide which conflicts a reviewer should see, and you record what
+          you removed so the decision is auditable rather than invisible.</p>
+
+          <p><strong>What you're building.</strong> Two files at the repository root.
+          <code>findings.json</code> — an array in the contract shape, holding only the conflicts
+          that survive the exemption. <code>exemptions.json</code> — the ones you suppressed,
+          each naming the account, the clause, and why it applies. The second file is not
+          optional bookkeeping; it's the difference between "we found two problems" and "we
+          found five and cleared three, here's the reasoning."</p>
+
+          <p><strong>What the data looks like.</strong> Join each of the five accounts back to
+          its HR row through <code>identities.csv</code> and the picture separates itself:</p>
+          <div class="terminal">
+<span class="out">A000042  Patrick Ramos      Controller          Finance &amp; Accounting  active
+A000089  Amanda Garrison    Controller          Finance &amp; Accounting  active
+A000168  April Tyler        Controller          Finance &amp; Accounting  active
+A000251  Michelle Mercado   Senior Accountant   Finance &amp; Accounting  active
+A000615  James Hernandez    Ranger/warden       FIELD SERVICES        terminated</span>
           </div>
+          <p class="step-why">Three Controllers — exactly the role ACP-4.2 names. Then a Senior
+          Accountant who is close to the exemption but is not it. Then something else entirely:
+          a terminated field-services employee holding payment-approval rights in the accounting
+          system. Two of these are findings, and they are not equally interesting.</p>
+
+          <p><strong>How you'll know you got it right.</strong></p>
+          <ul class="learn">
+            <li><code>findings.json</code> exists at the repository root and contains
+            <strong>exactly 2</strong> findings — <code>A000251</code> and
+            <code>A000615</code>.</li>
+            <li><code>exemptions.json</code> contains <strong>exactly 3</strong> —
+            <code>A000042</code>, <code>A000089</code>, <code>A000168</code> — each citing
+            <code>ACP-4.2</code>.</li>
+            <li>No Controller appears in <code>findings.json</code>. That's the false-positive
+            check, and it's the one this cycle is really about.</li>
+            <li>Both findings use <code>category: "sod_conflict"</code>, <code>app:
+            "Atlas ERP"</code>, and <code>severity: "critical"</code> — the matrix sets the
+            severity, not your judgment of the individual.</li>
+            <li>Each finding carries at least one <code>evidence</code> entry that names the
+            actual rows behind it, and a <code>rationale</code> that says why ACP-4.2 doesn't
+            apply to this person.</li>
+            <li>Match the exemption on <strong>both</strong> title and department, and normalise
+            before comparing. <code>A000615</code>'s department is recorded as
+            <code>FIELD SERVICES</code> — the same casing drift you measured in Cycle 1, still
+            live, still able to break a comparison.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Write the exemption as a lookup against the
+          matrix's <code>exemptions</code> block rather than as a hardcoded "if Controller" —
+          the clause, the title, and the department are all in the file, and next week's rules
+          will want the same mechanism. Then read both output files yourself before you trust
+          them. And read <code>A000615</code>'s HR row properly: this account belongs to the same
+          <code>james.hernandez</code> collision you untangled in Cycle 2, it is a second account
+          for an employee who left, and it holds payment approval in a system their job never
+          touched. It is the most serious thing in today's data, and you only see it because the
+          reconciliation was honest about which account belonged to whom.</p>
+
+          <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>All five landed in findings.json?</strong> The exemption never matched.
+              Print the title and department your code is comparing against the clause's values
+              — nine times in ten it's whitespace or casing on one side.</p>
+              <p><strong>Four findings, or one?</strong> The exemption is matching too broadly or
+              too narrowly. It requires both <code>title = Controller</code> <em>and</em>
+              <code>department = Finance &amp; Accounting</code>; department alone would clear
+              Michelle Mercado, who is not exempt.</p>
+              <p><strong>An account has no HR row to check?</strong> Then it can't be exempt —
+              the exemption is defined on a title and a department, and you have neither. Report
+              it and say so in the rationale. Unknown is not the same as cleared.</p>
+              <p><strong>Tempted to add a field the contract doesn't have?</strong> That's the
+              right instinct meeting a strict schema. The exemption belongs in
+              <code>exemptions.json</code>; inside a finding, use
+              <code>policy_citations</code> and <code>rationale</code> to carry the reasoning.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Validate <code>findings.json</code> against the contract.</div>
+          <p class="step-why">Why: everything downstream this week reads this file. A shape
+          error caught now costs a minute; caught on Day 4 it costs an afternoon of debugging
+          something that isn't actually broken.</p>
+
+          <p><strong>What you're building.</strong> A validation run — your
+          <code>findings.json</code> checked against
+          <code>src/meridian_capstone/contract/findings.schema.json</code>, either as a couple
+          of lines with the <code>jsonschema</code> package (already a kit dependency) or as a
+          check you fold into your triage script.</p>
+
+          <p><strong>How you'll know you got it right.</strong></p>
+          <ul class="learn">
+            <li>Validation passes with no errors.</li>
+            <li>Every finding carries all twelve required fields — none of them empty
+            placeholders. <code>evidence</code> must have at least one entry.</li>
+            <li>The enum fields hold legal values: <code>category</code> is
+            <code>sod_conflict</code>, <code>severity</code> is <code>critical</code>,
+            <code>recommendation</code> is one of <code>revoke</code> / <code>review</code> /
+            <code>retain</code>, <code>scope</code> is <code>account</code>.</li>
+            <li>No extra fields. The schema sets <code>additionalProperties: false</code>, so a
+            stray <code>finding_id</code> or <code>exemption_flag</code> is a hard failure —
+            deliberately, so that every consumer this week can rely on the shape.</li>
+            <li>Because <code>scope</code> is <code>account</code>, <code>account_id</code> must
+            be a real string, not <code>null</code>.</li>
+          </ul>
+
+          <p><strong>Suggested workflow.</strong> Read the schema file before you validate
+          against it — it's short, and reading it tells you more about what the rest of the
+          course expects than any error message will. <code>examples/sample_findings.json</code>
+          in the kit is a known-valid reference if you want to compare a working entry against
+          yours.</p>
+
           <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong><code>ValidationError</code> mentioning additional properties?</strong>
+              You've added a field the contract doesn't define. Remove it and move the
+              information into <code>rationale</code>, <code>evidence</code>, or
+              <code>policy_citations</code>.</p>
+              <p><strong>Complaining about the top level?</strong> The contract describes an
+              <em>array</em> of findings. A single object, or an object wrapping the list under
+              a key, will fail — even with two findings, the file starts with <code>[</code>.</p>
+              <p><strong><code>ModuleNotFoundError: jsonschema</code>?</strong> It's declared in
+              the kit's dependencies, so this usually means the venv isn't active or the kit was
+              never installed. Re-activate and re-run the install from the repository root.</p>
+            </div>
+          </details>
         </li>
 
         <li>
@@ -836,7 +1222,7 @@ required fields. Flag any that are missing something.</pre>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Add admin-role-non-manager triage rule and findings"</pre>
+git commit -m "Add SoD triage rule with ACP-4.2 exemption handling"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c3-s4"> Mark done</label>
         </li>
@@ -845,30 +1231,43 @@ git commit -m "Add admin-role-non-manager triage rule and findings"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 3 when</strong> <code>findings.json</code> exists,
-      contains at least one finding from the admin-role-non-manager rule, and every finding
-      carries all nine fields shown in the preview above.</p>
+      <p><strong>You're done with Cycle 3 when</strong> <code>findings.json</code> validates
+      against the contract and holds <strong>exactly the two</strong> real SoD conflicts —
+      <code>A000251</code> and <code>A000615</code> — with no Controller among them; and
+      <code>exemptions.json</code> records the <strong>three</strong> Controllers you cleared,
+      each citing <code>ACP-4.2</code>.</p>
     </div>
   </section>
 
   <!-- ============ VERIFICATION ============ -->
   <section class="verify">
     <h2 class="section-title">Prove it landed</h2>
-    <p>One command checks that your ledger and findings are shaped the way the rest of the
-    week expects. Run it from the repository root:</p>
+    <p>One command checks all four of today's artefacts — <code>identities.csv</code>,
+    <code>ledger.csv</code>, <code>findings.json</code>, <code>exemptions.json</code> — against
+    the seed-locked export and the findings contract. Run it from the repository root:</p>
     <div class="code labeled">
       <span class="kind">Terminal</span>
       <button class="copy" type="button">Copy</button>
       <pre>pytest tests/test_ledger.py</pre>
     </div>
-    <p class="step-why">Green means Day 2 is complete. If a test fails, read what it expected —
-    then ask Claude Code to help you close the gap.</p>
     <div class="terminal">
 <span class="cmd">pytest tests/test_ledger.py</span>
-<span class="out">tests/test_ledger.py ......                                    [100%]
+<span class="out">tests/test_ledger.py .............                             [100%]
 
-6 passed in 0.42s</span>
+13 passed in 0.14s</span>
     </div>
+    <p class="step-why">Thirteen passed means Day 2 is complete. Two other results are worth
+    recognising:</p>
+    <ul class="learn">
+      <li><strong>"1 skipped"</strong> means the tests found none of the four files and skipped
+      the whole module. You're either in the wrong directory or your scripts wrote their output
+      somewhere other than the repository root — not a pass.</li>
+      <li><strong>A failure</strong> is meant to be readable. Each one names the number it
+      expected and, where a wrong answer is predictable, what that wrong answer means — a ledger
+      of 15,104 rows will tell you outright that you de-duplicated before normalising dates.
+      Read the message before you change any code; then hand Claude Code the exact assertion
+      that failed rather than a description of it.</li>
+    </ul>
     <label class="done"><input type="checkbox" data-task="verify"> Tests pass — Day 2 done</label>
   </section>
 
@@ -879,17 +1278,31 @@ git commit -m "Add admin-role-non-manager triage rule and findings"</pre>
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>Loaded Meridian's fragmented HR and entitlements exports into a workspace you control</li>
-        <li>Reconciled them into a <strong>Ledger</strong> — a single source of truth about who holds what</li>
-        <li>Generated your first automated <strong>finding</strong> and wrote it to a structured <code>findings.json</code></li>
+        <li><strong>Loaded the mess.</strong> 1,190 HR rows and 15,111 entitlement grants, and —
+        more usefully — a measured account of what was wrong with them: two date formats, 31
+        department spellings hiding 12 departments, and duplicates that an exact-match check
+        couldn't see.</li>
+        <li><strong>Built the Ledger.</strong> A canonical identity table covering all 1,200
+        accounts, and 15,081 de-duplicated grants attached to the people who hold them — with
+        the unresolved 145 labelled honestly rather than quietly dropped.</li>
+        <li><strong>Produced your first findings.</strong> A rule that found five SoD conflicts,
+        a policy exemption that cleared three of them, and two findings in the contract shape
+        every later module reads — plus the record of what you suppressed and why.</li>
       </ul>
+      <p style="margin-top:14px">Worth sitting with for a moment: the regulator's question from
+      this morning — <em>show us everyone who can approve a vendor payment</em> — is now a
+      one-line query against a file on your disk. The hard part was never the query.</p>
     </div>
 
     <div class="narrative">
-      <p class="tomorrow">Tomorrow you'll teach three of Meridian's compliance policies — Segregation
-      of Duties, the Privileged Access Standard, and the Contractor Access Standard — to Claude as
-      <em>Skills</em>, turning rules that today live only in a PDF binder into checks Claude can apply
-      on its own. The regulator's question is about to get a lot easier to answer.</p>
+      <p class="tomorrow">Today you encoded one rule by hand, and you saw what it cost: the rule
+      itself was easy, and everything around it — the exemption, the evidence, the judgment about
+      what not to report — was the actual work. Meridian has five policy documents and a matrix
+      with six conflicts in it, and you've handled exactly one. Tomorrow you stop writing them one
+      at a time. You'll teach Segregation of Duties, the Privileged Access Standard, and the
+      Contractor Access Standard to Claude as <em>Skills</em> — turning a binder of policy into
+      checks Claude applies on its own, with the ledger you built today as the ground it stands
+      on.</p>
     </div>
 
     <div class="panel curious">
