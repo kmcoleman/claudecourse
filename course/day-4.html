@@ -342,46 +342,59 @@
 
   <!-- ============ DAY OPENER ============ -->
   <section class="opener">
-    <div class="kicker">Module 3 · Subagent decomposition</div>
+    <div class="kicker">Module 3 · Tools, Subagents &amp; Hooks</div>
     <h1>One orchestrator, many specialists.</h1>
 
     <div class="narrative">
-      <p class="lede">Meridian has 22 apps, roughly 1,200 users, and around 15,000 entitlements. Your
-      current pipeline works — but it chokes on scale, because it's one giant prompt trying to reason
-      about everything at once. Today you decompose the problem.</p>
-      <p>The fix isn't a bigger prompt. It's <em>division of labor</em>: one orchestrator that holds
-      the plan, and a small team of specialists that each do one job well and report back. It's how
-      you'd staff a real review — a data person, a policy person, a writer — except your specialists
-      are subagents.</p>
+      <p class="lede">Your pipeline works. It reconciles the Ledger, applies three policy Skills, and
+      writes nine cited findings. But it does all of that the same way it did on day one: one Claude,
+      one context, everything held in mind at once — 1,190 people, about 1,200 accounts, 15,081 grants
+      across 22 apps. Today you take it apart.</p>
+
+      <p>Not because it's broken — because that shape doesn't survive contact with scale. A single
+      context reasoning about every grant at once loses track, mixes cases, and slows down. The fix
+      isn't a bigger prompt. It's <em>division of labor</em>: one <strong>orchestrator</strong> that
+      holds the plan, and a small team of <strong>specialists</strong> that each do one job well and
+      report back. It's how you'd actually staff a review — a data person, a policy person, a writer —
+      except your specialists are subagents.</p>
+
+      <p>The rule for the day: decomposition changes <em>how</em> the answer is produced, never
+      <em>what</em> the answer is. When you take the limit off in Cycle 4, the same nine findings and
+      five exemptions from yesterday must come back out — now produced by a team instead of a
+      monolith. Then you add the layer that makes any of this trustworthy at scale:
+      <strong>hooks</strong>, the enforcement that records what happened and blocks what mustn't,
+      whether or not anyone was watching the run.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll build today</h3>
-      <p>An <strong>orchestrator + specialist team</strong>: three subagents (a ledger-reader, a
-      policy-applier, and a findings-writer) coordinated by one orchestrator, running end to end
-      against Meridian's full Q3 data to produce a complete <code>findings.json</code> — then the
-      <strong>enforcement layer</strong> that makes that run audit-ready: PreToolUse and PostToolUse
-      hooks that log every file write and block secrets from leaking.</p>
+      <p>An <strong>orchestrator + specialist team</strong> — three subagents (a ledger-reader that
+      talks to Meridian's data server over MCP, a policy-applier that runs the Day 3 Skills, and a
+      findings-writer) coordinated by one orchestrator, running end to end against the full Q3 export
+      to reproduce your nine-finding <code>findings.json</code>. Then the <strong>enforcement
+      layer</strong>: a PreToolUse hook that refuses any write carrying a secret, and a PostToolUse
+      hook that logs every write to an audit trail.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll learn</h3>
       <ul class="learn">
-        <li>What an agent's <em>tools</em> are — its senses and hands — and why fewer tools means tighter behavior</li>
-        <li>What a <em>subagent</em> is, and why decomposition beats one huge prompt at scale</li>
-        <li>What <em>MCP</em> is, and how it lets a specialist talk to the Meridian data server</li>
-        <li>How to give each specialist a narrow scope and wire them in sequence</li>
-        <li>How to run the full pipeline end to end and read findings counted by severity</li>
-        <li>What <em>hooks</em> are — how you <em>guarantee</em> behavior instead of just asking for it — and use them as your audit and enforcement layer</li>
+        <li>What an agent's <em>tools</em> are — its senses and hands — and why fewer tools means a smaller blast radius</li>
+        <li>What <em>MCP</em> is, and how the kit's read-only data server lets a specialist ask for exactly the facts it needs</li>
+        <li>What a <em>subagent</em> is, where its definition lives, and why decomposition beats one huge context at scale</li>
+        <li>How to give each specialist a narrow scope <em>and</em> a narrow toolset, and wire them in sequence</li>
+        <li>How to run the full pipeline and prove it reproduces yesterday's exact answer</li>
+        <li>What <em>hooks</em> are — how you <em>guarantee</em> behavior instead of asking for it — and use them as your audit and enforcement layer</li>
       </ul>
     </div>
 
     <div class="panel">
       <h3>Before you start</h3>
       <ul class="prereq">
-        <li>Day 3 complete — three policy Skills exist and findings cite their clauses</li>
+        <li>Day 3 complete — three Skills in <code>.claude/skills/</code>, and <code>findings.json</code> / <code>exemptions.json</code> at the repository root</li>
+        <li><code>pytest tests/test_skills.py</code> still reports 19 passed</li>
         <li>Your virtual environment is activated <em>(you'll confirm this in Step 1)</em></li>
-        <li>The kit's <code>meridian-capstone</code> MCP server is present <em>(you'll start it in Cycle 2)</em></li>
+        <li>The kit registers a read-only MCP server (<code>meridian-systems</code>) in <code>.mcp.json</code> — you'll meet it in Cycle 1</li>
       </ul>
     </div>
   </section>
@@ -401,8 +414,8 @@
       <div class="label">Concept</div>
       <p>Before you split work across subagents, understand the thing each agent actually works
       <em>with</em>: its <strong>tools</strong>. An agent's tools are its senses and hands — reading a
-      file, writing one, running a shell command, searching the codebase. Claude Code can only do what
-      its tools let it do, and <em>every tool call is a decision the agent makes</em> on its own.</p>
+      file, writing one, running a shell command, searching the code. Claude Code can only do what its
+      tools let it do, and <em>every tool call is a decision the agent makes on its own</em>.</p>
 
       <div class="whatis">
         <span class="tag">What is a tool?</span>
@@ -410,80 +423,136 @@
         file, <code>Write</code> or <code>Edit</code> one, run a shell command with <code>Bash</code>,
         <code>Grep</code> for text, <code>Glob</code> for filenames. Give the agent a tool and it can
         reach for it whenever it judges the moment is right. Take a tool away and that whole class of
-        action becomes impossible — not discouraged, impossible.</p>
+        action becomes impossible — not discouraged, <em>impossible</em>.</p>
       </div>
 
       <p><strong>Blast radius.</strong> The set of tools an agent holds <em>is</em> its blast radius —
       the full range of what it could do if it misjudged a single call. A read-only agent can be wrong
-      but not harmful. An agent with unrestricted <code>Bash</code> on a production box could delete
-      data or leak a secret with one decision. This is the compliance instinct applied to agents: you
-      shrink the blast radius by granting fewer tools, so tighter scope means safer behavior.</p>
+      but not harmful. An agent with unrestricted <code>Bash</code> and <code>Write</code> could
+      overwrite <code>ledger.csv</code>, rewrite a finding, or leak a secret with one decision. This is
+      the compliance instinct applied to agents: you shrink the blast radius by granting fewer tools.
+      Hold that thought — in Cycle 3 you'll hand each specialist only the tools its one job needs.</p>
 
       <div class="whatis">
         <span class="tag">What is MCP?</span>
-        <p>MCP (Model Context Protocol) is a standard way for Claude to talk to an outside tool or
-        data source — a shared language between the model and, say, a data server. The Meridian kit
-        ships an MCP server that exposes its access data through clean, UAR-specific tools, so a
-        specialist can ask for exactly the rows it needs instead of loading everything. Its tools:
-        <code>get_ledger</code>, <code>get_entitlements</code>, and <code>get_person</code>.</p>
+        <p>MCP (Model Context Protocol) is a standard way for Claude to talk to an outside tool or data
+        source — a shared language between the model and, say, a data server. The Meridian kit ships an
+        MCP server called <code>meridian-systems</code> that exposes its access data through clean,
+        read-only, <em>per-entity</em> tools: ask it about <em>one</em> account or <em>one</em> person
+        and it answers, rather than handing back the whole export. It's already registered in
+        <code>.mcp.json</code>, so Claude Code launches it for you — there's no server to start by
+        hand.</p>
       </div>
+
+      <p><strong>Two ways to reach the data, and they're not interchangeable.</strong> The bulk Ledger
+      you built in Day 2 comes from <em>files</em> read in one pass — that's the right tool for the
+      deterministic join over all 15,081 grants. The MCP server is the opposite: targeted,
+      judgment-time lookups about a single account or person, the kind a reviewer makes while deciding
+      one case. Reconciliation is files; judgment is MCP. You'll use both today.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Confirm your virtual environment is active.</div>
-          <p class="step-why">Why: same sandbox as always — look for <code>(venv)</code> in your prompt.</p>
+          <div class="step-do">Confirm your environment and yesterday's artifacts.</div>
+          <p class="step-why">Why: today rebuilds the pipeline that writes <code>findings.json</code>.
+          Before you change how it's produced, confirm Day 3's output is intact and its tests pass —
+          that's your reference answer for the whole day.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>source venv/bin/activate</pre>
+            <pre>source venv/bin/activate
+pytest tests/test_skills.py</pre>
           </div>
+          <p><strong>How you'll know you got it right.</strong> You see <code>(venv)</code> at the
+          front of your prompt and nineteen tests pass. If the module skips, you're in the wrong
+          directory or <code>.claude/skills/</code> is missing — fix that first, because Cycle 4 checks
+          today's pipeline against exactly the answer those tests describe.</p>
           <label class="done"><input type="checkbox" data-task="c1-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Ask Claude Code to list its own built-in tools.</div>
-          <p class="step-why">Why: you can't reason about blast radius until you know what the agent
-          can actually do. Have it name each tool and what that tool lets it touch.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>What tools do you have available in this session? List each one —
-Read, Write, Edit, Bash, Grep, Glob, and any others — and tell me
-in one line what each lets you do.</pre>
-          </div>
+          <div class="step-do">Inventory Claude Code's own built-in tools.</div>
+          <p class="step-why">Why: you can't reason about blast radius until you know what the agent can
+          actually do. This is a five-minute survey that pays off in every cycle after it.</p>
+
+          <p><strong>What you're building.</strong> A short written list — in your notes — of the tools
+          this Claude Code session holds, grouped by what they can touch: the ones that only
+          <em>read</em> (<code>Read</code>, <code>Grep</code>, <code>Glob</code>) and the ones that can
+          <em>change state</em> (<code>Write</code>, <code>Edit</code>, <code>Bash</code>). Note that
+          spawning a subagent is itself a tool — the one you'll lean on all day.</p>
+
+          <p><strong>How you'll know you got it right.</strong> You can name at least three built-in
+          tools and, for each, say in one line what it lets the agent touch — and which side of the
+          read/write line it falls on. If your list has no state-changing tools on it, look again;
+          those are the ones blast radius is about.</p>
+
+          <p><strong>Suggested workflow.</strong> Ask Claude Code to enumerate the tools available in
+          this session and what each does, then sort them yourself into read-only and state-changing.
+          The sorting is the part that matters — it's the same judgment you'll apply when you decide
+          which tools each specialist gets.</p>
           <label class="done"><input type="checkbox" data-task="c1-s2"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Look at the kit's MCP server tools.</div>
-          <p class="step-why">Why: the kit exposes its own narrow, UAR-specific tools over MCP.
-          Seeing what they are — and why each one exists — shows how a purpose-built toolset keeps a
-          specialist's reach small.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Look at the meridian-capstone MCP server. What tools does it expose
-(get_ledger, get_entitlements, get_person), and why would the kit
-give a specialist exactly these and nothing more?</pre>
+          <div class="step-do">Inventory the kit's MCP tools.</div>
+          <p class="step-why">Why: the kit exposes a deliberately narrow, UAR-specific toolset. Seeing
+          exactly what it is — and what it pointedly leaves out — shows how a purpose-built server keeps
+          a specialist's reach small.</p>
+
+          <p><strong>What you're building.</strong> A list of the <code>meridian-systems</code> tools
+          and, for each, the one question it answers about a single account or person. Read them from
+          <code>.mcp.json</code> and the server it points at
+          (<code>src/meridian_capstone/mcp_server/server.py</code>). There are seven:</p>
+          <div class="terminal">
+<span class="out">get_employee                 HR record for one employee (null = orphan signal)
+get_account                  IAM view of one account and its entitlement rows
+search_tickets               access-request tickets for an account, by app
+get_prior_review             last quarter's review decisions for an account
+get_application              app catalog entry: tier, roles, privileged_roles
+is_approved_service_account  is this name in the service-account registry?
+get_sod_matrix               the structured SoD conflict pairs and exemptions</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> You can name at least two of the seven
+          and say what each returns — and you can articulate what's <em>not</em> here: no tool writes
+          anything, and none returns the whole export. Every one answers a question about a single
+          entity. That's not an accident; it's the blast radius kept small by design.</p>
+
           <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Trying to start the server?</strong> Don't. It's a stdio server registered in
+              <code>.mcp.json</code> — Claude Code launches it on demand. There's nothing to run in a
+              separate terminal, and no port to open.</p>
+              <p><strong>Claude Code doesn't list the meridian tools?</strong> Confirm you launched it
+              from the repository root (where <code>.mcp.json</code> lives). If it still doesn't see
+              them, that's the thing you'll fix in Cycle 2 — note it and move on.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Have Claude Code reason about unrestricted Bash on production.</div>
-          <p class="step-why">Why: naming the failure mode out loud is how the compliance framing
-          sticks — fewer tools shrink the blast radius. Ask it what could go wrong, and what a tighter
-          toolset would prevent.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>In your own words: if you had unrestricted Bash access on a
-production access-review system, what could go wrong? Frame it as
-blast radius — what would a tighter set of tools have prevented?</pre>
-          </div>
+          <div class="step-do">Reason about blast radius out loud.</div>
+          <p class="step-why">Why: naming the failure mode is how the framing sticks. This is the
+          sentence you'll re-use every time you scope a specialist for the rest of the week.</p>
+
+          <p><strong>What you're building.</strong> A few sentences — your own words — answering: if a
+          review agent had unrestricted <code>Bash</code> and <code>Write</code> on this project, what
+          could a single bad call do? And what does a read-only, per-entity toolset make simply
+          impossible?</p>
+
+          <p><strong>How you'll know you got it right.</strong> Your answer names a concrete
+          irreversible action the wide toolset allows — overwriting <code>ledger.csv</code>, rewriting
+          <code>findings.json</code>, printing a credential — and then names what the narrow toolset
+          removes: not <em>discourages</em>, removes. That distinction is the whole point, and it's what
+          Cycle 5's hooks turn from a design choice into a guarantee.</p>
+
+          <p><strong>Suggested workflow.</strong> Have Claude Code reason through it with you, framed as
+          blast radius, then write the two-sentence version you'd say to an auditor. Keep it — you're
+          effectively drafting the rationale for the tool restrictions you'll apply in Cycle 3.</p>
           <label class="done"><input type="checkbox" data-task="c1-s4"> Mark done</label>
         </li>
       </ol>
@@ -492,8 +561,9 @@ blast radius — what would a tighter set of tools have prevented?</pre>
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 1 when</strong> you can name three or more of Claude Code's
-      built-in tools and at least two of the kit's MCP tools, and explain in a sentence why the kit
-      exposes those specific tools — fewer tools, smaller blast radius.</p>
+      built-in tools (and say which change state), name at least two of the seven
+      <code>meridian-systems</code> MCP tools, and explain in a sentence why a read-only, per-entity
+      toolset is a smaller blast radius than unrestricted <code>Bash</code>.</p>
     </div>
   </section>
 
@@ -510,126 +580,196 @@ blast radius — what would a tighter set of tools have prevented?</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>A <em>subagent</em> is a helper Claude that's handed one narrowly-scoped job and its own
-      slice of context — its own small set of tools and nothing more. The <em>orchestrator</em> is the
-      Claude that holds the overall plan: it breaks the work into pieces, delegates each piece to the
-      right specialist, and assembles the results. Same idea as a review lead who doesn't do every
-      task personally but knows who should.</p>
+      <p>A <em>subagent</em> is a second Claude handed one narrowly-scoped job and its own slice of
+      context — its own system prompt, its own small set of tools, and nothing else. The
+      <em>orchestrator</em> is the Claude that holds the overall plan: it breaks the work into pieces,
+      delegates each piece to the right specialist, and assembles the results. Same idea as a review
+      lead who doesn't do every task personally but knows who should.</p>
 
-      <p><strong>Why decompose?</strong> A single prompt asked to reason about 15,000 entitlements
-      at once runs out of room — it loses track, mixes cases, and slows down. Split the work and each
-      specialist keeps a small, clean context: the ledger-reader thinks only about data, the
-      policy-applier thinks only about Skills, the findings-writer thinks only about output shape.
-      Small scopes stay sharp.</p>
+      <div class="whatis">
+        <span class="tag">What is a subagent?</span>
+        <p>A project subagent is a Markdown file at <code>.claude/agents/&lt;name&gt;.md</code> with a
+        short YAML frontmatter block. <code>name</code> and <code>description</code> are required — and
+        the <code>description</code> is the important one, because Claude reads it to decide when to
+        delegate. Optional <code>tools</code> restricts what the subagent may touch (omit it and it
+        inherits everything — usually not what you want); optional <code>model</code> can route a
+        simple specialist to a cheaper model. Everything below the frontmatter becomes the subagent's
+        system prompt.</p>
+      </div>
 
-      <p>Here's the delegation map you'll build — one orchestrator, three specialists:</p>
+      <p><strong>Why decompose?</strong> A single context asked to reason about 15,081 grants at once
+      runs out of room — it loses track, mixes cases, and slows down. Split the work and each specialist
+      keeps a small, clean context: the ledger-reader thinks only about fetching facts, the
+      policy-applier thinks only about the Skills, the findings-writer thinks only about output shape.
+      Small scopes stay sharp. Here's the team you'll build:</p>
+
       <div class="code labeled">
         <span class="kind">Delegation map</span>
         <button class="copy" type="button">Copy</button>
-        <pre>            orchestrator
-           /     |      \
-  ledger-reader  policy-applier  findings-writer
-   (reads MCP)   (applies Skills)  (writes findings.json)</pre>
+        <pre>                 orchestrator
+                /      |       \
+   ledger-reader   policy-applier   findings-writer
+   (MCP + Read)    (Read + Skills)  (Write findings.json)
+   read-only       read-only        the only writer</pre>
       </div>
 
       <p>Start with one specialist and prove it works before building the whole team. The
-      <strong>ledger-reader</strong> is the natural first pick: its only job is to fetch access data
-      from the Meridian MCP server and hand it back. If it can round-trip — ask for rows, get rows —
-      the hardest wiring of the day is behind you. The kit's MCP server already exists; you just start
-      it and point a subagent at it.</p>
+      <strong>ledger-reader</strong> is the natural first pick: its only job is to fetch the facts about
+      one account from the <code>meridian-systems</code> server and hand them back. If it can
+      round-trip — ask about an account, get its record — the hardest wiring of the day is behind you.</p>
+
+      <div class="whatis">
+        <span class="tag">A quirk worth knowing now</span>
+        <p>Just like <code>.claude/skills/</code> yesterday, Claude Code only watches an
+        <code>agents</code> directory that existed when the session started. Create
+        <code>.claude/agents/</code> for the first time mid-session and you must restart before your
+        first subagent is discovered. Hit this now, on an empty directory, rather than while debugging a
+        specialist you think is broken.</p>
+      </div>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Sketch the delegation map, then have Claude Code explain the split.</div>
-          <p class="step-why">Why: drawing the orchestrator and its three specialists — and hearing
-          the split described against your actual pipeline — cements which piece of today's work goes
-          where before you wire anything.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Explain how an orchestrator and three specialist subagents
-(ledger-reader, policy-applier, findings-writer) would divide up
-our current triage pipeline. What does each one own?</pre>
-          </div>
+          <div class="step-do">Map the decomposition onto your Day 3 pipeline.</div>
+          <p class="step-why">Why: decide which piece of yesterday's work each specialist owns —
+          <em>and</em> the smallest toolset each one needs — before you wire anything. The tool list is
+          a design decision, not an afterthought.</p>
+
+          <p><strong>What you're building.</strong> A short ownership map, in your notes: for each of
+          the three specialists, its one job and the tools it needs to do that job and nothing more.
+          The reader gathers facts (MCP tools + <code>Read</code>); the applier judges against the three
+          Skills (<code>Read</code>, no writing); the writer shapes output (<code>Write</code> /
+          <code>Edit</code>). Only one of the three can write to disk.</p>
+
+          <p><strong>How you'll know you got it right.</strong> No two specialists share a
+          responsibility, and no specialist holds a tool its job doesn't require. If your ledger-reader
+          has <code>Write</code>, ask what it would ever write — the answer is nothing, so take it
+          away. That instinct is Cycle 1's blast radius, applied.</p>
           <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Start the Meridian MCP server.</div>
-          <p class="step-why">Why: the server has to be running before any specialist can talk to it.
-          Leave it running in its own terminal tab.</p>
-          <div class="code labeled">
-            <span class="kind">Terminal</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>python -m meridian_mcp.server</pre>
-          </div>
+          <div class="step-do">Confirm the MCP server is live in this session.</div>
+          <p class="step-why">Why: a specialist can't call a server Claude Code can't see. Prove the
+          connection before you build anything that depends on it.</p>
+
+          <p><strong>What you're building.</strong> Confirmation that Claude Code has loaded the
+          <code>meridian-systems</code> server and its seven tools. Because <code>.mcp.json</code>
+          already declares it, this is a check, not a setup step.</p>
           <div class="terminal">
-<span class="cmd">python -m meridian_mcp.server</span>
-<span class="out">meridian-mcp listening on stdio
-tools: get_ledger, get_entitlements, get_person</span>
+<span class="cmd">claude mcp list</span>
+<span class="out">meridian-systems   ✓ connected   (stdio)
+  tools: get_employee, get_account, search_tickets, get_prior_review,
+         get_application, is_approved_service_account, get_sod_matrix</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> The server shows as connected and its
+          seven tools are listed. Anything less and no specialist you build will reach the data.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>"module not found"?</strong> The kit's MCP package may not be installed in
-              your venv. Ask Claude Code: "the meridian_mcp module isn't found — how do I install the
-              kit's MCP server into my active venv?"</p>
+              <p><strong>Server missing or failed?</strong> It runs as <code>python -m
+              meridian_capstone.mcp_server.server</code> with <code>MERIDIAN_DATA_DIR=data/2026-Q3</code>
+              — both set in <code>.mcp.json</code>. Confirm the package imports in your venv
+              (<code>python -c "import meridian_capstone"</code>) and that you started Claude Code from
+              the repository root.</p>
+              <p><strong>Connected but zero tools?</strong> The server started but couldn't read the
+              data directory. Check that <code>data/2026-Q3/</code> exists and
+              <code>MERIDIAN_DATA_DIR</code> points at it.</p>
             </div>
           </details>
         </li>
 
         <li>
-          <div class="step-do">Register the MCP server with Claude Code.</div>
-          <p class="step-why">Why: Claude Code needs to know the server exists before a subagent can
-          call it. This adds it to your project's MCP configuration.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
+          <div class="step-do">Create the <code>.claude/agents/</code> directory and restart.</div>
+          <p class="step-why">Why: get the discovery quirk out of the way on an empty directory, exactly
+          as you did for Skills in Day 3.</p>
+
+          <p><strong>What you're building.</strong> An empty <code>.claude/agents/</code> at the
+          repository root, and a restarted session that watches it.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Register the meridian-capstone MCP server in this project's
-config so subagents can call its tools (get_ledger,
-get_entitlements, get_person).</pre>
+            <pre>mkdir -p .claude/agents</pre>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> After restarting, Claude Code reports no
+          project subagents yet — which is correct, the directory is empty. What you're confirming is
+          that it sees an empty <code>agents</code> directory rather than none at all, so the specialist
+          you add next appears without another restart.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Not sure the restart is needed?</strong> It costs ten seconds and removes a
+              variable. The failure it prevents — a correctly written subagent that's never discovered —
+              looks identical to a broken one, and telling them apart wastes far more than ten seconds.</p>
+              <p><strong>Commit this directory?</strong> Yes. Subagents are project artifacts; anyone
+              who clones the repo should get your specialist team with it.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Define the ledger-reader specialist and have it fetch one batch.</div>
-          <p class="step-why">Why: this is the round-trip test. A specialist scoped to just reading
-          asks the MCP server for a small batch of ledger rows and returns them.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Create a ledger-reader subagent whose only job is to fetch access
-data from the meridian MCP server. Have it pull the first 20 ledger
-rows and show them to me.</pre>
-          </div>
+          <div class="step-do">Define the ledger-reader and prove the MCP round-trip.</div>
+          <p class="step-why">Why: this is the whole-day's wiring in miniature — a scoped specialist
+          calling the server and returning real data. Prove it on one account whose answer you already
+          know.</p>
+
+          <p><strong>What you're building.</strong> A subagent file at
+          <code>.claude/agents/ledger-reader.md</code>: frontmatter with a <code>name</code>, a
+          <code>description</code> that says it gathers the access facts for one account from the
+          <code>meridian-systems</code> server (so Claude knows when to delegate), and a
+          <code>tools</code> list limited to the MCP tools plus <code>Read</code> — no
+          <code>Write</code>, no <code>Bash</code>. Then have the orchestrator delegate to it to pull the
+          full picture for <strong>A000251</strong>, Michelle Mercado.</p>
+
+          <p><strong>How you'll know you got it right.</strong> The reader returns A000251's account via
+          <code>get_account</code>, and among its roles you see both <code>Vendor Admin</code> and
+          <code>AP Manager</code> — the pair that made it a finding yesterday:</p>
           <div class="terminal">
-<span class="cmd">ledger-reader → meridian-mcp.get_ledger(limit=20)</span>
-<span class="out">← returned 20 rows  (canonical_id, person, app, role, last_login)
+<span class="cmd">orchestrator → ledger-reader: gather facts for A000251</span>
+<span class="out">ledger-reader → meridian-systems.get_account("A000251")
+← account_name michelle.mercado · 14 entitlement rows
+  roles include: Vendor Admin, AP Manager  (Atlas ERP)
 round-trip OK</span>
           </div>
+          <p class="step-why">The point isn't the specific rows — it's that a subagent scoped to
+          read-only tools reached the server and came back with real data. If it did, the rest of the
+          team is variations on this.</p>
+
           <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Nothing comes back?</strong> Confirm the server from Step 1 is still running
-              in its tab. If it is, ask Claude: "the ledger-reader called get_ledger but got nothing —
-              show me the raw request and response so we can see where it broke."</p>
+              <p><strong>Nothing comes back?</strong> Re-check Step 2 — the server has to be connected.
+              Then confirm the reader's <code>tools</code> list actually includes the MCP tools; a
+              subagent can only call tools it was granted.</p>
+              <p><strong>The subagent isn't found?</strong> If you created <code>.claude/agents/</code>
+              this session (Step 3) and skipped the restart, it isn't watched yet. Restart and try
+              again.</p>
+              <p><strong>It tries to read a CSV instead of calling MCP?</strong> Its description or
+              prompt is pointing it at files. This specialist's job is the per-entity lookup — tell it
+              to answer from the <code>meridian-systems</code> tools, and confirm it isn't holding
+              <code>Bash</code> it could shell out with.</p>
             </div>
           </details>
         </li>
 
         <li>
           <div class="step-do">Commit the working MCP wiring.</div>
+          <p class="step-why">Why: the round-trip is the foundation for the whole team. Snapshot it
+          before you build on it.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Wire ledger-reader specialist to Meridian MCP server"</pre>
+git commit -m "Add ledger-reader specialist over Meridian MCP"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c2-s5"> Mark done</label>
         </li>
@@ -638,9 +778,11 @@ git commit -m "Wire ledger-reader specialist to Meridian MCP server"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 2 when</strong> the MCP server is running and your
-      ledger-reader subagent has round-tripped — you asked it for ledger rows and real data came
-      back through MCP.</p>
+      <p><strong>You're done with Cycle 2 when</strong> <code>.claude/agents/ledger-reader.md</code>
+      exists with valid frontmatter and a tool list restricted to read-only MCP access, the
+      <code>meridian-systems</code> server is connected, and the orchestrator has delegated to the
+      reader to round-trip one account — you asked about A000251 and its real entitlements came back
+      through MCP.</p>
     </div>
   </section>
 
@@ -657,15 +799,24 @@ git commit -m "Wire ledger-reader specialist to Meridian MCP server"</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>With the reader proven, add the other two specialists and let the orchestrator run all three
-      in sequence. Each keeps a narrow scope:</p>
+      <p>With the reader proven, add the other two specialists and let the orchestrator run all three in
+      sequence. Each keeps a narrow scope <em>and</em> a narrow toolset — the tool list is where Cycle
+      1's blast-radius lesson becomes concrete:</p>
       <ul class="learn">
-        <li><strong>ledger-reader</strong> — fetches access data from MCP (done in Cycle 2)</li>
-        <li><strong>policy-applier</strong> — runs each grant past the three Skills from Day 3</li>
-        <li><strong>findings-writer</strong> — shapes the results into valid <code>findings.json</code></li>
+        <li><strong>ledger-reader</strong> — gathers an account's facts from MCP. Tools: the
+        <code>meridian-systems</code> lookups + <code>Read</code>. Cannot write. <em>(Cycle 2.)</em></li>
+        <li><strong>policy-applier</strong> — runs each account's facts past the three Day 3 Skills and
+        emits a violation record with a real <code>policy_citations</code> entry. Tools:
+        <code>Read</code> and the Skills. Cannot write, cannot fetch — it judges what it's handed.</li>
+        <li><strong>findings-writer</strong> — shapes violation records into contract-valid
+        <code>findings.json</code> and <code>exemptions.json</code>. Tools: <code>Write</code>,
+        <code>Edit</code>, <code>Read</code>. It's the only specialist that touches disk, and it doesn't
+        re-judge anything.</li>
       </ul>
-      <p>The orchestrator's job is the handoff: reader's output feeds the applier; the applier's
-      output feeds the writer. Each specialist trusts the one before it and does only its own step.</p>
+      <p>The orchestrator's job is the handoff: the reader's facts feed the applier; the applier's
+      verdicts feed the writer. Each specialist trusts the one before it and does only its own step.
+      That the writer is the <em>only</em> tool holder able to write is not tidiness — it means a bug in
+      the reader or applier can be wrong but cannot corrupt an output file.</p>
     </div>
 
     <div class="task">
@@ -673,57 +824,100 @@ git commit -m "Wire ledger-reader specialist to Meridian MCP server"</pre>
       <ol class="steps">
         <li>
           <div class="step-do">Define the policy-applier specialist.</div>
-          <p class="step-why">Why: it owns the compliance step — taking rows from the reader and
-          evaluating each against the SoD, privileged-access, and contractor-access Skills.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Create a policy-applier subagent that takes ledger rows and
-evaluates each grant against the three Skills, returning a
-violation record (with policy_reference) for each hit.</pre>
-          </div>
+          <p class="step-why">Why: it owns the compliance judgment — taking an account's facts and
+          evaluating them against the SoD, privileged-access, and contractor-access Skills you wrote
+          yesterday.</p>
+
+          <p><strong>What you're building.</strong> A subagent at
+          <code>.claude/agents/policy-applier.md</code> that, given one account's gathered facts,
+          applies the three Skills and returns a violation record per hit — each carrying the citation
+          the Skill produced (<code>ACP-4.1</code> for an SoD conflict, the policy title where a policy
+          has no clause numbers). Its <code>tools</code> are <code>Read</code> plus the Skills; it has
+          no writing tools and no MCP access.</p>
+
+          <p><strong>How you'll know it's scoped right.</strong> Handed A000251's facts it returns a
+          <code>sod_conflict</code> citing <code>ACP-4.1</code>; handed a Controller
+          (A000042/A000089/A000168) it returns an <em>exemption</em> citing <code>ACP-4.2</code>, not a
+          finding. If it ever fetches data or writes a file, its toolset is too wide — that's the
+          reader's job and the writer's job respectively.</p>
+
           <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>It re-derives conflicts from scratch?</strong> It shouldn't. The SoD conflict
+              pairs live in the matrix and the reader can surface them via
+              <code>get_sod_matrix</code>; the applier reasons <em>from</em> the Skills, it doesn't
+              reinvent the policy.</p>
+              <p><strong>It drops the exemptions silently?</strong> A suppressed conflict still has to be
+              recorded — that was Day 3's rule and it survives decomposition. The applier should mark a
+              Controller as exempt-under-ACP-4.2, not simply omit it.</p>
+            </div>
+          </details>
         </li>
 
         <li>
           <div class="step-do">Define the findings-writer specialist.</div>
-          <p class="step-why">Why: it owns output shape — turning raw violation records into findings
-          with every required field, ready for the rest of the week's tooling.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Create a findings-writer subagent that takes violation records
-and writes a valid findings.json — every finding carrying all
-required fields, including policy_reference and severity.</pre>
-          </div>
+          <p class="step-why">Why: it owns output shape — turning verdicts into findings that satisfy
+          the frozen contract, and it's the only specialist allowed to write.</p>
+
+          <p><strong>What you're building.</strong> A subagent at
+          <code>.claude/agents/findings-writer.md</code> that takes violation records and writes a valid
+          <code>findings.json</code> (plus the <code>exemptions.json</code> sidecar), every finding
+          carrying all required fields including a populated <code>policy_citations</code>. Its
+          <code>tools</code> are <code>Write</code>, <code>Edit</code>, and <code>Read</code>.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Its output validates against
+          <code>src/meridian_capstone/contract/findings.schema.json</code>, which sets
+          <code>additionalProperties: false</code> — so the writer can't invent a field like
+          <code>policy_reference</code> or <code>finding_id</code>. Anything the contract can't hold
+          (like exemption bookkeeping) goes in the sidecar, exactly as in Day 3.</p>
+
           <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Schema validation fails on an unknown field?</strong> The contract is
+              closed. The field for citations is <code>policy_citations</code> (an array of strings) —
+              not <code>policy_reference</code>. Map the applier's citation onto that field.</p>
+              <p><strong>The writer starts re-judging?</strong> It shouldn't decide anything — if a
+              record reached it, the applier already ruled. Keep its prompt to shaping and writing.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Have the orchestrator run all three in sequence on a small batch.</div>
-          <p class="step-why">Why: prove the handoffs work on a limited run before you scale up.
-          Watch each specialist hand off to the next.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>As orchestrator, run ledger-reader → policy-applier →
-findings-writer on the first 100 ledger rows. Show me the handoff
-at each step and the findings produced.</pre>
-          </div>
+          <div class="step-do">Run all three in sequence on a small batch.</div>
+          <p class="step-why">Why: prove the handoffs work on a limited run before you scale up. The
+          contract's <code>limit</code> exists for exactly this cheap iteration.</p>
+
+          <p><strong>What you're building.</strong> One orchestrated pass — reader → applier → writer —
+          over a small candidate set, with each handoff visible. Watch that each specialist stays in its
+          lane and passes results forward explicitly.</p>
           <div class="terminal">
-<span class="cmd">orchestrator: run pipeline (limit=100)</span>
-<span class="out">ledger-reader   → 100 rows
-policy-applier  → 6 violations
-findings-writer → wrote 6 findings
-pipeline OK</span>
+<span class="cmd">orchestrator: run reader → applier → writer  (limit = 40)</span>
+<span class="out">ledger-reader    → gathered facts for 40 candidate accounts
+policy-applier   → 3 violations, 1 exemption   (cited)
+findings-writer  → wrote 3 findings + 1 exemption
+handoffs clean; each specialist stayed in scope</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> The batch flows end to end and every
+          finding the writer emits carries a citation. The exact counts depend on which accounts the
+          candidate set happened to include — what matters here is that the pipeline <em>runs</em>, not
+          that it's complete. Completeness is Cycle 4.</p>
+
           <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>A specialist reaches past its scope?</strong> If the policy-applier starts
-              fetching data or the writer starts re-evaluating policies, remind the orchestrator to
-              keep each subagent to its one job and pass results between them explicitly.</p>
+              <p><strong>A specialist reaches past its scope?</strong> If the applier starts fetching or
+              the writer starts re-evaluating policy, the tool lists are too generous. Tighten the
+              <code>tools</code> frontmatter — the cleanest fix is removing the tool that made the
+              overreach possible, not adding an instruction asking it not to.</p>
+              <p><strong>The handoff loses data between steps?</strong> Have the orchestrator pass each
+              specialist's output forward as explicit input to the next, rather than assuming shared
+              memory. Subagents don't see each other's context.</p>
             </div>
           </details>
         </li>
@@ -743,9 +937,10 @@ git commit -m "Add policy-applier and findings-writer specialists"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 3 when</strong> all three specialists exist and the
-      orchestrator runs them in sequence on a 100-row batch — reader to applier to writer — producing
-      valid findings.</p>
+      <p><strong>You're done with Cycle 3 when</strong> all three specialists exist as
+      <code>.claude/agents/*.md</code>, each with a <code>tools</code> list scoped to its one job — only
+      the findings-writer can write — and the orchestrator runs reader → applier → writer over a small
+      batch, producing cited findings with each handoff staying in its lane.</p>
     </div>
   </section>
 
@@ -762,69 +957,115 @@ git commit -m "Add policy-applier and findings-writer specialists"</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Now take the limit off and run the whole thing against Meridian's complete Q3 export. At full
-      scale, things break that a 100-row run never surfaces — a duplicate entitlement row, a grant
-      date in an unexpected format, a Skill that times out. That's expected. Today's real skill is <em>diagnosing
-      and fixing</em> what breaks, then confirming the output is shaped correctly.</p>
-      <p>The full run is driven by one call:</p>
+      <p>Now take the limit off and run the whole team against Meridian's complete Q3 export. The bar is
+      exact and you already know it: the decomposed pipeline must reproduce yesterday's answer —
+      <strong>nine findings across three categories and five recorded exemptions</strong>. Decomposition
+      changed <em>how</em> those findings are produced. If it changed <em>what</em> they are, something
+      is wrong in a specialist, not in the plan.</p>
+
+      <p><strong>The frozen contract is your entry point.</strong>
+      <code>src/meridian_capstone/contract/run_review.py</code> exposes
+      <code>run_review(export_dir, limit=None)</code> — the exact signature the grader calls. Your
+      orchestrator and its specialists are the implementation behind it. The full run is one command:</p>
       <div class="code labeled">
         <span class="kind">The full run</span>
         <button class="copy" type="button">Copy</button>
-        <pre>run_review(export_dir='data/2026-Q3', limit=None)</pre>
+        <pre>python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json</pre>
       </div>
+
+      <p>At full scale, things break that a 40-row batch never surfaced — a duplicate entitlement row, a
+      date in an unexpected format, an account the reader can fetch but the applier can't classify.
+      That's expected, and diagnosing it is the real skill of the cycle. What isn't negotiable is where
+      you land: the same nine findings as Day 3.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Run the full pipeline against Q3.</div>
-          <p class="step-why">Why: this is the end-to-end test. Expect it to surface a few problems on
-          the first pass — that's the point.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Run run_review(export_dir='data/2026-Q3', limit=None) through the
-orchestrator and its three specialists. If anything errors, stop
-and show me the failure.</pre>
-          </div>
+          <div class="step-do">Run the full pipeline over Q3.</div>
+          <p class="step-why">Why: this is the end-to-end test. Expect the first pass to surface a
+          problem or two — that's the point of running it at full scale.</p>
+
+          <p><strong>What you're building.</strong> A complete <code>findings.json</code> produced by
+          the orchestrator and its three specialists over all 15,081 grants — not the Day 3 monolith,
+          the team. Run it through <code>run_review</code> with no limit and let it complete or stop on
+          the first real error.</p>
+
+          <p><strong>How you'll know you're on track.</strong> The run reaches the end and produces
+          findings in all three categories — <code>sod_conflict</code>, <code>dormant_privileged</code>,
+          and <code>contractor_overstay</code>. If a category comes back empty, that Skill isn't
+          reaching the applier; fix that before tuning anything else.</p>
+
           <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
         </li>
 
         <li>
           <div class="step-do">Diagnose and fix the first thing that breaks.</div>
-          <p class="step-why">Why: at full scale, edge cases appear. Work them one at a time — read
-          the error, ask Claude what caused it, fix, re-run.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>This row broke the policy-applier. Explain why it failed, propose
-the smallest fix, and apply it. Then re-run just this row to
-confirm it's handled.</pre>
-          </div>
+          <p class="step-why">Why: at full scale, edge cases appear. Work them one at a time — read the
+          error, find the cause, fix the class of problem, re-run.</p>
+
+          <p><strong>What you're building.</strong> A pipeline that survives the whole export. For each
+          failure, get to the root cause rather than the symptom: the goal is a fix that also handles the
+          twenty rows you haven't hit yet, not a patch for the one that stopped you.</p>
+
+          <p><strong>How you'll know you got it right.</strong> The same input that broke the run now
+          flows through, and you can say <em>why</em> it broke and what class of rows shared the problem.
+          A fix you can't explain is a fix you can't trust at Q4.</p>
+
           <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>Same error keeps coming back?</strong> The fix may be treating a symptom.
-              Ask Claude: "is this the root cause or just this one row? Show me every row that would
-              hit the same problem" — then fix the class, not the instance.</p>
+              <p><strong>Same error keeps returning?</strong> You're likely treating a symptom. Ask which
+              rows share the shape that failed, and fix the shape — one date-format branch, not one row.
+              Day 2's messy-data lessons (mixed date formats, duplicate rows, name mismatches) are the
+              usual culprits surfacing at scale.</p>
+              <p><strong>A specialist stalls on a whole class of accounts?</strong> Check the handoff
+              contract between specialists — an account the reader returns in one shape the applier
+              doesn't expect will fail every time. Align the shape once.</p>
             </div>
           </details>
         </li>
 
         <li>
-          <div class="step-do">Verify the findings against the expected shape.</div>
-          <p class="step-why">Why: a clean run isn't enough — the output has to match what the rest of
-          the tooling expects. Confirm every finding has its required fields.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Check the Q3 findings.json: does every finding have all required
-fields, a valid severity, and a policy_reference? List anything
-that doesn't conform.</pre>
+          <div class="step-do">Verify the totals against the known answer.</div>
+          <p class="step-why">Why: this is your proof. Every number here is knowable in advance because
+          you produced it yesterday, so any deviation is a real signal.</p>
+
+          <p><strong>How you'll know you got it right.</strong> Nine findings across three categories,
+          the same account sets as Day 3, full citation coverage, and five recorded exemptions:</p>
+          <div class="terminal">
+<span class="out">category              findings   accounts
+sod_conflict                 2   A000251, A000615
+dormant_privileged           3   A000365, A000605, A000768
+contractor_overstay          4   A001143, A001163, A000175, A000577
+                          ----
+total                        9   with policy_citations: 9 / 9
+
+exemptions.json              5   A000042, A000089, A000168   (ACP-4.2)
+                                 A000963, A001015            (break-glass)</span>
           </div>
+          <p class="step-why">If your contractor findings came out as 46 rather than 4, you scoped them
+          per grant instead of per account — defensible, and the account set is still the same four, but
+          note it. Anything else that differs from this table means a specialist changed the answer.
+          Re-run <code>pytest tests/test_skills.py</code>; if Day 3's checks fail now, the regression is
+          in your rewrite, not the data.</p>
+
           <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>More findings than expected?</strong> Look at which category grew. An inflated
+              <code>dormant_privileged</code> usually means every role is being treated as privileged
+              (only <code>privileged_roles</code> from <code>get_application</code> count — 105 grants);
+              an inflated <code>contractor_overstay</code> usually means contractor status alone is being
+              read as a violation.</p>
+              <p><strong>The Controllers are back as findings?</strong> The ACP-4.2 exemption regressed
+              while you were rewiring. The applier must apply it and the writer must record it — one of
+              them dropped it.</p>
+            </div>
+          </details>
         </li>
 
         <li>
@@ -833,7 +1074,7 @@ that doesn't conform.</pre>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Full subagent pipeline produces Q3 findings.json"</pre>
+git commit -m "Full subagent pipeline reproduces Q3 findings.json"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c4-s4"> Mark done</label>
         </li>
@@ -843,8 +1084,9 @@ git commit -m "Full subagent pipeline produces Q3 findings.json"</pre>
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
       <p><strong>You're done with Cycle 4 when</strong>
-      <code>run_review(export_dir='data/2026-Q3', limit=None)</code> completes without error and
-      writes a conforming <code>findings.json</code> for all of Q3.</p>
+      <code>run_review(export_dir='data/2026-Q3', limit=None)</code> completes without error and writes
+      a <code>findings.json</code> with the same nine findings and five exemptions as Day 3 — now
+      produced by the orchestrator and its three specialists rather than a single pass.</p>
     </div>
   </section>
 
@@ -861,112 +1103,194 @@ git commit -m "Full subagent pipeline produces Q3 findings.json"</pre>
 
     <div class="concept">
       <div class="label">Concept</div>
-      <p>Everything so far has <em>asked</em> the system to behave — a rule in <code>CLAUDE.md</code>,
-      a narrow scope on a subagent. <strong>Hooks are how you <em>guarantee</em> behavior instead of
-      requesting it.</strong> A hook is code that runs automatically around every tool call, whether
-      the agent wants it to or not. For compliance, that makes hooks your audit and enforcement
-      primitive: the layer that proves what happened and stops what mustn't.</p>
+      <p>Everything so far has <em>asked</em> the system to behave — a rule in <code>CLAUDE.md</code>, a
+      narrow toolset on a subagent. <strong>Hooks are how you <em>guarantee</em> behavior instead of
+      requesting it.</strong> A hook is a command Claude Code runs automatically around a tool call,
+      whether the agent wants it to or not. For compliance, that makes hooks your audit and enforcement
+      primitive: the layer that records what happened and stops what mustn't.</p>
+
+      <p>Hooks are configured in <code>.claude/settings.json</code> under a <code>hooks</code> block,
+      keyed by event. Each entry has a <code>matcher</code> (which tools it fires on, e.g.
+      <code>Write|Edit</code>) and a command to run. The command receives the tool call as JSON on
+      standard input — <code>tool_name</code>, <code>tool_input</code>, <code>session_id</code>, and
+      more — and communicates its decision back through its output.</p>
 
       <div class="whatis">
         <span class="tag">What is a PreToolUse hook?</span>
-        <p>A <em>PreToolUse</em> hook runs <strong>before</strong> a tool call executes. Because it
-        goes first, it can <em>block</em> the call, <em>modify</em> its input, or <em>log</em> it.
-        That's your enforcement point: catch a write before it happens, or record it for the audit
-        trail before anything touches disk.</p>
+        <p>A <em>PreToolUse</em> hook runs <strong>before</strong> a tool call executes. Because it goes
+        first, it can <em>deny</em> the call outright — return a <code>permissionDecision</code> of
+        <code>"deny"</code> and the tool never runs. That's your enforcement point: catch a write before
+        it touches disk. This is the only place a write can actually be prevented.</p>
       </div>
 
       <div class="whatis">
         <span class="tag">What is a PostToolUse hook?</span>
-        <p>A <em>PostToolUse</em> hook runs <strong>after</strong> a tool call, so it can
-        <em>react</em> to what came back — inspect the result, flag it, or refuse to let it stand.
-        You'll use one to scan output for anything that looks like a leaked secret and stop it cold.</p>
+        <p>A <em>PostToolUse</em> hook runs <strong>after</strong> a tool call has already succeeded. It
+        can't un-write what just landed — the tool is done — but it can <em>react</em>: record what
+        happened, add context, or halt the run before Claude continues. That makes it the honest place
+        for an audit trail, which by nature records writes that actually occurred.</p>
       </div>
 
-      <p>Two hooks, two jobs — one records, one guards:</p>
+      <p><strong>Two hooks, matched to what each event can truthfully do</strong> — one guards, one
+      records:</p>
       <div class="code labeled">
         <span class="kind">The enforcement layer</span>
         <button class="copy" type="button">Copy</button>
-        <pre>PreToolUse   (file write)  → append to audit/2026-Q3.jsonl   [ AUDIT ]
-PostToolUse  (any output)  → scan for secrets, block on hit   [ GUARD ]</pre>
+        <pre>PreToolUse   (Write|Edit) → scan pending content, DENY on a secret   [ GUARD ]
+PostToolUse  (Write|Edit) → append the write to audit/2026-Q3.jsonl  [ AUDIT ]</pre>
       </div>
+
+      <p><strong>You won't write these from scratch.</strong> The kit ships working, commented stubs at
+      <code>.claude/hooks/examples/</code> — <code>secret_guard.py</code>,
+      <code>audit_write.py</code>, and a <code>settings.hooks.json</code> showing the wiring. Your job
+      is to copy them into <code>.claude/hooks/</code>, wire them into <code>settings.json</code>, and
+      understand what each line does — not to invent the plumbing.</p>
     </div>
 
     <div class="task">
       <div class="label">Task</div>
       <ol class="steps">
         <li>
-          <div class="step-do">Add a PreToolUse hook that audits every file write.</div>
-          <p class="step-why">Why: this is your audit trail. Before any write lands, the hook appends
-          one line — timestamp, tool name, target path — to the quarter's audit log, so every change
-          is on the record.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
+          <div class="step-do">Copy the audit stub and wire the PostToolUse hook.</div>
+          <p class="step-why">Why: start with the recorder. Before you block anything, get every write
+          onto the record — that alone changes an unwitnessed run into an auditable one.</p>
+
+          <p><strong>What you're building.</strong> The audit hook, live. Copy
+          <code>.claude/hooks/examples/audit_write.py</code> into <code>.claude/hooks/</code> and add a
+          <code>PostToolUse</code> entry matching <code>Write|Edit</code> to
+          <code>.claude/settings.json</code> (the shape is in
+          <code>examples/settings.hooks.json</code>). After each successful write it appends one JSON
+          line — timestamp, tool, path, session — to <code>audit/2026-Q3.jsonl</code>.</p>
+          <div class="code labeled">
+            <span class="kind">.claude/settings.json — the PostToolUse entry</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Add a PreToolUse hook that fires on every file-writing tool
-(Write, Edit) and appends one JSON line to audit/2026-Q3.jsonl:
-the timestamp, the tool name, and the target path.</pre>
+            <pre>"PostToolUse": [
+  { "matcher": "Write|Edit",
+    "hooks": [
+      { "type": "command",
+        "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/audit_write.py\"" }
+    ] }
+]</pre>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> <code>settings.json</code> stays valid
+          JSON, and a single test write produces one line in <code>audit/2026-Q3.jsonl</code> with all
+          four fields present.</p>
+
           <label class="done"><input type="checkbox" data-task="c5-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — the audit stub, line by line</summary>
+            <div class="body">
+              <p><code>event = json.load(sys.stdin)</code> — Claude Code hands the completed tool call to
+              the hook as JSON on standard input; this reads it.</p>
+              <p><code>entry = {...}</code> — builds the audit record: a UTC timestamp, the
+              <code>tool_name</code> ("Write"/"Edit"), the <code>file_path</code> from
+              <code>tool_input</code>, and the <code>session_id</code> so a line traces to a run.</p>
+              <p><code>audit_dir = .../CLAUDE_PROJECT_DIR/audit</code> and <code>os.makedirs(...,
+              exist_ok=True)</code> — resolves the log location from the project dir Claude Code sets,
+              and creates the folder on first use.</p>
+              <p><code>log.write(json.dumps(entry) + "\n")</code> — appends one line. Open mode
+              <code>"a"</code> makes it append-only: every write adds a line, none overwrites another.
+              <code>sys.exit(0)</code> — records only; it never blocks.</p>
+              <p><strong>Nothing appears?</strong> Confirm the hook is under <code>PostToolUse</code> (not
+              Pre) and that the command path resolves — <code>$CLAUDE_PROJECT_DIR</code> is set by Claude
+              Code at run time.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Add a PostToolUse hook that blocks leaked secrets.</div>
-          <p class="step-why">Why: this is your guardrail. After a tool runs, the hook scans the
-          output for obvious secret patterns and blocks the call if it finds one — the system can't
-          emit a credential even if it tries.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Add a PostToolUse hook that scans tool output for obvious secrets —
-patterns like sk-, ANTHROPIC_API_KEY, or "password:" — and blocks
-the tool call if any match, with a clear message about what it caught.</pre>
-          </div>
+          <div class="step-do">Copy the guard stub and wire the PreToolUse hook.</div>
+          <p class="step-why">Why: now the enforcement. The guard has to run <em>before</em> the write,
+          which is why it's a PreToolUse hook — a post-hoc scan would be reading a secret that's already
+          on disk.</p>
+
+          <p><strong>What you're building.</strong> The secret guard, live. Copy
+          <code>.claude/hooks/examples/secret_guard.py</code> into <code>.claude/hooks/</code> and add a
+          <code>PreToolUse</code> entry matching <code>Write|Edit</code>. It reads the content about to
+          be written and, if it matches a secret pattern (<code>sk-</code>,
+          <code>ANTHROPIC_API_KEY</code>, <code>password:</code>, <code>Bearer&nbsp;</code>), returns a
+          <code>deny</code> — so the write never happens.</p>
+
+          <p><strong>How you'll know you got it right.</strong> <code>settings.json</code> now carries
+          both a PreToolUse and a PostToolUse entry, still valid JSON, and an ordinary write (a real
+          finding) passes untouched. You'll fire the guard deliberately in Step 4.</p>
+
           <label class="done"><input type="checkbox" data-task="c5-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — the guard stub, line by line</summary>
+            <div class="body">
+              <p><code>SECRET_PATTERNS = [...]</code> — the regexes that must never be written:
+              <code>sk-</code>-style tokens, a named key env var, a <code>password:</code> field, a
+              <code>Bearer</code> header. Extend this list per engagement.</p>
+              <p><code>event = json.load(sys.stdin)</code> then <code>pending_text = " ".join(...content,
+              new_string...)</code> — reads the pending call and joins the text about to be written.
+              <code>Write</code> carries the body in <code>content</code>; <code>Edit</code> carries it in
+              <code>new_string</code>, so one guard covers both.</p>
+              <p><code>for pattern in SECRET_PATTERNS: if re.search(...)</code> — on a match it prints a
+              <code>permissionDecision: "deny"</code> with a reason naming the pattern, then
+              <code>exit(0)</code>. Exit 0 with a deny decision blocks the tool; the reason is shown so
+              you know exactly what tripped it.</p>
+              <p>Final <code>sys.exit(0)</code> with no output — no match, so the guard stays silent and
+              the normal permission flow proceeds. Silence means allow.</p>
+              <p><strong>Why not PostToolUse?</strong> A PostToolUse hook fires after the write lands —
+              the secret would already be on disk. Prevention has to be Pre.</p>
+            </div>
+          </details>
         </li>
 
         <li>
-          <div class="step-do">Run the pipeline again and watch the audit log fill.</div>
-          <p class="step-why">Why: with the hooks in place, re-run the Q3 review and tail the audit
-          file — every write the pipeline makes should show up as a line.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Run run_review(export_dir='data/2026-Q3', limit=None) again, then
-show me the last 10 lines of audit/2026-Q3.jsonl so I can see the
-hook recorded each write.</pre>
-          </div>
+          <div class="step-do">Re-run the Q3 review and watch the audit log fill.</div>
+          <p class="step-why">Why: with the hooks live, a normal run should record itself. Confirm the
+          recorder before you trust the guard.</p>
+
+          <p><strong>What you're building.</strong> Evidence the audit trail works on a real run.
+          Regenerate <code>findings.json</code> through the pipeline, then look at the tail of the log.</p>
           <div class="terminal">
 <span class="cmd">tail -n 3 audit/2026-Q3.jsonl</span>
-<span class="out">{"ts":"2026-07-23T14:02:11Z","tool":"Write","path":"findings.json"}
-{"ts":"2026-07-23T14:02:11Z","tool":"Edit","path":"findings.json"}
-{"ts":"2026-07-23T14:02:12Z","tool":"Write","path":"summary.md"}</span>
+<span class="out">{"ts":"2026-07-24T14:02:11Z","tool":"Write","path":"findings.json","session_id":"a1c…"}
+{"ts":"2026-07-24T14:02:11Z","tool":"Write","path":"exemptions.json","session_id":"a1c…"}
+{"ts":"2026-07-24T14:02:12Z","tool":"Edit","path":"findings.json","session_id":"a1c…"}</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> There's a line for every write the run
+          made — <code>findings.json</code>, <code>exemptions.json</code>, any edits — each a valid JSON
+          object with the four fields. That file is now your run's evidence.</p>
+
           <label class="done"><input type="checkbox" data-task="c5-s3"> Mark done</label>
         </li>
 
         <li>
-          <div class="step-do">Try to leak a fake secret and confirm the guardrail blocks it.</div>
-          <p class="step-why">Why: an untested guardrail is a guess. Deliberately push a fake secret
-          through and confirm the PostToolUse hook catches it — a guardrail you've watched fire is one
-          you can trust.</p>
-          <div class="code prompt labeled">
-            <span class="kind">Claude Code prompt</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Try to write a finding whose notes field contains the string
-sk-fake-secret-12345. Show me what the PostToolUse hook does.</pre>
-          </div>
+          <div class="step-do">Fire the guardrail with a fake secret.</div>
+          <p class="step-why">Why: an untested guardrail is a guess. Push a fake secret through
+          deliberately and watch the PreToolUse hook refuse it — a guard you've seen fire is one you can
+          trust.</p>
+
+          <p><strong>What you're building.</strong> Proof the guard blocks. Have the pipeline attempt to
+          write a finding whose text contains the string <code>sk-fake-secret-12345</code>, and confirm
+          the write is denied before it reaches disk.</p>
           <div class="terminal">
-<span class="cmd">findings-writer → Write(findings.json)</span>
-<span class="out">PostToolUse guard: matched secret pattern "sk-" in output
-✗ tool call BLOCKED — write refused</span>
+<span class="cmd">findings-writer → Write(findings.json)   [contains sk-fake-secret-12345]</span>
+<span class="out">PreToolUse guard: matched /sk-[A-Za-z0-9]/ in the pending write
+✗ write DENIED — secret never reached disk</span>
           </div>
+
+          <p><strong>How you'll know you got it right.</strong> The write is refused, the reason names
+          the pattern that matched, and <code>findings.json</code> does <em>not</em> contain the fake
+          secret afterward. The guarantee is structural now, not a request.</p>
+
           <label class="done"><input type="checkbox" data-task="c5-s4"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
-              <p><strong>The write went through?</strong> The guard isn't matching. Ask Claude:
-              "the PostToolUse hook let sk-fake-secret-12345 through — show me the pattern it's
-              checking and why it didn't match," then tighten it until the block fires.</p>
+              <p><strong>The write went through?</strong> The guard isn't firing. Check three things: the
+              hook is under <code>PreToolUse</code> (a PostToolUse hook can't prevent the write); the
+              <code>matcher</code> includes <code>Write</code>; and the pattern actually matches — the
+              stub keys on <code>content</code> and <code>new_string</code>, which is where Write and
+              Edit put the text.</p>
+              <p><strong>Blocked, but you want to see why?</strong> The deny reason is fed back to Claude
+              and shown in the run. It should name the matched pattern — if it doesn't, you're looking at
+              a different block (a permission prompt, say), not the guard.</p>
             </div>
           </details>
         </li>
@@ -977,7 +1301,7 @@ sk-fake-secret-12345. Show me what the PostToolUse hook does.</pre>
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
             <pre>git add .
-git commit -m "Add PreToolUse audit + PostToolUse secret-guard hooks"</pre>
+git commit -m "Add PreToolUse secret-guard + PostToolUse audit hooks"</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="c5-s5"> Mark done</label>
         </li>
@@ -986,33 +1310,46 @@ git commit -m "Add PreToolUse audit + PostToolUse secret-guard hooks"</pre>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 5 when</strong> <code>audit/2026-Q3.jsonl</code> exists and
-      has a line for every write from the last run, and your guardrail test blocks output containing
-      <code>sk-fake-secret-12345</code>. You now have an enforcement layer, not just a request.</p>
+      <p><strong>You're done with Cycle 5 when</strong> <code>.claude/settings.json</code> defines a
+      PreToolUse guard and a PostToolUse audit over <code>Write|Edit</code>,
+      <code>audit/2026-Q3.jsonl</code> has a line for every write from your last run, and an attempt to
+      write <code>sk-fake-secret-12345</code> is denied before it lands. You have an enforcement layer
+      now, not just a request.</p>
     </div>
   </section>
 
   <!-- ============ VERIFICATION ============ -->
   <section class="verify">
     <h2 class="section-title">Prove it landed</h2>
-    <p>One command runs the full review and counts what came back by severity — the first time you'll
-    see your system's output as numbers. Run it from the repository root:</p>
+    <p>Two test modules close out the day. <code>test_pipeline.py</code> checks that your specialist team
+    exists and that the full-Q3 <code>findings.json</code> still carries the exact nine findings and five
+    exemptions — decomposition must not have moved the answer. <code>test_hooks.py</code> checks the
+    enforcement layer: the guard denies a <code>sk-fake-secret-12345</code> write, and the audit logger
+    emits a well-formed line. Run both from the repository root:</p>
     <div class="code labeled">
       <span class="kind">Terminal</span>
       <button class="copy" type="button">Copy</button>
-      <pre>pytest tests/test_pipeline.py</pre>
+      <pre>pytest tests/test_pipeline.py tests/test_hooks.py</pre>
     </div>
-    <p class="step-why">Green means the pipeline returns a valid findings list end to end. The
-    severity breakdown is your first real read on Meridian's Q3 access risk.</p>
     <div class="terminal">
-<span class="cmd">pytest tests/test_pipeline.py</span>
-<span class="out">run_review(export_dir='data/2026-Q3', limit=None)
-  findings: 214   high: 41   medium: 118   low: 55
+<span class="cmd">pytest tests/test_pipeline.py tests/test_hooks.py</span>
+<span class="out">tests/test_pipeline.py ........                               [ 53%]
+tests/test_hooks.py .......                                   [100%]
 
-tests/test_pipeline.py ......                                  [100%]
-6 passed in 3.90s</span>
+15 passed in 0.6s</span>
     </div>
-    <label class="done"><input type="checkbox" data-task="verify"> Pipeline returns valid findings — Day 4 done</label>
+    <p class="step-why">Fifteen passed means the pipeline reproduces Q3 <em>and</em> the guardrail fires.
+    Run <code>pytest tests/test_skills.py</code> too — today rewrote how <code>findings.json</code> is
+    produced, and Day 3's nineteen checks must still hold. Two results are worth recognising:</p>
+    <ul class="learn">
+      <li><strong>A skip on <code>test_pipeline.py</code></strong> means no <code>.claude/agents/</code>
+      directory was found — the module self-skips until Day 4 is underway. That's not a pass; it means
+      the specialist team doesn't exist yet.</li>
+      <li><strong>A failure in <code>test_pipeline.py</code></strong> names which category or account set
+      drifted from Day 3 — that's a specialist that changed the answer, and the message tells you which
+      one to look at. Hand Claude Code the exact assertion that failed rather than a description of it.</li>
+    </ul>
+    <label class="done"><input type="checkbox" data-task="verify"> Both suites pass — Day 4 done</label>
   </section>
 
   <!-- ============ WRAP-UP ============ -->
@@ -1022,29 +1359,48 @@ tests/test_pipeline.py ......                                  [100%]
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>A working grasp of an agent's <strong>tools</strong> — its senses and hands, and its blast radius</li>
-        <li>An <strong>orchestrator</strong> that plans the work and delegates it</li>
-        <li>Three <strong>specialists</strong> — ledger-reader, policy-applier, findings-writer — each with a narrow scope</li>
-        <li>A specialist talking to the Meridian data server over <strong>MCP</strong></li>
-        <li>A full pipeline producing Q3 <code>findings.json</code>, counted by severity</li>
-        <li>An enforcement layer — <strong>PreToolUse and PostToolUse hooks</strong> that audit every write and block leaked secrets</li>
+        <li><strong>A working grasp of tools and blast radius.</strong> An inventory of Claude Code's own
+        tools and the seven read-only, per-entity <code>meridian-systems</code> MCP tools — and the
+        instinct that fewer tools means a smaller blast radius.</li>
+        <li><strong>An orchestrator and three specialists.</strong> A ledger-reader over MCP, a
+        policy-applier running the Day 3 Skills, and a findings-writer — each a
+        <code>.claude/agents/*.md</code> file scoped to one job and one minimal toolset, with only the
+        writer able to touch disk.</li>
+        <li><strong>The same answer, a better architecture.</strong> A full Q3 run through
+        <code>run_review</code> that reproduces yesterday's nine findings and five exemptions — proof the
+        decomposition changed how, not what.</li>
+        <li><strong>An enforcement layer.</strong> A PostToolUse audit hook writing every change to
+        <code>audit/2026-Q3.jsonl</code>, and a PreToolUse guard that denies any write carrying a secret
+        — a guarantee, not a request.</li>
       </ul>
+      <p style="margin-top:14px">Worth noticing: the two hooks aren't interchangeable, and knowing which
+      is which is the real lesson. Only a PreToolUse hook can stop a write before it lands; a PostToolUse
+      hook can only record one that already did. Prevention and audit are different jobs, and you built
+      each with the event that can actually deliver it.</p>
     </div>
 
     <div class="narrative">
-      <p class="tomorrow">You built a real agentic system — tools, subagents, and an enforcement layer.
-      Tomorrow you prove it didn't just memorize Q3 — you regenerate Meridian with a new seed, a fresh
-      <em>Q4</em> quarter your pipeline has never seen, find out whether it learned the pattern or
-      quietly special-cased this quarter's data, and prove that your rules, skills, tools, subagents,
-      and hooks all travel with the new seed.</p>
+      <p class="tomorrow">You built a real agentic system — tools, subagents, and an enforcement layer —
+      and proved it reproduces Q3. But reproducing the quarter you built it on isn't the test that
+      matters. Tomorrow you regenerate Meridian with a new seed for a fresh <em>Q4</em> quarter your
+      pipeline has never seen — same apps, same policies, a completely new cast — and find out whether it
+      learned the pattern or quietly memorized Q3. Your rules, Skills, tools, subagents, and hooks all
+      travel with the new seed; the question is whether the answers do.</p>
     </div>
 
     <div class="panel curious">
       <h3>If you're curious</h3>
       <ul class="learn">
-        <li><a href="#">Orchestrator and specialist patterns</a> — why decomposition scales</li>
-        <li><a href="#">MCP in one page</a> — how Claude talks to tools and data</li>
-        <li><a href="#">Keeping subagent scopes narrow</a> — the discipline that keeps them sharp</li>
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building
+        effective agents</a> — Anthropic's writing on agent patterns; the "orchestrator–workers" section
+        is exactly the decomposition you built today, and worth reading for when it's <em>not</em> the
+        right shape (Anthropic Engineering)</li>
+        <li><a href="https://code.claude.com/docs/en/sub-agents">Create custom subagents</a> — the
+        reference for everything in Cycles 2–3: where subagent files live, the frontmatter fields, and
+        how <code>tools</code> restricts scope (Claude Code docs)</li>
+        <li><a href="https://code.claude.com/docs/en/hooks">Claude Code hooks</a> — the full hook
+        reference: every event, the JSON a hook receives on stdin, and exactly how PreToolUse and
+        PostToolUse differ in what they can do (Claude Code docs)</li>
       </ul>
     </div>
   </section>
