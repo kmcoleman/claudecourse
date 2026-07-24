@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Certified Architect — Course Portal</title>
+<style>
+  /* ============================================================
+     Design tokens — matched to course/day-2.html so the portal
+     reads as the front door of the same building.
+     ============================================================ */
+  :root {
+    --ink:      #1b2733;   /* primary text, deep slate */
+    --muted:    #5a6673;   /* secondary text */
+    --faint:    #8b95a1;   /* captions, meta */
+    --bg:       #f5f6f8;   /* page background */
+    --card:     #ffffff;   /* surfaces */
+    --border:   #e2e7ec;   /* hairlines */
+    --brand:    #2f4bd0;   /* interactive / spine (indigo) */
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;   /* warm paper tint */
+    --task-br:  #c9a227;   /* amber spine */
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --warn-bg:  #fdf6e6;
+    --warn-br:  #c9a227;
+    --warn-ink: #7a5c0a;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --wrap-wide: 1120px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+  a { color: var(--brand); }
+
+  /* ---------- Sticky header + nav ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 60;
+    background: var(--ink);
+    color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+    padding: 11px 24px;
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .home {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600; color: #fff;
+  }
+  .site .home em { color: #c9a227; font-style: normal; }
+  nav.top {
+    margin-left: auto;
+    display: flex; gap: 4px; flex-wrap: wrap;
+    font-size: 13px;
+  }
+  nav.top a {
+    color: #c7d2e8; text-decoration: none;
+    padding: 4px 10px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  nav.top a:hover { background: rgba(255,255,255,.10); color: #fff; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  main.wide { max-width: var(--wrap-wide); }
+  section { margin-top: 64px; scroll-margin-top: 72px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 24px;
+  }
+  .section-title .n {
+    color: var(--brand); font-variant-numeric: tabular-nums;
+    margin-right: 10px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { margin-top: 44px; }
+  .hero .kicker {
+    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 46px; line-height: 1.08; font-weight: 600;
+    margin: 0 0 18px; letter-spacing: -.015em;
+  }
+  .hero .lede {
+    font-size: 20px; color: #33414f; margin: 0 0 26px; max-width: 40em;
+  }
+  .outcome {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--brand);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px;
+    margin: 0;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand-dk); font-weight: 700; margin-bottom: 6px;
+  }
+  .outcome p {
+    margin: 0; font-family: var(--serif); font-size: 20px;
+    line-height: 1.45; color: #2b3947;
+  }
+  .outcome em { color: var(--brand-dk); font-style: italic; }
+
+  /* ---------- The Arc — six building blocks spine ---------- */
+  .arc { list-style: none; margin: 0; padding: 0; position: relative; }
+  .arc::before {
+    content: ""; position: absolute; left: 21px; top: 22px; bottom: 22px;
+    width: 2px; background: linear-gradient(var(--brand), #c9a227);
+  }
+  .block {
+    position: relative; padding: 0 0 26px 60px; min-height: 44px;
+  }
+  .block:last-child { padding-bottom: 0; }
+  .block .node {
+    position: absolute; left: 0; top: 0;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--card); border: 2px solid var(--brand);
+    color: var(--brand); font-family: var(--serif);
+    font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1;
+  }
+  .block:last-child .node { border-color: var(--task-br); color: #8a6d10; }
+  .block .head {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 3px;
+  }
+  .block .name {
+    font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink);
+  }
+  .block .where {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 700;
+  }
+  .block .where a { color: var(--brand); text-decoration: none; }
+  .block .where a:hover { text-decoration: underline; }
+  .block .artifact {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    background: #eef1f5; border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px;
+  }
+  .block p { margin: 4px 0 0; color: var(--muted); font-size: 15.5px; }
+
+  /* ---------- Day cards ---------- */
+  .daygrid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+  }
+  .daycard {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px 22px 20px;
+    display: flex; flex-direction: column;
+    transition: box-shadow .14s, transform .14s, border-color .14s;
+  }
+  .daycard:hover {
+    box-shadow: 0 6px 22px rgba(27,39,51,.09);
+    transform: translateY(-2px); border-color: #cdd6e0;
+  }
+  .daycard .dhead { display: flex; align-items: baseline; gap: 12px; }
+  .daycard .dnum {
+    font-family: var(--serif); font-size: 40px; line-height: .9;
+    font-weight: 600; color: var(--brand);
+  }
+  .daycard .dmod {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 700;
+  }
+  .daycard h3 {
+    font-family: var(--serif); font-size: 23px; font-weight: 600;
+    margin: 12px 0 2px;
+  }
+  .daycard .sub {
+    font-family: var(--serif); font-style: italic; color: var(--muted);
+    font-size: 16px; margin: 0 0 12px;
+  }
+  .daycard p.summary { margin: 0 0 16px; font-size: 15px; color: #3a4653; }
+  .daycard .cycles {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px;
+  }
+  .daycard .chip {
+    font-size: 11.5px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .daycard .open {
+    margin-top: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+    align-self: flex-start;
+    background: var(--brand); color: #fff; text-decoration: none;
+    font-size: 14px; font-weight: 600;
+    padding: 9px 16px; border-radius: 6px;
+    transition: background .12s;
+  }
+  .daycard .open:hover { background: var(--brand-dk); }
+  .daycard .open svg { width: 14px; height: 14px; }
+
+  /* ---------- The World ---------- */
+  .worldlede { font-size: 18px; color: #33414f; max-width: 42em; margin: 0 0 24px; }
+  .statrow {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px; margin: 0 0 22px;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+  }
+  .stat .big {
+    font-family: var(--serif); font-size: 30px; font-weight: 600;
+    color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .stat .lab {
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600; margin-top: 6px;
+  }
+  .quarters {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px;
+  }
+  .qcard {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; background: var(--card);
+  }
+  .qcard.q3 { border-left: 4px solid var(--brand); }
+  .qcard.q4 { border-left: 4px solid var(--task-br); }
+  .qcard .qt {
+    font-family: var(--serif); font-size: 19px; font-weight: 600; margin-bottom: 2px;
+  }
+  .qcard .qrole {
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 8px;
+  }
+  .qcard.q3 .qrole { color: var(--brand); }
+  .qcard.q4 .qrole { color: #8a6d10; }
+  .qcard p { margin: 0; font-size: 14.5px; color: var(--muted); }
+
+  /* ---------- Explore: shared ---------- */
+  .server-note {
+    background: var(--warn-bg); border: 1px solid #eadcae;
+    border-left: 4px solid var(--warn-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px; margin: 0 0 22px;
+    font-size: 14.5px; color: var(--warn-ink);
+  }
+  .server-note strong { color: #6b4f08; }
+  .server-note code {
+    font-family: var(--mono); font-size: 13px;
+    background: #fff; border: 1px solid #eadcae; border-radius: 4px;
+    padding: 1px 6px; color: #5c4506;
+  }
+  .server-note.hidden { display: none; }
+
+  .explore-bar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin: 0 0 20px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .qtoggle { display: inline-flex; border: 1px solid var(--border);
+    border-radius: 999px; overflow: hidden; background: var(--card); }
+  .qtoggle button {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: none; background: transparent; color: var(--muted);
+    padding: 7px 18px; cursor: pointer; transition: background .12s, color .12s;
+  }
+  .qtoggle button.active { background: var(--brand); color: #fff; }
+  .qtoggle button:not(.active):hover { background: var(--bg); }
+  .qtoggle .qhint { align-self: center; }
+  .explore-bar .qlabel {
+    font-size: 13px; color: var(--faint);
+  }
+  .explore-bar .qlabel b { color: var(--muted); }
+
+  /* dataset tabs */
+  .tabs {
+    display: flex; gap: 4px; flex-wrap: wrap; margin: 0 0 20px;
+  }
+  .tabs button {
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    padding: 7px 14px; border-radius: 6px; cursor: pointer;
+    transition: all .12s;
+  }
+  .tabs button:hover { border-color: #cdd6e0; color: var(--ink); }
+  .tabs button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .panelview {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; min-height: 160px;
+  }
+  .view-head { margin: 0 0 6px; }
+  .view-head h3 {
+    font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 0;
+  }
+  .view-head .desc { font-size: 14.5px; color: var(--muted); margin: 2px 0 0; }
+
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
+  .search {
+    flex: 1 1 240px; min-width: 200px;
+    font-family: var(--sans); font-size: 14px;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 12px; background: var(--bg); color: var(--ink);
+  }
+  .search:focus { outline: 2px solid var(--info-br); outline-offset: 0; background: #fff; }
+  .rowcount { font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.data thead th {
+    position: sticky; top: 0;
+    background: #eef1f5; color: var(--ink); text-align: left;
+    font-weight: 700; font-size: 12px; letter-spacing: .03em;
+    padding: 9px 12px; border-bottom: 2px solid var(--border);
+    cursor: pointer; white-space: nowrap; user-select: none;
+  }
+  table.data thead th:hover { background: #e4e9f0; }
+  table.data thead th .arrow { color: var(--brand); margin-left: 5px; font-size: 11px; }
+  table.data thead th .arrow.dim { color: transparent; }
+  table.data tbody td {
+    padding: 7px 12px; border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums; vertical-align: top;
+  }
+  table.data tbody tr:nth-child(even) { background: #fafbfc; }
+  table.data tbody tr:hover { background: var(--info-bg); }
+  table.data .mono { font-family: var(--mono); font-size: 12.5px; color: #33414f; }
+  table.data td.empty { color: var(--faint); font-style: italic; }
+
+  .pager { display: flex; align-items: center; gap: 10px; margin-top: 14px; justify-content: flex-end; }
+  .pager button {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    padding: 5px 12px; border-radius: 6px; cursor: pointer;
+  }
+  .pager button:disabled { opacity: .4; cursor: default; }
+  .pager button:not(:disabled):hover { border-color: #cdd6e0; color: var(--ink); }
+  .pager .pinfo { font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+  .loading { color: var(--faint); font-size: 14px; padding: 24px 0; text-align: center; }
+  .errbox {
+    background: var(--warn-bg); border: 1px solid #eadcae;
+    border-radius: 6px; padding: 16px 18px; font-size: 14.5px; color: var(--warn-ink);
+  }
+  .errbox code { font-family: var(--mono); background: #fff; border: 1px solid #eadcae;
+    border-radius: 4px; padding: 1px 6px; font-size: 13px; }
+
+  /* policies */
+  .pollayout { display: grid; grid-template-columns: 230px 1fr; gap: 20px; }
+  .pollist { list-style: none; margin: 0; padding: 0; }
+  .pollist li { margin: 0 0 6px; }
+  .pollist button {
+    width: 100%; text-align: left; font-family: var(--sans);
+    border: 1px solid var(--border); background: var(--card);
+    border-radius: 6px; padding: 10px 12px; cursor: pointer;
+    transition: all .12s;
+  }
+  .pollist button:hover { border-color: #cdd6e0; background: var(--bg); }
+  .pollist button.active { border-color: var(--brand); border-left: 3px solid var(--brand); background: var(--info-bg); }
+  .pollist .pn { display: block; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .pollist .pf { display: block; font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .polbody {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 24px 20px; background: #fff; min-height: 200px;
+  }
+  .polbody h1 { font-family: var(--serif); font-size: 25px; font-weight: 600; margin: 20px 0 6px; }
+  .polbody h2 {
+    font-family: var(--serif); font-size: 18px; font-weight: 600;
+    margin: 22px 0 4px; padding-top: 14px; border-top: 1px solid var(--border);
+    color: var(--brand-dk);
+  }
+  .polbody h1 + h2, .polbody h2:first-of-type { border-top: none; }
+  .polbody p { margin: 8px 0; font-size: 15.5px; color: #2c3a4a; }
+  .polbody code { font-family: var(--mono); font-size: 13px; background: #f2f4f7;
+    border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: #263243; }
+  .polbody strong { color: var(--ink); }
+  .polbody .clause {
+    font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+    color: var(--brand-dk); background: var(--info-bg);
+    border: 1px solid #cfdcf7; border-radius: 4px; padding: 0 5px;
+  }
+  .polnote { font-size: 13px; color: var(--faint); margin: 0 0 14px; }
+
+  /* user lookup */
+  .lookup-form { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 6px; }
+  .lookup-form input {
+    flex: 1 1 320px; font-family: var(--sans); font-size: 15px;
+    border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px;
+    background: var(--bg);
+  }
+  .lookup-form input:focus { outline: 2px solid var(--info-br); background: #fff; }
+  .lookup-form button {
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    background: var(--brand); color: #fff; border: none; border-radius: 6px;
+    padding: 10px 20px; cursor: pointer;
+  }
+  .lookup-form button:hover { background: var(--brand-dk); }
+  .lookup-hint { font-size: 13px; color: var(--faint); margin: 0 0 8px; }
+  .lookup-hint b { color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+  .person { margin-top: 10px; }
+  .person + .person { border-top: 2px solid var(--ink); padding-top: 20px; margin-top: 26px; }
+  .idcard {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 4px 20px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px 18px; margin: 6px 0 16px;
+  }
+  .idcard .nm { grid-column: 1 / -1; font-family: var(--serif); font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .idcard .fld { font-size: 13.5px; }
+  .idcard .fld .k { color: var(--faint); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; display: block; }
+  .idcard .fld .v { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .idcard .fld .v.mono { font-family: var(--mono); font-size: 13px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    padding: 1px 8px; border-radius: 999px; text-transform: uppercase; }
+  .badge.active { background: var(--ok-bg); color: var(--ok); }
+  .badge.terminated { background: #fce9e6; color: #b23b2e; }
+  .badge.on_leave, .badge.leave { background: var(--warn-bg); color: var(--warn-ink); }
+  .badge.contractor { background: #efeaf9; color: #6b4bb0; }
+  .badge.fte { background: var(--info-bg); color: var(--brand-dk); }
+  .subhead {
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--faint); font-weight: 700; margin: 18px 0 8px;
+    border-bottom: 1px solid var(--border); padding-bottom: 4px;
+  }
+  .subhead .cnt { color: var(--brand); }
+  .appgroup { margin: 0 0 10px; }
+  .appgroup .an { font-weight: 600; font-size: 14.5px; margin: 8px 0 4px; }
+  .appgroup .an .tier { font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: #8a6d10; background: var(--task-bg);
+    border: 1px solid #ece3c2; border-radius: 4px; padding: 0 6px; margin-left: 6px; }
+  .roleline { font-size: 13.5px; color: var(--muted); padding: 2px 0 2px 14px; }
+  .roleline .r { font-family: var(--mono); font-size: 12.5px; color: #33414f; }
+  .roleline .meta { color: var(--faint); font-size: 12px; }
+  .miniempty { color: var(--faint); font-style: italic; font-size: 13.5px; padding: 4px 0; }
+
+  /* reference viewer (sidecar json) */
+  .refgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 4px 0 16px; }
+  .refbtn {
+    text-align: left; font-family: var(--sans); cursor: pointer;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 16px; transition: all .12s;
+  }
+  .refbtn:hover { border-color: #cdd6e0; box-shadow: 0 4px 14px rgba(27,39,51,.06); }
+  .refbtn.active { border-color: var(--brand); border-left: 3px solid var(--brand); background: var(--info-bg); }
+  .refbtn .rf { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--brand-dk); }
+  .refbtn .rd { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  pre.json {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+    background: var(--term-bg); color: var(--term-fg);
+    border-radius: 6px; padding: 16px 18px; overflow-x: auto; margin: 0;
+    max-height: 520px; overflow-y: auto;
+  }
+
+  /* ---------- Resources ---------- */
+  .reslist { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .rescard {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .rescard h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px; }
+  .rescard ul { list-style: none; margin: 0; padding: 0; }
+  .rescard li { margin: 8px 0; font-size: 14.5px; }
+  .rescard li a { text-decoration: none; }
+  .rescard li a:hover { text-decoration: underline; }
+  .rescard li .ext::after { content: " ↗"; color: var(--faint); font-size: 11px; }
+  .rescard li code { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .rescard li.todo { color: var(--faint); font-style: italic; }
+
+  footer.end {
+    max-width: var(--wrap-wide); margin: 0 auto; padding: 44px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  footer.end .lin { color: var(--faint); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    .hero h1 { font-size: 33px; }
+    .site-inner { padding: 10px 16px; }
+    nav.top { width: 100%; margin-left: 0; }
+    main { padding: 0 16px 64px; }
+    .pollayout { grid-template-columns: 1fr; }
+    .quarters { grid-template-columns: 1fr; }
+    .block { padding-left: 54px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="home">Course <em>Portal</em></span>
+    <nav class="top">
+      <a href="#arc">The Arc</a>
+      <a href="#days">Days</a>
+      <a href="#world">The World</a>
+      <a href="#explore">Explore Data</a>
+      <a href="#resources">Resources</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wide">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero" style="margin-top:44px">
+    <div class="kicker">5-Day Bootcamp · Intent-Based Development</div>
+    <h1>Claude Certified Architect</h1>
+    <p class="lede">Five days building one real agentic system — an automated user-access
+    review for a regional utility — from a plain <code>CLAUDE.md</code> up to a self-checking
+    orchestrator that generalizes to data it has never seen.</p>
+    <div class="outcome">
+      <div class="label">The outcome</div>
+      <p>You understand the building blocks of an agentic system — and can build one yourself
+      using <em>intent-based development</em>: you describe what good looks like, and direct
+      Claude Code to build it.</p>
+    </div>
+  </section>
+
+  <!-- ================= THE ARC ================= -->
+  <section id="arc">
+    <h2 class="section-title"><span class="n">01</span>The arc — six building blocks</h2>
+    <p class="worldlede">Each day adds one part. By Friday they're a single system: rules give
+    Claude its standing instructions, skills give it the rulebook, tools give it reach,
+    subagents divide the labor, hooks keep it honest, and generalization proves it holds.</p>
+    <ol class="arc">
+      <li class="block">
+        <span class="node">1</span>
+        <div class="head">
+          <span class="name">Rules</span>
+          <span class="where"><a href="course/day-1.html">Day 1</a></span>
+          <span class="artifact">CLAUDE.md</span>
+        </div>
+        <p>How you tell Claude Code to behave. Project rules that load every session and shape
+        every response — the standing instructions the whole system sits on.</p>
+      </li>
+      <li class="block">
+        <span class="node">2</span>
+        <div class="head">
+          <span class="name">Skills</span>
+          <span class="where"><a href="course/day-3.html">Day 3</a></span>
+          <span class="artifact">policies/*.md</span>
+        </div>
+        <p>Markdown policies Claude applies on demand. Meridian's five written compliance
+        policies become Agent Skills the reviewer reaches for when a case calls for them.</p>
+      </li>
+      <li class="block">
+        <span class="node">3</span>
+        <div class="head">
+          <span class="name">Tools</span>
+          <span class="where"><a href="course/day-4.html">Day 4</a></span>
+          <span class="artifact">MCP server</span>
+        </div>
+        <p>The agent's senses and hands. Read-only lookups let Claude ask about one account,
+        person, or ticket at judgment time — targeted questions, not bulk data.</p>
+      </li>
+      <li class="block">
+        <span class="node">4</span>
+        <div class="head">
+          <span class="name">Subagents</span>
+          <span class="where"><a href="course/day-4.html">Day 4</a></span>
+          <span class="artifact">orchestrator + specialists</span>
+        </div>
+        <p>One orchestrator directing many specialists. Split the review into focused agents
+        that each own a single kind of judgment, then gather their findings.</p>
+      </li>
+      <li class="block">
+        <span class="node">5</span>
+        <div class="head">
+          <span class="name">Hooks</span>
+          <span class="where"><a href="course/day-4.html">Day 4</a></span>
+          <span class="artifact">.claude/hooks/</span>
+        </div>
+        <p>The enforcement and audit layer. Deterministic guards run before a tool fires;
+        an audit trail records what happened after — the parts you don't leave to judgment.</p>
+      </li>
+      <li class="block">
+        <span class="node">6</span>
+        <div class="head">
+          <span class="name">Generalization</span>
+          <span class="where"><a href="course/day-5.html">Day 5</a></span>
+          <span class="artifact">2026-Q4</span>
+        </div>
+        <p>Pattern transfer to unseen data. Point the finished system at a new quarter and
+        prove it holds — same shape, different specifics. This is the certification.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= DAYS ================= -->
+  <section id="days">
+    <h2 class="section-title"><span class="n">02</span>Day by day</h2>
+    <div class="daygrid">
+
+      <article class="daycard">
+        <div class="dhead"><span class="dnum">1</span><span class="dmod">Module 0 · Foundations</span></div>
+        <h3>Foundations</h3>
+        <p class="sub">Everything you need, working.</p>
+        <p class="summary">Set up your environment, meet Claude Code, and learn the six
+        building blocks you'll assemble all week. By the end, the kit runs and the green
+        light is green.</p>
+        <div class="cycles"><span class="chip">8 hours</span><span class="chip">5 cycles</span><span class="chip">24 tasks</span></div>
+        <a class="open" href="course/day-1.html">Open Day 1
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </article>
+
+      <article class="daycard">
+        <div class="dhead"><span class="dnum">2</span><span class="dmod">Module 1 · The Ledger</span></div>
+        <h3>The Ledger</h3>
+        <p class="sub">Who has access to what?</p>
+        <p class="summary">Reconcile a messy HR roster against an entitlements export into one
+        trustworthy record of every person and the access they hold — then flag your first
+        risky access pattern automatically.</p>
+        <div class="cycles"><span class="chip">6 hours</span><span class="chip">3 cycles</span><span class="chip">13 tasks</span></div>
+        <a class="open" href="course/day-2.html">Open Day 2
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </article>
+
+      <article class="daycard">
+        <div class="dhead"><span class="dnum">3</span><span class="dmod">Module 2 · Skills</span></div>
+        <h3>Policies as Skills</h3>
+        <p class="sub">Teaching Claude the rulebook.</p>
+        <p class="summary">Turn Meridian's five written compliance policies into Agent Skills
+        that Claude applies to every account — so judgment follows the policy, not a hunch,
+        and cites the clause it used.</p>
+        <div class="cycles"><span class="chip">6 hours</span><span class="chip">4 cycles</span><span class="chip">17 tasks</span></div>
+        <a class="open" href="course/day-3.html">Open Day 3
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </article>
+
+      <article class="daycard">
+        <div class="dhead"><span class="dnum">4</span><span class="dmod">Module 3 · Tools, Subagents, Hooks</span></div>
+        <h3>Tools, Subagents &amp; Hooks</h3>
+        <p class="sub">One orchestrator, many specialists.</p>
+        <p class="summary">Give the agent read-only tools to query Meridian's systems, split
+        the review across subagents that each own one judgment, and wrap the whole thing in
+        hooks that guard before and audit after.</p>
+        <div class="cycles"><span class="chip">6 hours</span><span class="chip">5 cycles</span><span class="chip">23 tasks</span></div>
+        <a class="open" href="course/day-4.html">Open Day 4
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </article>
+
+      <article class="daycard">
+        <div class="dhead"><span class="dnum">5</span><span class="dmod">Module 6 · Generalization</span></div>
+        <h3>Generalization</h3>
+        <p class="sub">Prove it transfers.</p>
+        <p class="summary">Point the finished system at an unseen quarter — 2026-Q4 — and show
+        the pattern holds. Same shape, different specifics. Memorizing Q3's answers won't
+        help; only a real system passes.</p>
+        <div class="cycles"><span class="chip">6 hours</span><span class="chip">4 cycles</span><span class="chip">19 tasks</span></div>
+        <a class="open" href="course/day-5.html">Open Day 5
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= THE WORLD ================= -->
+  <section id="world">
+    <h2 class="section-title"><span class="n">03</span>The world — Meridian Regional Energy</h2>
+    <p class="worldlede">A fictional regional gas &amp; electric utility. Big enough to have a
+    real access problem — entitlements scattered across two dozen systems that were never
+    designed to talk to each other — and small enough to hold in your head. Everything you
+    build this week runs against Meridian's own data.</p>
+    <div class="statrow">
+      <div class="stat"><div class="big">~1,200</div><div class="lab">Employees</div></div>
+      <div class="stat"><div class="big">22</div><div class="lab">Applications</div></div>
+      <div class="stat"><div class="big">~15,000</div><div class="lab">Entitlements</div></div>
+      <div class="stat"><div class="big">5</div><div class="lab">Compliance policies</div></div>
+      <div class="stat"><div class="big">2</div><div class="lab">Quarters of data</div></div>
+    </div>
+    <div class="quarters">
+      <div class="qcard q3">
+        <div class="qt">2026-Q3</div>
+        <div class="qrole">The training quarter</div>
+        <p>The data you learn on. Every exercise Days 1–4 works against Q3 — reconciling it,
+        writing policies against it, tuning the agent on it.</p>
+      </div>
+      <div class="qcard q4">
+        <div class="qt">2026-Q4</div>
+        <div class="qrole">The unseen quarter</div>
+        <p>Same systems, new people and new edge cases. Day 5's test: run the finished system
+        against Q4 and prove it generalizes rather than memorizes.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXPLORE THE DATA ================= -->
+  <section id="explore">
+    <h2 class="section-title"><span class="n">04</span>Explore the data</h2>
+    <p class="worldlede">Browse Meridian's world without touching code. Read the policies, page
+    through the roster and entitlements, and look up any person to see everything they hold.
+    Flip the quarter toggle to watch the same shapes fill with different specifics — that's the
+    whole of Day 5 in one switch.</p>
+
+    <div class="server-note" id="serverNote">
+      <strong>Viewing this file directly?</strong> Policies, the HR roster, tickets, the user
+      lookup and the reference files all work right now. The two large tables — <strong>Entitlements</strong>
+      (~15k rows) and <strong>Prior reviews</strong> — load over HTTP, which browsers block on
+      <code>file://</code>. To enable everything, from the repo root run
+      <code>python&nbsp;-m&nbsp;http.server&nbsp;8000</code> and open
+      <code>http://localhost:8000/index.html</code>.
+    </div>
+
+    <div class="explore-bar">
+      <div class="qtoggle" role="group" aria-label="Choose quarter">
+        <button id="qbtn-Q3" class="active" data-q="2026-Q3">2026-Q3</button>
+        <button id="qbtn-Q4" data-q="2026-Q4">2026-Q4</button>
+      </div>
+      <span class="qlabel">Viewing <b id="qlabel">2026-Q3</b> — <span id="qrole">the training quarter</span></span>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button data-view="policies" class="active">Policies</button>
+      <button data-view="hr">HR roster</button>
+      <button data-view="entitlements">Entitlements</button>
+      <button data-view="tickets">Access tickets</button>
+      <button data-view="reviews">Prior reviews</button>
+      <button data-view="lookup">User lookup</button>
+      <button data-view="refs">Reference files</button>
+    </div>
+
+    <div class="panelview" id="view"><div class="loading">Loading…</div></div>
+  </section>
+
+  <!-- ================= RESOURCES ================= -->
+  <section id="resources">
+    <h2 class="section-title"><span class="n">05</span>Resources &amp; for instructors</h2>
+    <div class="reslist">
+      <div class="rescard">
+        <h3>This repository</h3>
+        <ul>
+          <li><a href="README.md">Repository README</a> — how the kit and answer material fit together</li>
+          <li><a href="CLAUDE.md">CLAUDE.md</a> — the project rules Claude Code reads</li>
+          <li><a href="course/README.md">course/README.md</a> — the day pages</li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h3>Design docs</h3>
+        <ul>
+          <li><a href="docs/superpowers/specs/2026-07-15-uar-capstone-design.md">UAR capstone design</a></li>
+          <li><a href="docs/superpowers/specs/2026-07-15-data-generator-design.md">Data generator design</a></li>
+          <li><a href="docs/superpowers/specs/2026-07-22-module0-setup-kit-design.md">Module 0 setup-kit design</a></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h3>Anthropic docs</h3>
+        <ul>
+          <li><a class="ext" href="https://docs.claude.com/en/docs/claude-code/overview" target="_blank" rel="noopener">Claude Code</a></li>
+          <li><a class="ext" href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener">Agent Skills</a></li>
+          <li><a class="ext" href="https://docs.claude.com/en/docs/claude-code/hooks" target="_blank" rel="noopener">Hooks</a></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h3>Instructor material</h3>
+        <ul>
+          <!-- TODO: link rubric + timing sheets here once authored -->
+          <li class="todo">Grading rubric — coming soon</li>
+          <li class="todo">Timing &amp; facilitation sheet — coming soon</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="end">
+  <p>Claude Certified Architect — 5-Day Bootcamp · Meridian Regional Energy is a fictional
+  company; all data is synthetic.</p>
+  <p class="lin">Portal built to match the course day pages · offline-friendly · no external dependencies</p>
+</footer>
+
+<!-- ============================================================
+     EMBEDDED DATA (small files, both quarters + world-fixed policies).
+     Injected at build time by scripts/build_portal.py. The large
+     tables (entitlements, prior_review) are fetched on demand.
+     ============================================================ -->
+<script type="text/csv" id="embed-2026-Q3-hr" data-embed="2026-Q3/hr_roster.csv"></script>
+<script type="text/csv" id="embed-2026-Q4-hr" data-embed="2026-Q4/hr_roster.csv"></script>
+<script type="application/json" id="embed-2026-Q3-tickets" data-embed="2026-Q3/access_tickets.json"></script>
+<script type="application/json" id="embed-2026-Q4-tickets" data-embed="2026-Q4/access_tickets.json"></script>
+<script type="application/json" id="embed-2026-Q3-applications" data-embed="2026-Q3/applications.json"></script>
+<script type="application/json" id="embed-2026-Q4-applications" data-embed="2026-Q4/applications.json"></script>
+<script type="application/json" id="embed-2026-Q3-service_accounts" data-embed="2026-Q3/service_accounts.json"></script>
+<script type="application/json" id="embed-2026-Q4-service_accounts" data-embed="2026-Q4/service_accounts.json"></script>
+<script type="application/json" id="embed-2026-Q3-sod_matrix" data-embed="2026-Q3/sod_matrix.json"></script>
+<script type="application/json" id="embed-2026-Q4-sod_matrix" data-embed="2026-Q4/sod_matrix.json"></script>
+<script type="text/markdown" id="embed-pol-access-control" data-embed="2026-Q3/policies/access-control-policy.md"></script>
+<script type="text/markdown" id="embed-pol-sod" data-embed="2026-Q3/policies/sod-policy.md"></script>
+<script type="text/markdown" id="embed-pol-privileged" data-embed="2026-Q3/policies/privileged-access-standard.md"></script>
+<script type="text/markdown" id="embed-pol-contractor" data-embed="2026-Q3/policies/contractor-access-standard.md"></script>
+<script type="text/markdown" id="embed-pol-termination" data-embed="2026-Q3/policies/termination-procedure.md"></script>
+
+<script>
+"use strict";
+/* =====================================================================
+   Meridian course portal — data browser
+   Vanilla JS, no dependencies. Small files are embedded in <script> tags
+   above; the two large tables are fetched from data/<quarter>/ on demand.
+   ===================================================================== */
+
+// ---------- tiny helpers ----------
+const $ = (sel, root=document) => root.querySelector(sel);
+const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+// .trim() strips the surrounding newlines the build step adds around embedded data,
+// so the CSV header isn't read as an empty leading line.
+const readEmbed = id => { const n = document.getElementById(id); return n ? n.textContent.trim() : ""; };
+
+// ---------- CSV parser (handles quoted fields with commas / quotes) ----------
+function parseCSV(text) {
+  const rows = []; let row = [], field = "", i = 0, inQ = false;
+  text = text.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  while (i < text.length) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i+1] === '"') { field += '"'; i += 2; continue; } inQ = false; i++; continue; }
+      field += c; i++; continue;
+    }
+    if (c === '"') { inQ = true; i++; continue; }
+    if (c === ",") { row.push(field); field = ""; i++; continue; }
+    if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+    field += c; i++;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  // drop a trailing empty line
+  if (rows.length && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === "") rows.pop();
+  return rows;
+}
+function csvToObjects(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) return { columns: [], rows: [] };
+  const columns = rows[0];
+  const out = rows.slice(1)
+    .filter(r => r.length > 1 || (r[0] != null && r[0] !== "")) // drop blank lines
+    .map(r => { const o = {}; columns.forEach((c,i) => o[c] = r[i] != null ? r[i] : ""); return o; });
+  return { columns, rows: out };
+}
+
+// ---------- normalization for the HR <-> entitlements join ----------
+// account_name (a username like "jennifer.jordan") derives from full_name.
+const toUsername = name => String(name || "").trim().toLowerCase().replace(/\s+/g, ".");
+
+// ---------- data layer ----------
+let QUARTER = "2026-Q3";
+const QROLE = { "2026-Q3": "the training quarter", "2026-Q4": "the unseen quarter" };
+const cache = {}; // cache[quarter][key] = data
+
+function embedded(quarter, key, kind) {
+  const raw = readEmbed(`embed-${quarter}-${key}`);
+  return kind === "csv" ? csvToObjects(raw) : JSON.parse(raw || "null");
+}
+
+// returns a promise for a dataset {columns, rows} or parsed json
+function getData(quarter, key) {
+  cache[quarter] = cache[quarter] || {};
+  if (cache[quarter][key] !== undefined) return Promise.resolve(cache[quarter][key]);
+
+  let p;
+  if (key === "hr")            p = Promise.resolve(embedded(quarter, "hr", "csv"));
+  else if (key === "tickets")  p = Promise.resolve({ columns: TICKET_COLS, rows: embedded(quarter, "tickets", "json") });
+  else if (key === "entitlements") p = fetchCSV(`data/${quarter}/entitlements.csv`);
+  else if (key === "reviews")  p = fetchCSV(`data/${quarter}/prior_review.csv`);
+  else if (key === "applications" || key === "service_accounts" || key === "sod_matrix")
+                               p = Promise.resolve(embedded(quarter, key, "json"));
+  else p = Promise.reject(new Error("unknown dataset " + key));
+
+  return p.then(d => { cache[quarter][key] = d; return d; });
+}
+const TICKET_COLS = ["ticket_id","account_id","app","role","requested_date","approver","status"];
+
+function fetchCSV(path) {
+  return fetch(path).then(r => {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.text();
+  }).then(csvToObjects);
+}
+
+// ---------- column configs for tables ----------
+const MONO_COLS = new Set(["employee_id","account_id","account_name","ticket_id","hire_date","term_date",
+  "granted_date","last_login","requested_date","review_date","email"]);
+
+// ===================================================================
+//  Generic sortable / searchable / paginated table
+// ===================================================================
+const PAGE_SIZE = 100;
+function renderTable(container, dataset, opts) {
+  opts = opts || {};
+  const columns = opts.columns || dataset.columns;
+  const allRows = dataset.rows;
+  const state = { q: "", sortCol: null, dir: 1, page: 0, filtered: allRows };
+
+  container.innerHTML = "";
+  const controls = el("div", "controls");
+  const search = el("input", "search");
+  search.type = "search";
+  search.placeholder = opts.placeholder || `Search ${allRows.length.toLocaleString()} rows…`;
+  search.setAttribute("aria-label", "Search table");
+  const count = el("span", "rowcount");
+  controls.append(search, count);
+  const wrap = el("div", "tablewrap");
+  const table = el("table", "data");
+  wrap.append(table);
+  const pager = el("div", "pager");
+  container.append(controls, wrap, pager);
+
+  function applyFilter() {
+    const q = state.q.trim().toLowerCase();
+    state.filtered = !q ? allRows : allRows.filter(row =>
+      columns.some(c => String(row[c] == null ? "" : row[c]).toLowerCase().includes(q)));
+    if (state.sortCol) sortRows();
+    state.page = 0;
+    draw();
+  }
+  function sortRows() {
+    const c = state.sortCol, dir = state.dir;
+    state.filtered = state.filtered.slice().sort((a, b) => {
+      let x = a[c] == null ? "" : a[c], y = b[c] == null ? "" : b[c];
+      const nx = parseFloat(x), ny = parseFloat(y);
+      const numeric = x !== "" && y !== "" && !isNaN(nx) && !isNaN(ny) && /^[\d.]+$/.test(x) && /^[\d.]+$/.test(y);
+      if (numeric) return (nx - ny) * dir;
+      return String(x).localeCompare(String(y), undefined, { numeric: true }) * dir;
+    });
+  }
+  function draw() {
+    const total = state.filtered.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (state.page >= pages) state.page = pages - 1;
+    const start = state.page * PAGE_SIZE;
+    const pageRows = state.filtered.slice(start, start + PAGE_SIZE);
+
+    // header
+    let thead = "<thead><tr>";
+    columns.forEach(c => {
+      const active = state.sortCol === c;
+      const arrow = active ? (state.dir === 1 ? "▲" : "▼") : "▲";
+      thead += `<th data-col="${esc(c)}">${esc(c)}<span class="arrow${active ? "" : " dim"}">${arrow}</span></th>`;
+    });
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+    for (const row of pageRows) {
+      tbody += "<tr>";
+      for (const c of columns) {
+        const v = row[c];
+        if (v === "" || v == null) tbody += '<td class="empty">—</td>';
+        else tbody += `<td class="${MONO_COLS.has(c) ? "mono" : ""}">${esc(v)}</td>`;
+      }
+      tbody += "</tr>";
+    }
+    if (!pageRows.length) tbody += `<tr><td class="empty" colspan="${columns.length}" style="text-align:center;padding:24px">No matching rows</td></tr>`;
+    tbody += "</tbody>";
+    table.innerHTML = thead + tbody;
+
+    count.textContent = total === allRows.length
+      ? `${total.toLocaleString()} rows`
+      : `${total.toLocaleString()} of ${allRows.length.toLocaleString()} rows`;
+
+    // pager
+    pager.innerHTML = "";
+    const info = el("span", "pinfo", total ? `Page ${state.page+1} of ${pages}` : "—");
+    const prev = el("button", null, "‹ Prev");
+    const next = el("button", null, "Next ›");
+    prev.disabled = state.page === 0;
+    next.disabled = state.page >= pages - 1;
+    prev.onclick = () => { state.page--; draw(); wrap.scrollIntoView({ block: "nearest" }); };
+    next.onclick = () => { state.page++; draw(); wrap.scrollIntoView({ block: "nearest" }); };
+    pager.append(info, prev, next);
+
+    // header sort handlers
+    table.querySelectorAll("thead th").forEach(th => {
+      th.onclick = () => {
+        const c = th.dataset.col;
+        if (state.sortCol === c) state.dir *= -1; else { state.sortCol = c; state.dir = 1; }
+        sortRows(); draw();
+      };
+    });
+  }
+
+  let t;
+  search.addEventListener("input", () => { state.q = search.value; clearTimeout(t); t = setTimeout(applyFilter, 120); });
+  draw();
+}
+
+// ===================================================================
+//  Views
+// ===================================================================
+const view = $("#view");
+
+function showLoading(msg) { view.innerHTML = `<div class="loading">${esc(msg || "Loading…")}</div>`; }
+function showError(dataset, err) {
+  const isFile = location.protocol === "file:";
+  view.innerHTML = `<div class="errbox">
+    <strong>Couldn't load ${esc(dataset)}.</strong>
+    ${isFile
+      ? `This table is fetched over HTTP, which your browser blocks on <code>file://</code>.
+         Run <code>python -m http.server 8000</code> from the repo root and open
+         <code>http://localhost:8000/index.html</code>.`
+      : `${esc(err.message)}. Make sure <code>data/${esc(QUARTER)}/</code> is being served alongside this page.`}
+  </div>`;
+}
+
+function viewHead(title, desc) {
+  return `<div class="view-head"><h3>${esc(title)}</h3><p class="desc">${desc}</p></div>`;
+}
+
+// ---- table-backed views ----
+function tableView(key, title, desc, opts) {
+  showLoading(`Loading ${title.toLowerCase()}…`);
+  const forQuarter = QUARTER;
+  getData(forQuarter, key).then(dataset => {
+    if (forQuarter !== QUARTER) return; // quarter changed while loading
+    view.innerHTML = viewHead(title, desc);
+    const host = el("div");
+    view.append(host);
+    renderTable(host, dataset, opts || {});
+  }).catch(err => { if (forQuarter === QUARTER) showError(title, err); });
+}
+
+// ---- policies ----
+const POLICIES = [
+  { id: "embed-pol-access-control", name: "Access Control Policy", file: "access-control-policy.md" },
+  { id: "embed-pol-sod",           name: "Segregation of Duties", file: "sod-policy.md" },
+  { id: "embed-pol-privileged",    name: "Privileged Access Standard", file: "privileged-access-standard.md" },
+  { id: "embed-pol-contractor",    name: "Contractor Access Standard", file: "contractor-access-standard.md" },
+  { id: "embed-pol-termination",   name: "Termination Procedure", file: "termination-procedure.md" },
+];
+function renderMarkdown(md) {
+  // block-level: blank-line separated; headings vs paragraphs. Inline: **bold**, `code`, ACP-clause highlight.
+  const inline = s => {
+    s = esc(s);
+    s = s.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
+    s = s.replace(/\*\*([^*]+)\*\*/g, (_, b) => `<strong>${b}</strong>`);
+    s = s.replace(/\b(ACP-\d+(?:\.\d+)?)\b/g, (_, c) => `<span class="clause">${c}</span>`);
+    return s;
+  };
+  // Line-based: a "#"-prefixed line is a heading (even when its body follows on the
+  // very next line with no blank between); consecutive other lines form a paragraph.
+  const lines = md.replace(/\r\n?/g, "\n").split("\n");
+  let html = "", para = [];
+  const flush = () => { if (para.length) { html += `<p>${inline(para.join(" "))}</p>`; para = []; } };
+  for (const line of lines) {
+    if (/^\s*$/.test(line)) { flush(); continue; }
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) { flush(); const level = Math.min(h[1].length, 2); html += `<h${level}>${inline(h[2])}</h${level}>`; }
+    else para.push(line.trim());
+  }
+  flush();
+  return html;
+}
+function policiesView() {
+  view.innerHTML = viewHead("Policies", "Meridian's five compliance policies — the source Day 3 turns into Agent Skills. Clause numbers (like ACP-4.2) are highlighted.")
+    + `<p class="polnote">Policies are world-fixed — the same rulebook governs both quarters.</p>`;
+  const layout = el("div", "pollayout");
+  const list = el("ul", "pollist");
+  const body = el("div", "polbody");
+  POLICIES.forEach((p, i) => {
+    const li = el("li");
+    const btn = el("button", i === 0 ? "active" : null, `<span class="pn">${esc(p.name)}</span><span class="pf">${esc(p.file)}</span>`);
+    btn.onclick = () => {
+      list.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      body.innerHTML = renderMarkdown(readEmbed(p.id));
+      body.scrollTop = 0;
+    };
+    li.append(btn); list.append(li);
+  });
+  body.innerHTML = renderMarkdown(readEmbed(POLICIES[0].id));
+  layout.append(list, body);
+  view.append(layout);
+}
+
+// ---- reference files (sidecar JSON) ----
+const REFS = [
+  { key: "applications",     file: "applications.json",     desc: "The 22 apps + their role catalog and tiers" },
+  { key: "service_accounts", file: "service_accounts.json", desc: "Approved service accounts (incl. break-glass)" },
+  { key: "sod_matrix",       file: "sod_matrix.json",       desc: "SoD conflict pairs + the ACP-4.2 exemption" },
+];
+function refsView() {
+  view.innerHTML = viewHead("Reference files", "The small sidecar files the MCP server serves at judgment time. Click one to read it.");
+  const grid = el("div", "refgrid");
+  const out = el("pre", "json", "Select a file above.");
+  REFS.forEach((r, i) => {
+    const b = el("button", "refbtn" + (i === 0 ? " active" : ""), `<div class="rf">${esc(r.file)}</div><div class="rd">${esc(r.desc)}</div>`);
+    b.onclick = () => {
+      grid.querySelectorAll(".refbtn").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      const data = embedded(QUARTER, r.key, "json");
+      out.textContent = JSON.stringify(data, null, 2);
+    };
+    grid.append(b);
+  });
+  view.append(grid, out);
+  out.textContent = JSON.stringify(embedded(QUARTER, REFS[0].key, "json"), null, 2);
+}
+
+// ---- user lookup ----
+function lookupView() {
+  view.innerHTML = viewHead("User lookup", "Enter a name, employee ID, or account ID to see one person's full picture — HR record, every entitlement grouped by app, tickets and prior reviews.");
+  const form = el("form", "lookup-form");
+  const input = el("input");
+  input.type = "search";
+  input.placeholder = "e.g.  Jennifer Jordan   ·   E00441   ·   A001179";
+  input.setAttribute("aria-label", "Name, employee ID, or account ID");
+  const btn = el("button", null, "Look up");
+  btn.type = "submit";
+  form.append(input, btn);
+  const hint = el("p", "lookup-hint");
+  hint.innerHTML = `Try: <b data-q="emergency.admin">emergency.admin</b> (break-glass) · <b data-q="marcus.pipeline">marcus.pipeline</b> (service acct) · <b data-q="Contractor">contractors</b> · <b data-q="terminated">terminated staff</b>`;
+  const results = el("div");
+  results.id = "lookupResults";
+  view.append(form, hint, results);
+
+  form.onsubmit = e => { e.preventDefault(); runLookup(input.value, results); };
+  hint.querySelectorAll("b").forEach(b => b.onclick = () => { input.value = b.dataset.q; runLookup(b.dataset.q, results); });
+  input.focus();
+}
+
+function runLookup(query, results) {
+  query = (query || "").trim();
+  if (!query) { results.innerHTML = ""; return; }
+  results.innerHTML = `<div class="loading">Searching ${esc(QUARTER)}…</div>`;
+  const forQuarter = QUARTER;
+
+  // Load everything the lookup joins across. HR + tickets are embedded (always ok);
+  // entitlements + reviews are fetched (may fail on file://) — degrade gracefully.
+  Promise.all([
+    getData(forQuarter, "hr"),
+    getData(forQuarter, "tickets"),
+    getData(forQuarter, "entitlements").catch(() => null),
+    getData(forQuarter, "reviews").catch(() => null),
+    getData(forQuarter, "applications"),
+  ]).then(([hr, tickets, ents, reviews, apps]) => {
+    if (forQuarter !== QUARTER) return;
+    renderLookup(query, results, { hr, tickets, ents, reviews, apps });
+  });
+}
+
+function renderLookup(query, results, D) {
+  const q = query.toLowerCase();
+  const hrRows = D.hr.rows, entRows = D.ents ? D.ents.rows : [];
+  const appTier = {}; (D.apps || []).forEach(a => appTier[a.name] = a.tier);
+
+  // 1) find candidate people. A "person" is anchored on a username (account_name),
+  //    bridged to HR by toUsername(full_name) === account_name.
+  const usernames = new Set();
+  const hrByUser = {};
+  hrRows.forEach(r => { const u = toUsername(r.full_name); hrByUser[u] = hrByUser[u] || []; hrByUser[u].push(r); });
+
+  // match on HR fields. employee_id is exact; the rest are substring so archetype
+  // searches ("Contractor", "terminated", "Finance") surface the people behind them.
+  const HR_SUBSTR = ["full_name", "email", "department", "title", "employment_type", "status"];
+  hrRows.forEach(r => {
+    if (r.employee_id && r.employee_id.toLowerCase() === q) usernames.add(toUsername(r.full_name));
+    else if (HR_SUBSTR.some(f => String(r[f] || "").toLowerCase().includes(q))) usernames.add(toUsername(r.full_name));
+  });
+  // match on account_id or account_name in entitlements
+  const accountIdsForUser = {}; // username -> Set(account_id)
+  entRows.forEach(r => {
+    const u = (r.account_name || "").toLowerCase();
+    if (u) { accountIdsForUser[u] = accountIdsForUser[u] || new Set(); if (r.account_id) accountIdsForUser[u].add(r.account_id); }
+    if ((r.account_name || "").toLowerCase().includes(q)) usernames.add((r.account_name || "").toLowerCase());
+    if ((r.account_id || "").toLowerCase() === q) usernames.add((r.account_name || "").toLowerCase());
+  });
+
+  const found = [...usernames].filter(Boolean).sort();
+  if (!found.length) {
+    results.innerHTML = `<div class="errbox">No one matched <strong>${esc(query)}</strong> in ${esc(QUARTER)}.
+      Try a full name, an employee ID like <code>E00441</code>, or an account ID like <code>A001179</code>.</div>`;
+    return;
+  }
+
+  const degraded = !D.ents;
+  let html = "";
+  if (degraded) html += `<div class="server-note" style="margin-bottom:16px">Entitlements aren't loaded (they need a local server), so grants are hidden below. HR, tickets and reviews still show.</div>`;
+
+  found.slice(0, 25).forEach(username => {
+    html += renderPerson(username, { ...D, entRows, accountIds: accountIdsForUser[username], hrByUser, appTier });
+  });
+  if (found.length > 25) html += `<p class="polnote">Showing 25 of ${found.length} matches — refine your search.</p>`;
+  results.innerHTML = html;
+}
+
+function renderPerson(username, ctx) {
+  const hr = (ctx.hrByUser[username] || [])[0];
+  const accountIds = ctx.accountIds ? [...ctx.accountIds] : [];
+  const myEnts = ctx.entRows.filter(r => (r.account_name || "").toLowerCase() === username);
+  const idSet = new Set(accountIds);
+  myEnts.forEach(r => { if (r.account_id) idSet.add(r.account_id); });
+  const ids = [...idSet];
+  const myTickets = (ctx.tickets.rows || []).filter(t => idSet.has(t.account_id));
+  const myReviews = ctx.reviews ? ctx.reviews.rows.filter(r => idSet.has(r.account_id)) : null;
+
+  // ---- id card ----
+  let card = `<div class="person"><div class="idcard">`;
+  const displayName = hr ? hr.full_name : username;
+  card += `<div class="nm">${esc(displayName)} ${statusBadge(hr)}</div>`;
+  if (hr) {
+    card += fld("Employee ID", hr.employee_id, true);
+    card += fld("Username", username, true);
+    card += fld("Account ID(s)", ids.join(", ") || "—", true);
+    card += fld("Department", hr.department);
+    card += fld("Title", hr.title);
+    card += fld("Type", hr.employment_type);
+    card += fld("Hire date", hr.hire_date, true);
+    card += fld("Term date", hr.term_date || "—", true);
+    card += fld("Email", hr.email, true);
+  } else {
+    card += `<div class="fld" style="grid-column:1/-1;color:var(--muted)">No HR record matched this account — it may be a service or system account.</div>`;
+    card += fld("Username", username, true);
+    card += fld("Account ID(s)", ids.join(", ") || "—", true);
+  }
+  card += `</div>`;
+
+  // ---- entitlements grouped by app ----
+  if (ctx.entRows.length) {
+    card += `<div class="subhead">Entitlements <span class="cnt">${myEnts.length}</span></div>`;
+    if (!myEnts.length) card += `<div class="miniempty">No entitlements found for this account.</div>`;
+    else {
+      const byApp = {};
+      myEnts.forEach(e => { (byApp[e.app] = byApp[e.app] || []).push(e); });
+      Object.keys(byApp).sort().forEach(app => {
+        const tier = ctx.appTier[app];
+        card += `<div class="appgroup"><div class="an">${esc(app)}${tier === "crown" ? '<span class="tier">crown jewel</span>' : ""}</div>`;
+        byApp[app].forEach(e => {
+          card += `<div class="roleline"><span class="r">${esc(e.role)}</span>
+            <span class="meta"> · granted ${esc(e.granted_date || "?")} by ${esc(e.granted_by || "?")} · last login ${esc(e.last_login || "—")}</span></div>`;
+        });
+        card += `</div>`;
+      });
+    }
+  }
+
+  // ---- tickets ----
+  card += `<div class="subhead">Access tickets <span class="cnt">${myTickets.length}</span></div>`;
+  if (!myTickets.length) card += `<div class="miniempty">No access request tickets.</div>`;
+  else myTickets.forEach(t => {
+    card += `<div class="roleline"><span class="r">${esc(t.ticket_id)}</span>
+      <span class="meta"> · ${esc(t.app)} / ${esc(t.role)} · ${esc(t.status)} · requested ${esc(t.requested_date)} · approver ${esc(t.approver)}</span></div>`;
+  });
+
+  // ---- prior reviews ----
+  if (myReviews === null) {
+    card += `<div class="subhead">Prior reviews</div><div class="miniempty">Not loaded (needs a local server).</div>`;
+  } else {
+    card += `<div class="subhead">Prior reviews <span class="cnt">${myReviews.length}</span></div>`;
+    if (!myReviews.length) card += `<div class="miniempty">No prior review decisions.</div>`;
+    else myReviews.forEach(r => {
+      card += `<div class="roleline"><span class="r">${esc(r.app)}</span>
+        <span class="meta"> · ${esc(r.decision)} by ${esc(r.reviewer)} · ${esc(r.review_date)}</span></div>`;
+    });
+  }
+
+  card += `</div>`;
+  return card;
+}
+
+function fld(k, v, mono) {
+  return `<div class="fld"><span class="k">${esc(k)}</span><span class="v${mono ? " mono" : ""}">${esc(v == null || v === "" ? "—" : v)}</span></div>`;
+}
+function statusBadge(hr) {
+  if (!hr) return "";
+  const s = (hr.status || "").toLowerCase();
+  const et = (hr.employment_type || "").toLowerCase();
+  let out = "";
+  if (s) out += `<span class="badge ${s}">${esc(hr.status)}</span> `;
+  if (et) out += `<span class="badge ${et}">${esc(hr.employment_type)}</span>`;
+  return out;
+}
+
+// ===================================================================
+//  View router + quarter toggle
+// ===================================================================
+let currentView = "policies";
+const VIEWS = {
+  policies:     () => policiesView(),
+  hr:           () => tableView("hr", "HR roster", "One row per employee — the people side of the picture.", { placeholder: "Search name, department, title, status…" }),
+  entitlements: () => tableView("entitlements", "Entitlements", "One row per access grant — which account holds which role in which app.", { placeholder: "Search account, app, role, granted_by…" }),
+  tickets:      () => tableView("tickets", "Access tickets", "Approved access requests — the paper trail behind a grant.", { placeholder: "Search ticket, account, app, status…" }),
+  reviews:      () => tableView("reviews", "Prior reviews", "Decisions from the previous review cycle — used to spot rubber-stamping.", { placeholder: "Search account, app, decision…" }),
+  lookup:       () => lookupView(),
+  refs:         () => refsView(),
+};
+
+function switchView(name) {
+  currentView = name;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  VIEWS[name]();
+}
+function switchQuarter(q) {
+  if (q === QUARTER) return;
+  QUARTER = q;
+  document.querySelectorAll(".qtoggle button").forEach(b => b.classList.toggle("active", b.dataset.q === q));
+  $("#qlabel").textContent = q;
+  $("#qrole").textContent = QROLE[q];
+  switchView(currentView); // re-render current view against the new quarter
+}
+
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => switchView(b.dataset.view));
+document.querySelectorAll(".qtoggle button").forEach(b => b.onclick = () => switchQuarter(b.dataset.q));
+
+// file:// note
+if (location.protocol !== "file:") $("#serverNote").classList.add("hidden");
+
+// initial render
+switchView("policies");
+</script>
+</body>
+</html>
