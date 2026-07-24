@@ -347,9 +347,9 @@
 
     <div class="narrative">
       <p class="lede">Your Q3 review at Meridian went well. But a good review isn't one that worked
-      once — it's one that works <em>next quarter</em>, on data you've never seen. Today you regenerate
-      Meridian with a brand-new seed, producing a fresh <em>Q4</em> quarter, and find out what your
-      pipeline actually learned.</p>
+      once — it's one that works <em>next quarter</em>, on data you've never seen. Today you point your
+      pipeline at a fresh <em>Q4</em> quarter — the same Meridian, a brand-new cast — and find out what
+      your pipeline actually learned.</p>
       <p>This is the difference between a demo and a product. The company is the same — same 22 apps,
       same roles, same five policies, same SoD matrix. What's different is the cast: every employee has
       a new name and ID, and which specific people are risky this quarter has completely changed. The
@@ -360,7 +360,7 @@
     <div class="panel">
       <h3>What you'll build today</h3>
       <p>A pipeline you trust on <strong>unseen data</strong>: your fully-built-up Day 4 system — rules,
-      skills, tools, subagents, and hooks — run against a freshly generated Q4 quarter, producing a
+      skills, tools, subagents, and hooks — run against a fresh, pre-shipped Q4 quarter, producing a
       valid Q4 <code>findings.json</code> with no logic changes, its audit log filling and its
       secret-guardrail still firing on the new seed, and every place it secretly leaned on Q3's specifics
       found and removed.</p>
@@ -370,7 +370,7 @@
       <h3>What you'll learn</h3>
       <ul class="learn">
         <li>The difference between learning a <em>pattern</em> and memorizing one quarter's specifics</li>
-        <li>How to regenerate the same company under a new seed to create a genuinely unseen quarter</li>
+        <li>How the same company under a new seed becomes a genuinely unseen quarter to test transfer against</li>
         <li>How to catch a pipeline that silently special-cases Q3 people, IDs, paths, or exact counts</li>
         <li>How to prove a review system transfers — and reason about the quarters you haven't run yet</li>
       </ul>
@@ -382,7 +382,7 @@
         <li>Day 4 complete — the full pipeline (tools, subagents, and hooks) produces Meridian Q3 findings, with an audit log and a secret-guardrail in place</li>
         <li><code>pytest tests/test_pipeline.py tests/test_hooks.py</code> still passes</li>
         <li>Your virtual environment is activated <em>(you'll confirm this in Step 1)</em></li>
-        <li>The kit's generator (<code>python -m meridian.generate</code>) is available <em>(you'll run it in Cycle 1)</em></li>
+        <li>The Q4 quarter ships pre-generated in the kit at <code>data/2026-Q4/</code> <em>(you'll explore it in Cycle 1)</em></li>
       </ul>
     </div>
   </section>
@@ -401,10 +401,14 @@
     <div class="concept">
       <div class="label">Concept</div>
       <p>To test transfer honestly, you need data your pipeline has never seen — but from the
-      <em>same</em> company, so any failure is about your code, not a different world. The kit's
-      generator does exactly this: give it a new <em>seed</em> and a new <em>quarter</em>, and it
-      rebuilds Meridian from scratch — same 22 apps, same roles, same policies, same SoD matrix — but
-      with a completely new cast of people and a new set of specific findings.</p>
+      <em>same</em> company, so any failure is about your code, not a different world. That's exactly
+      what Q4 is. It was built the same way Q3 was — the kit's generator run with one different
+      <em>seed</em> — which rebuilds Meridian from scratch: same 22 apps, same roles, same policies,
+      same SoD matrix, but a completely new cast of people and a new set of specific findings.</p>
+      <p>You won't run that command today. In a real engagement you'd point your pipeline at next
+      quarter's export as it actually arrives; for the bootcamp we've pre-generated Q4 and shipped it in
+      the kit at <code>data/2026-Q4/</code>, so today is spent on the transfer lesson rather than on
+      plumbing. You <em>read</em> Q4 exactly as you'd read a client's real next-quarter data.</p>
       <p>What stays fixed seed to seed: the apps (Atlas ERP, MeridianPay, Gateway, Active Directory,
       Vault, and the rest), the role vocabulary, the five policies, the SoD matrix, and the
       service-account registry — <code>marcus.pipeline</code> and <code>emergency.admin</code> are
@@ -443,21 +447,24 @@
         </li>
 
         <li>
-          <div class="step-do">Generate a fresh Q4 quarter with a new seed.</div>
-          <p class="step-why">Why: this rebuilds Meridian under a new seed — same company, new people,
-          new specific findings — in its own Q4 folder. The seed is fixed so your ground-truth checks
-          later line up; it just has to be different from the one that produced Q3.</p>
+          <div class="step-do">Open the pre-shipped Q4 quarter.</div>
+          <p class="step-why">Why: Q4 ships in the kit, already built from the same generator under a
+          different seed — same company, new people, new specific findings — in its own Q4 folder. You
+          don't generate it; you read it, exactly as you'd read a client's real next-quarter export the
+          day it lands.</p>
           <div class="code labeled">
             <span class="kind">Terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>python -m meridian.generate --seed 20261015 --quarter 2026-Q4 --out data/2026-Q4</pre>
+            <pre>ls data/2026-Q4/</pre>
           </div>
-          <p><strong>How you'll know you got it right.</strong> The command creates
-          <code>data/2026-Q4/</code> with the same five inputs Q3 had — an HR roster, an entitlements
-          export, the access tickets, last quarter's review, and the policies folder:</p>
+          <p><strong>How you'll know you got it right.</strong> <code>data/2026-Q4/</code> holds the same
+          files Q3 does — the per-quarter inputs (HR roster, entitlements export, access tickets, last
+          quarter's review, policies) plus the fixed world reference the MCP server reads (applications,
+          service accounts, SoD matrix), which are byte-identical to Q3's:</p>
           <div class="terminal">
 <span class="cmd">ls data/2026-Q4/</span>
-<span class="out">access_tickets.json  entitlements.csv  hr_roster.csv  policies/  prior_review.csv</span>
+<span class="out">access_tickets.json  applications.json  entitlements.csv     hr_roster.csv
+policies/            prior_review.csv   service_accounts.json  sod_matrix.json</span>
           </div>
           <p class="step-why">Same shape as Q3 — 1,190 people, 1,200 accounts — because it's the same
           company. The data <em>inside</em> is a new cast.</p>
@@ -521,9 +528,9 @@
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 1 when</strong> <code>data/2026-Q4</code> exists — same apps
-      and policies as Q3, a new cast — you can name what changed versus what stayed fixed, and you've
-      written down where you expect your pipeline to have memorized Q3.</p>
+      <p><strong>You're done with Cycle 1 when</strong> you've opened <code>data/2026-Q4</code> — same
+      apps and policies as Q3, a new cast — you can name what changed versus what stayed fixed, and
+      you've written down where you expect your pipeline to have memorized Q3.</p>
     </div>
   </section>
 
@@ -1037,9 +1044,9 @@ git commit -m "Prove transfer to Q4; add capstone reflection"</pre>
     audit log filled, and the guard still blocks a secret — your system learned the pattern, not just Q3.
     Two results are worth recognising:</p>
     <ul class="learn">
-      <li><strong>A module skip</strong> means no <code>data/2026-Q4</code> was found — the module
-      self-skips until you generate the Q4 quarter in Cycle 1. That's not a pass; it means the unseen
-      quarter doesn't exist yet.</li>
+      <li><strong>The Q4 inputs always exist</strong> — <code>data/2026-Q4</code> ships in the kit, so
+      the input and seed checks run from the start; there's no module-level skip waiting on you to build
+      the quarter.</li>
       <li><strong>A skip on the findings or audit tests</strong> means <code>data/2026-Q4</code> exists
       but you haven't produced the Q4 answer or run the hooks yet — those checks wake up once
       <code>findings.2026-Q4.json</code> and the Q4 audit log are there. Hand Claude Code the exact
@@ -1055,7 +1062,7 @@ git commit -m "Prove transfer to Q4; add capstone reflection"</pre>
     <div class="panel wrap-recap">
       <h3>What you built today</h3>
       <ul>
-        <li>A freshly generated <strong>Q4 quarter</strong> — same company, unseen data, a new cast</li>
+        <li>A pass through the unseen <strong>Q4 quarter</strong> — same company, a new cast, data your pipeline had never touched</li>
         <li>A diagnosis of every place the pipeline memorized Q3 — the split-brain data path, the loud crashes and the quiet wrong answers alike</li>
         <li>A <strong>generalized pipeline</strong> keyed to rules instead of Q3 specifics: the exemption by role not ID, the count by data not by a typed-in number, the path by quarter not baked in</li>
         <li>Confirmation the <strong>enforcement layer</strong> travels — the Q4 audit log fills and the secret-guardrail still fires on the new seed</li>
