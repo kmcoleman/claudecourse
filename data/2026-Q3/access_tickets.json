@@ -1,0 +1,767 @@
+[
+  {
+    "ticket_id": "REQ-A001004",
+    "account_id": "A001004",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-03-22",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000878",
+    "account_id": "A000878",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-10",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000867",
+    "account_id": "A000867",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-06-20",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001019",
+    "account_id": "A001019",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-04-20",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000858",
+    "account_id": "A000858",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-20",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000971",
+    "account_id": "A000971",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-03",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000932",
+    "account_id": "A000932",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-26",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000833",
+    "account_id": "A000833",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-16",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000147",
+    "account_id": "A000147",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-02-05",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000138",
+    "account_id": "A000138",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-23",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001058",
+    "account_id": "A001058",
+    "app": "Atlas ERP",
+    "role": "ERP Admin",
+    "requested_date": "2024-07-17",
+    "approver": "service.owner",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000673",
+    "account_id": "A000673",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-19",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000042",
+    "account_id": "A000042",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-22",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001177",
+    "account_id": "A001177",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-02-03",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001125-VendorAdmin",
+    "account_id": "A001125",
+    "app": "Atlas ERP",
+    "role": "Vendor Admin",
+    "requested_date": "2024-07-12",
+    "approver": "cfo.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000465",
+    "account_id": "A000465",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-23",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000647",
+    "account_id": "A000647",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-05",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000978",
+    "account_id": "A000978",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-11",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000951",
+    "account_id": "A000951",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-02-05",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000705",
+    "account_id": "A000705",
+    "app": "Atlas ERP",
+    "role": "ERP Admin",
+    "requested_date": "2024-07-20",
+    "approver": "service.owner",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000816",
+    "account_id": "A000816",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-01",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000564",
+    "account_id": "A000564",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-08",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001084",
+    "account_id": "A001084",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-25",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001195",
+    "account_id": "A001195",
+    "app": "VPN",
+    "role": "User",
+    "requested_date": "2026-09-12",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000151",
+    "account_id": "A000151",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-03",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000619",
+    "account_id": "A000619",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-08",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000494",
+    "account_id": "A000494",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-21",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000142",
+    "account_id": "A000142",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-05",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001013",
+    "account_id": "A001013",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-18",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000282",
+    "account_id": "A000282",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-17",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000708",
+    "account_id": "A000708",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-02-04",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000784",
+    "account_id": "A000784",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-14",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000716",
+    "account_id": "A000716",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-02-12",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000270",
+    "account_id": "A000270",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-07",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001022",
+    "account_id": "A001022",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-09",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001159",
+    "account_id": "A001159",
+    "app": "Active Directory",
+    "role": "Domain Admin",
+    "requested_date": "2024-01-01",
+    "approver": "security.team",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000327",
+    "account_id": "A000327",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-31",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000492",
+    "account_id": "A000492",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-06-23",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000662",
+    "account_id": "A000662",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-09",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000693",
+    "account_id": "A000693",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-04",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000313",
+    "account_id": "A000313",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-17",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000450",
+    "account_id": "A000450",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-16",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000814",
+    "account_id": "A000814",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-27",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000691",
+    "account_id": "A000691",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-19",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000169",
+    "account_id": "A000169",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-03-12",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000562",
+    "account_id": "A000562",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-08-31",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001185",
+    "account_id": "A001185",
+    "app": "VPN",
+    "role": "User",
+    "requested_date": "2026-09-09",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000779",
+    "account_id": "A000779",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-04",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000076",
+    "account_id": "A000076",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-12",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000072",
+    "account_id": "A000072",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-25",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001161",
+    "account_id": "A001161",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-12",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001037",
+    "account_id": "A001037",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-11",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001144",
+    "account_id": "A001144",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-26",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000387-VendorAdmin",
+    "account_id": "A000387",
+    "app": "Atlas ERP",
+    "role": "Vendor Admin",
+    "requested_date": "2025-01-29",
+    "approver": "cfo.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000674-VendorAdmin",
+    "account_id": "A000674",
+    "app": "Atlas ERP",
+    "role": "Vendor Admin",
+    "requested_date": "2024-09-16",
+    "approver": "cfo.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000631",
+    "account_id": "A000631",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-05-24",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000252",
+    "account_id": "A000252",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-18",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000603",
+    "account_id": "A000603",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-06-19",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000192",
+    "account_id": "A000192",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-09",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001061",
+    "account_id": "A001061",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-04",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000929",
+    "account_id": "A000929",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-05-31",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001051",
+    "account_id": "A001051",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-05",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000383",
+    "account_id": "A000383",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-02-09",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000848",
+    "account_id": "A000848",
+    "app": "Atlas ERP",
+    "role": "ERP Admin",
+    "requested_date": "2024-07-20",
+    "approver": "service.owner",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000741",
+    "account_id": "A000741",
+    "app": "VPN",
+    "role": "User",
+    "requested_date": "2026-09-12",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000417",
+    "account_id": "A000417",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-01-01",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000868",
+    "account_id": "A000868",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-03-02",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000351",
+    "account_id": "A000351",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-17",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000237",
+    "account_id": "A000237",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-06-26",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000301",
+    "account_id": "A000301",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-08",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000053",
+    "account_id": "A000053",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-29",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001199",
+    "account_id": "A001199",
+    "app": "Active Directory",
+    "role": "Domain Admin",
+    "requested_date": "2023-12-30",
+    "approver": "security.team",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000970",
+    "account_id": "A000970",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-09-18",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000815",
+    "account_id": "A000815",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-04-13",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001035",
+    "account_id": "A001035",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-04-11",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000194",
+    "account_id": "A000194",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-11",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000582",
+    "account_id": "A000582",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-06-24",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000513",
+    "account_id": "A000513",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-11-13",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000367",
+    "account_id": "A000367",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-04-22",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000043",
+    "account_id": "A000043",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-10-05",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000595",
+    "account_id": "A000595",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2025-12-28",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000753",
+    "account_id": "A000753",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-07-26",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001129",
+    "account_id": "A001129",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-06-26",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A000834",
+    "account_id": "A000834",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-03-11",
+    "approver": "manager.approval",
+    "status": "approved"
+  },
+  {
+    "ticket_id": "REQ-A001200",
+    "account_id": "A001200",
+    "app": "Vault",
+    "role": "Admin",
+    "requested_date": "2026-04-29",
+    "approver": "manager.approval",
+    "status": "approved"
+  }
+]

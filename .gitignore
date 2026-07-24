@@ -6,7 +6,17 @@ venv/
 .pytest_cache/
 build/
 dist/
-# generated datasets (regenerate from seed)
-/data/
-.superpowers/
 .DS_Store
+.superpowers/
+
+# Kit secrets — never commit the real key (.env.example is committed)
+.env
+
+# Q4 is answer/ground-truth for Day 5; students regenerate it from seed.
+# Q3 IS committed as the course data set, so do NOT ignore /data wholesale.
+/data/2026-Q4/
+
+# Learner-produced artifacts (Day 4/5 outputs)
+/findings*.json
+/exemptions*.json
+/audit/

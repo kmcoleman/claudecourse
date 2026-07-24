@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Meridian UAR findings",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["scope", "account_id", "employee_id", "app", "entitlement",
+                 "category", "severity", "recommendation", "rationale",
+                 "evidence", "policy_citations", "confidence"],
+    "properties": {
+      "scope": {"enum": ["account", "application"]},
+      "account_id": {"type": ["string", "null"]},
+      "employee_id": {"type": ["string", "null"]},
+      "app": {"type": "string"},
+      "entitlement": {"type": ["string", "null"]},
+      "category": {"enum": ["terminated_access", "orphan_account", "no_approval",
+                            "grant_before_hire", "dormant_privileged",
+                            "contractor_overstay", "privilege_creep",
+                            "sod_conflict", "coverage_gap", "other"]},
+      "severity": {"enum": ["critical", "high", "medium", "low"]},
+      "recommendation": {"enum": ["revoke", "review", "retain"]},
+      "rationale": {"type": "string", "minLength": 1},
+      "evidence": {
+        "type": "array", "minItems": 1,
+        "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source", "detail"],
+          "properties": {"source": {"type": "string"}, "detail": {"type": "string"}}
+        }
+      },
+      "policy_citations": {"type": "array", "items": {"type": "string"}},
+      "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+    },
+    "allOf": [
+      {
+        "if": {"properties": {"scope": {"const": "account"}}},
+        "then": {"properties": {"account_id": {"type": "string"}}}
+      },
+      {
+        "if": {"properties": {"scope": {"const": "application"}}},
+        "then": {"properties": {"account_id": {"type": "null"},
+                                "employee_id": {"type": "null"},
+                                "entitlement": {"type": "null"}}}
+      }
+    ]
+  }
+}

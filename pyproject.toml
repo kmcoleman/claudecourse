@@ -1,15 +1,34 @@
 [project]
-name = "meridian"
+name = "meridian-capstone"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["faker==40.31.0", "pyyaml==6.0.3"]
+# Student-kit runtime deps. The generator (course-source) deps live in the
+# optional "course-source" group below so a stripped student repo needs none of them.
+dependencies = [
+    "claude-agent-sdk==0.2.126",
+    "mcp==1.28.1",
+    "jsonschema==4.26.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest==9.1.1"]
+# Answer-material only: the Meridian data generator under meridian/. Not needed
+# to run or grade the kit; installed for course authoring / regenerating quarters.
+course-source = ["faker==40.31.0", "pyyaml==6.0.3"]
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["meridian*"]
+# Kit package lives under src/ (meridian_capstone); the generator lives at repo
+# root (meridian). Both are installed in this working repo; the student repo
+# ships only src/ once meridian/ is stripped.
+where = ["src", "."]
+include = ["meridian_capstone*", "meridian*"]
+
+[tool.pytest.ini_options]
+markers = ["api: makes a real Claude API call (costs tokens); excluded by -m 'not api'"]
+# Default `pytest` runs the student kit's green light only. Generator tests are
+# answer material: run them explicitly with `pytest meridian/tests`.
+testpaths = ["tests"]

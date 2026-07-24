@@ -1,0 +1,75 @@
+{
+  "conflicts": [
+    {
+      "app": "Atlas ERP",
+      "roles": [
+        "Vendor Admin",
+        "AP Manager"
+      ],
+      "severity": "critical",
+      "why": "Create a vendor, then approve its payment"
+    },
+    {
+      "app": "Atlas ERP",
+      "roles": [
+        "AP Clerk",
+        "AP Manager"
+      ],
+      "severity": "high",
+      "why": "Enter an invoice and approve it"
+    },
+    {
+      "app": "Procure",
+      "roles": [
+        "Requisitioner",
+        "Buyer",
+        "Receiver"
+      ],
+      "severity": "critical",
+      "why": "Three-way procurement fraud"
+    },
+    {
+      "app": "MeridianPay",
+      "roles": [
+        "Payroll Clerk",
+        "Payroll Approver"
+      ],
+      "severity": "critical",
+      "why": "Edit your own pay, approve it"
+    },
+    {
+      "app": "Gateway",
+      "roles": [
+        "User Admin"
+      ],
+      "cross_app_admin": true,
+      "severity": "high",
+      "why": "Grant yourself access, then use it"
+    },
+    {
+      "app": "Helix ITSM",
+      "roles": [
+        "Change Approver"
+      ],
+      "cross_app": {
+        "app": "AWS Prod",
+        "role": "Admin"
+      },
+      "severity": "high",
+      "why": "Approve your own change, then deploy it"
+    }
+  ],
+  "exemptions": [
+    {
+      "app": "Atlas ERP",
+      "roles": [
+        "Vendor Admin",
+        "AP Manager"
+      ],
+      "department": "Finance & Accounting",
+      "title": "Controller",
+      "clause": "ACP-4.2",
+      "compensating_control": "Quarterly manual payment review by the CFO, evidenced in Atlas"
+    }
+  ]
+}

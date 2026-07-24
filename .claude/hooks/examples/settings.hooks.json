@@ -1,0 +1,30 @@
+{
+  "//": "Reference shape for the `hooks` block of .claude/settings.json.",
+  "//guard": "PreToolUse runs before the tool -> it can DENY a secret-bearing write.",
+  "//audit": "PostToolUse runs after the tool succeeds -> it RECORDS what was written.",
+  "//copy": "Copy the two scripts from .claude/hooks/examples/ into .claude/hooks/ first.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/secret_guard.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/audit_write.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

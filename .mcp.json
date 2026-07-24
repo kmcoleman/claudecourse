@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "meridian-systems": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "meridian_capstone.mcp_server.server"],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "MERIDIAN_DATA_DIR": "data/2026-Q3"
+      }
+    }
+  }
+}

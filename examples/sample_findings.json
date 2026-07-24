@@ -1,0 +1,36 @@
+[
+  {
+    "scope": "account",
+    "account_id": "A004217",
+    "employee_id": "E00918",
+    "app": "Active Directory",
+    "entitlement": "Domain Admin",
+    "category": "terminated_access",
+    "severity": "critical",
+    "recommendation": "revoke",
+    "rationale": "Employee terminated 2026-06-15; Domain Admin remains active with no revocation ticket.",
+    "evidence": [
+      {"source": "hr_roster", "detail": "term_date=2026-06-15, status=terminated"},
+      {"source": "entitlements", "detail": "AD/Domain Admin, last_login 2026-06-10, still present"}
+    ],
+    "policy_citations": ["TERM-1"],
+    "confidence": 0.98
+  },
+  {
+    "scope": "application",
+    "account_id": null,
+    "employee_id": null,
+    "app": "Box",
+    "entitlement": null,
+    "category": "coverage_gap",
+    "severity": "high",
+    "recommendation": "review",
+    "rationale": "Box was implemented on 2026-07-21 — inside the Q3 review window — so it is a brand-new application, yet it already holds live entitlements (including the privileged Admin role) that have never been reviewed. A freshly rolled-out app going live with broad, unreviewed access is a classic access-review finding: Box's Q3 entitlements need a first-time review before they are certified.",
+    "evidence": [
+      {"source": "prior_review", "detail": "no Box rows in prior_review — the app has never been through an access review"},
+      {"source": "applications", "detail": "Box implementation_date=2026-07-21 — implemented in-quarter (new rollout); tier=business, privileged Admin role present"}
+    ],
+    "policy_citations": ["ACP-1"],
+    "confidence": 0.7
+  }
+]
