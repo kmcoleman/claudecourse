@@ -1,18 +1,17 @@
 """Day 5 checkpoint — the pipeline transfers to an unseen quarter (Q4).
 
-Day 5 regenerates Meridian under a NEW seed to produce a fresh Q4 quarter, then
-runs the exact Day 4 pipeline against it with no code changes. The whole point is
-generalization: the system must have learned the *pattern* (whoever holds Vendor
-Admin + AP Manager, whichever Controller is exempt under ACP-4.2, whichever
-contractor is past SOW) rather than *memorized* Q3's specific people, IDs, or
-exact counts. So this module checks the Q4 answer against Q4 ground truth — a
-different cast from Q3 — and confirms the Day 4 enforcement layer travels.
+Day 5 runs the exact Day 4 pipeline against a fresh quarter (Q4) with no code
+changes. The whole point is generalization: the system must have learned the
+*pattern* (whoever holds Vendor Admin + AP Manager, whichever Controller is
+exempt under ACP-4.2, whichever contractor is past SOW) rather than *memorized*
+Q3's specific people, IDs, or exact counts. So this module checks the Q4 answer
+against Q4 ground truth — a different cast from Q3 — and confirms the Day 4
+enforcement layer travels.
 
-Q4 is generated in Cycle 1 with a fixed seed:
+Q4 ships pre-generated in the kit (data/2026-Q4/), produced once by the same
+world design under a fixed seed (20261015). Students read it in Day 5 Cycle 1
+rather than running the generator, so these inputs are always present.
 
-    python -m meridian.generate --seed 20261015 --quarter 2026-Q4 --out data/2026-Q4
-
-The module self-skips until data/2026-Q4 exists, so a Day 4 clone stays green.
 The Q4 run writes its findings to a quarter-stamped file, findings.2026-Q4.json,
 so Q3's findings.json stays intact for the Day 4 regression check. Tests that
 need the learner's Q4 artifacts self-skip until those artifacts are produced.
@@ -48,13 +47,10 @@ Q4_EXEMPT = {"A000518", "A000895", "A001168",         # three ACP-4.2 Controller
 Q3_ACCOUNTS = {"A000384", "A001115", "A000012", "A000598", "A000742",
                "A000686", "A000741", "A001185", "A001195"}
 
-if not DATA_Q4.exists():
-    pytest.skip(
-        "No data/2026-Q4 found. Work through Day 5 Cycle 1 first — generate the "
-        "Q4 quarter with:  python -m meridian.generate --seed 20261015 "
-        "--quarter 2026-Q4 --out data/2026-Q4",
-        allow_module_level=True,
-    )
+# Q4 ships pre-generated in the kit (data/2026-Q4/), so these inputs are always
+# present — no module-level skip guarding on their existence. The per-test
+# skips below still fire until the *learner* produces the Q4 answer artifacts
+# (findings.2026-Q4.json, exemptions.2026-Q4.json, audit/2026-Q4.jsonl).
 
 
 # --------------------------------------------------------------------------
@@ -86,8 +82,8 @@ def test_q4_inputs_were_generated():
     for name in ("hr_roster.csv", "entitlements.csv",
                  "access_tickets.json", "prior_review.csv"):
         assert (DATA_Q4 / name).exists(), (
-            f"data/2026-Q4/{name} is missing. Regenerate the quarter with seed "
-            "20261015 (Day 5 Cycle 1)."
+            f"data/2026-Q4/{name} is missing. Q4 ships pre-generated in the kit — "
+            "check out data/2026-Q4/ from the repo (Day 5 Cycle 1)."
         )
     assert (DATA_Q4 / "policies").is_dir(), "data/2026-Q4/policies/ is missing."
 
@@ -97,8 +93,8 @@ def test_q4_is_the_expected_seed():
     hr_rows = (DATA_Q4 / "hr_roster.csv").read_text().splitlines()
     assert len(hr_rows) - 1 == 1190, (
         f"Expected 1190 HR rows for seed 20261015, got {len(hr_rows) - 1}. If this "
-        "is off, Q4 was generated with a different seed — regenerate with "
-        "--seed 20261015 so the ground-truth checks below line up."
+        "is off, the pre-shipped data/2026-Q4/ is not the seed-20261015 quarter "
+        "the ground-truth checks below line up with — restore it from the repo."
     )
 
 
