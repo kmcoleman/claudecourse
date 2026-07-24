@@ -1,0 +1,1191 @@
+employee_id,full_name,email,department,title,hire_date,term_date,employment_type,status
+E00651,Raymond Hudson,raymond.hudson@meridian-energy.com,Operations,Archivist,2012-04-09,,FTE,active
+E00001,Rachel Thompson,rachel.thompson@meridian-energy.com,Field Services,"Biochemist, clinical",2020-11-15,,FTE,active
+E00151,Emily Patel,emily.patel@meridian-energy.com,Operations,"Designer, graphic",2022-09-15,,FTE,active
+E01109,David Sanchez,david.sanchez@meridian-energy.com,Sales & Key Accounts,Retail manager,2025-01-02,,FTE,active
+E00334,Mary Cardenas,mary.cardenas@meridian-energy.com,Operations,"Education officer, community",2022-02-02,,FTE,active
+E00261,Sean Lopez,sean.lopez@meridian-energy.com,Field Services,Clinical research associate,2012-11-04,,FTE,active
+E00160,Brandon Moore,brandon.moore@meridian-energy.com,Engineering,"Psychologist, counselling",2019-05-01,,FTE,active
+E00995,James Young,james.young@meridian-energy.com,Operations,Geochemist,2015-01-21,,FTE,active
+E00005,Mary Smith,mary.smith@meridian-energy.com,Customer Care,Musician,2022-04-15,,FTE,active
+E00009,David Schaefer,david.schaefer@meridian-energy.com,Finance & Accounting,Actuary,2012-05-07,,FTE,active
+E00161,Anthony Lopez,anthony.lopez@meridian-energy.com,Operations,Land,2026-05-26,,FTE,active
+E00875,Lisa Estrada,lisa.estrada@meridian-energy.com,Operations,Curator,2015-02-21,,FTE,active
+E00209,James Elliott,james.elliott@meridian-energy.com,Field Services,Landscape architect,2022-06-07,,Contractor,active
+E00966,Anthony Warren,anthony.warren@meridian-energy.com,Field Services,Insurance account manager,2019-12-18,,Contractor,active
+E00104,Matthew Patel,matthew.patel@meridian-energy.com,Engineering,Publishing rights manager,2020-03-05,,FTE,active
+E00954,Justin Smith,justin.smith@meridian-energy.com,Field Services,Economist,2015-11-09,,FTE,active
+E00506,Troy Anthony,troy.anthony@meridian-energy.com,Operations,Air traffic controller,2013-09-05,,FTE,active
+E00239,Maurice Owens,maurice.owens@meridian-energy.com,Customer Care,Garment/textile technologist,2026-06-14,,FTE,active
+E00816,Angela Payne,angela.payne@meridian-energy.com,Field Services,Magazine journalist,2020-10-05,,FTE,active
+E00455,Sharon Harris,sharon.harris@meridian-energy.com,Operations,Musician,2020-03-09,,FTE,active
+E00856,Aaron Tyler,aaron.tyler@meridian-energy.com,Legal & Compliance,Control and instrumentation engineer,2019-09-13,,FTE,active
+E00814,Kelly Rodriguez,kelly.rodriguez@meridian-energy.com,Operations,Midwife,2012-10-07,,FTE,active
+E00110,Dana Bailey,dana.bailey@meridian-energy.com,Operations,Airline pilot,2023-11-07,,FTE,active
+E01099,Donald Kelly,donald.kelly@meridian-energy.com,Procurement,Newspaper journalist,2014-11-02,,FTE,active
+E00175,Joseph Bright,joseph.bright@meridian-energy.com,Field Services,"Programmer, systems",2017-03-12,,FTE,active
+E00754,Holly Poole,holly.poole@meridian-energy.com,Customer Care,Actor,2016-08-15,,FTE,active
+E00392,Andrea Ray,andrea.ray@meridian-energy.com,Engineering,Chartered legal executive (England and W,2018-01-02,,FTE,active
+E00078,Cameron Torres,cameron.torres@meridian-energy.com,Customer Care,Production manager,2014-03-27,,FTE,active
+E00642,Katelyn Martinez,katelyn.martinez@meridian-energy.com,Operations,"Engineer, electronics",2024-01-17,,FTE,active
+E00590,Kevin Baker,kevin.baker@meridian-energy.com,Operations,Consulting civil engineer,2016-07-09,,FTE,active
+E00796,Maria Woods,maria.woods@meridian-energy.com,Field Services,Chief Technology Officer,2021-03-08,,Contractor,active
+E00448,Joseph Dixon,joseph.dixon@meridian-energy.com,Operations,Water engineer,2016-10-19,,FTE,active
+E00805,Benjamin Morales,benjamin.morales@meridian-energy.com,Operations,Building surveyor,2012-10-03,,FTE,active
+E00091,Anna Mcpherson,anna.mcpherson@meridian-energy.com,Field Services,Naval architect,2016-02-11,,Contractor,active
+E01026,Jesus Johnson,jesus.johnson@meridian-energy.com,Operations,Radio broadcast assistant,2016-04-01,,FTE,active
+E01003,Amber Chavez,amber.chavez@meridian-energy.com,Operations,Education administrator,2016-06-13,,FTE,active
+E00650,Deborah Brown,deborah.brown@meridian-energy.com,Information Technology,Make,2025-02-08,,FTE,active
+E00550,Seth Washington,seth.washington@meridian-energy.com,Operations,Art therapist,2017-12-27,,FTE,active
+E00956,Victoria Ward,victoria.ward@meridian-energy.com,Customer Care,"Engineer, maintenance",2024-11-26,,FTE,active
+E00913,Tonya Smith,tonya.smith@meridian-energy.com,Operations,Transport planner,2018-10-13,,FTE,active
+E01074,John Bennett,john.bennett@meridian-energy.com,Operations,Comptroller,2019-03-14,,FTE,active
+E00479,Kevin Alvarez,kevin.alvarez@meridian-energy.com,Operations,"Runner, broadcasting/film/video",2013-05-18,,FTE,active
+E00555,Matthew Mcknight,matthew.mcknight@meridian-energy.com,Customer Care,Museum/gallery conservator,2023-08-30,,FTE,active
+E00809,Stacey Collins,stacey.collins@meridian-energy.com,Field Services,"Administrator, Civil Service",2024-09-06,,FTE,active
+E00663,Brandon Estes,brandon.estes@meridian-energy.com,Field Services,Veterinary surgeon,2018-02-22,,FTE,active
+E00779,Daniel DDS,daniel.dds@meridian-energy.com,Operations,Environmental education officer,2014-07-03,,FTE,active
+E00087,Nicholas Gonzales,nicholas.gonzales@meridian-energy.com,Operations,"Therapist, nutritional",2019-02-20,,FTE,active
+E00712,Brandon Kaufman,brandon.kaufman@meridian-energy.com,Operations,"Secretary, company",2022-06-09,,FTE,active
+E01034,Jasmine Ortiz,jasmine.ortiz@meridian-energy.com,Field Services,Fast food restaurant manager,2019-07-19,,FTE,active
+E00979,Melissa Vaughan,melissa.vaughan@meridian-energy.com,Field Services,"Buyer, industrial",2022-12-23,,FTE,active
+E00708,Paul Bentley,paul.bentley@meridian-energy.com,OPERATIONS,"Surveyor, rural practice",2012-02-27,,FTE,active
+E00799,Jessica Graves,jessica.graves@meridian-energy.com,Field Services,Housing manager/officer,2016-02-23,,Contractor,active
+E00428,Jay Webb,jay.webb@meridian-energy.com,Operations,Interior and spatial designer,2026-03-23,,FTE,active
+E00034,Molly Stewart,molly.stewart@meridian-energy.com,Operations,"Engineer, manufacturing",2022-07-08,,FTE,active
+E00783,Vicki Chavez,vicki.chavez@meridian-energy.com,Customer Care,Ambulance person,2021-12-13,,FTE,active
+E00501,Todd Cole,todd.cole@meridian-energy.com,Finance & Accounting,Learning mentor,2018-02-03,,FTE,active
+E00272,Charles Davenport,charles.davenport@meridian-energy.com,Field Services,Operational researcher,2024-12-05,,FTE,active
+E00266,Karen Miranda,karen.miranda@meridian-energy.com,Customer Care,"Social research officer, government",2015-03-04,,FTE,active
+E01181,James Cook,james.cook@meridian-energy.com,OPERATIONS,Metallurgist,2017-12-26,,FTE,active
+E00625,Christopher Collins,christopher.collins@meridian-energy.com,Field Services,Illustrator,2017-02-16,,Contractor,active
+E00416,Robert Miranda,robert.miranda@meridian-energy.com,Engineering,Theatre manager,2023-11-06,,FTE,active
+E00474,Melissa Johnson,melissa.johnson@meridian-energy.com,Customer Care,"Lecturer, higher education",2025-11-17,,Contractor,active
+E01006,Melissa Thornton,melissa.thornton@meridian-energy.com,Operations,Licensed conveyancer,2017-10-24,,FTE,active
+E00303,Timothy Perez,timothy.perez@meridian-energy.com,Operations,"Psychologist, counselling",2024-07-24,,FTE,active
+E00302,Ruth Johnson,ruth.johnson@meridian-energy.com,Engineering,Academic librarian,2015-01-13,,FTE,active
+E00544,Jonathan Smith,jonathan.smith@meridian-energy.com,Marketing,Commercial art gallery manager,2021-10-03,,FTE,active
+E00704,Denise Price,denise.price@meridian-energy.com,Procurement,"Accountant, chartered certified",2023-04-11,,FTE,active
+E00547,Cassandra Anderson,cassandra.anderson@meridian-energy.com, Customer Care ,"Conservation officer, nature",2016-08-22,,FTE,active
+E00634,Sharon Khan,sharon.khan@meridian-energy.com,Operations,"Scientist, research (physical sciences)",2013-03-16,,FTE,active
+E00331,Christopher Burns,christopher.burns@meridian-energy.com,Engineering,"Engineer, chemical",2024-04-25,,FTE,active
+E00681,Christopher Patel,christopher.patel@meridian-energy.com,Engineering,"Psychotherapist, child",2024-11-27,,FTE,on_leave
+E00440,Bridget Henry,bridget.henry@meridian-energy.com,Information Technology,"Psychotherapist, child",2015-05-27,,FTE,active
+E00352,William Webb,william.webb@meridian-energy.com,finance & accounting,Theatre stage manager,2016-05-22,,FTE,active
+E00230,Evan Henderson,evan.henderson@meridian-energy.com,Field Services,Public house manager,2016-06-04,,Contractor,active
+E00191,Ashley Lozano,ashley.lozano@meridian-energy.com,Engineering,"Surveyor, mining",2020-10-12,,FTE,active
+E00534,Dale Castillo,dale.castillo@meridian-energy.com,Sales & Key Accounts,"Engineer, mining",2023-08-27,,FTE,active
+E00375,Sophia Hood,sophia.hood@meridian-energy.com,Customer Care,Database administrator,2016-07-05,,Contractor,active
+E01177,Jonathan Mccarty,jonathan.mccarty@meridian-energy.com,Operations,Publishing rights manager,2018-12-29,,FTE,active
+E00493,Julie Peterson,julie.peterson@meridian-energy.com,Field Services,"Teacher, English as a foreign language",2023-04-08,,FTE,active
+E00008,Dwayne Cortez,dwayne.cortez@meridian-energy.com,Engineering,IT sales professional,2019-11-11,,FTE,active
+E00420,Corey Grant,corey.grant@meridian-energy.com,Legal & Compliance,Biomedical engineer,2022-10-20,,FTE,active
+E01188,Debra Sanchez,debra.sanchez@meridian-energy.com,Operations,Medical illustrator,2018-10-10,,FTE,active
+E01068,Jennifer Jones,jennifer.jones@meridian-energy.com,Operations,Industrial buyer,2013-03-10,,FTE,active
+E00316,Darryl Watkins,darryl.watkins@meridian-energy.com,Information Technology,Exhibition designer,2022-02-03,,FTE,active
+E00928,Jesse Taylor,jesse.taylor@meridian-energy.com,Field Services,Chief Marketing Officer,2018-02-14,,Contractor,active
+E00083,Chad Richardson,chad.richardson@meridian-energy.com,Field Services,Health and safety adviser,2022-04-23,,Contractor,active
+E00822,Teresa Johnson,teresa.johnson@meridian-energy.com,Operations,Production manager,2020-11-22,,FTE,active
+E00318,Michael Franklin,michael.franklin@meridian-energy.com,Engineering,Neurosurgeon,2017-12-05,,FTE,active
+E00648,Ryan York,ryan.york@meridian-energy.com,Operations,Armed forces technical officer,2019-08-08,,FTE,active
+E00080,Suzanne Pham,suzanne.pham@meridian-energy.com,Operations,Sports therapist,2017-08-25,,FTE,active
+E01043,Alex Clements,alex.clements@meridian-energy.com,Operations,Agricultural engineer,2014-07-07,,FTE,active
+E00186,Hannah Santiago,hannah.santiago@meridian-energy.com,Field Services,Theatre stage manager,2012-10-04,,FTE,active
+E00999,Matthew Briggs,matthew.briggs@meridian-energy.com,Operations,Bookseller,2016-07-13,,FTE,active
+E01182,Robert James,robert.james@meridian-energy.com,Operations,"Psychologist, prison and probation servi",2023-03-05,,FTE,active
+E01108,Benjamin Becker,benjamin.becker@meridian-energy.com,CUSTOMER CARE,"Chemist, analytical",2022-08-27,,FTE,active
+E00173,Christopher Thompson,christopher.thompson@meridian-energy.com,Operations,"Surveyor, mining",2023-11-19,,FTE,active
+E01127,Michelle Cole,michelle.cole@meridian-energy.com,Engineering,"Physicist, medical",2025-07-12,,FTE,active
+E00817,Lindsay Miller,lindsay.miller@meridian-energy.com,Finance & Accounting,Retail merchandiser,2022-01-22,,FTE,active
+E00583,Linda Singleton,linda.singleton@meridian-energy.com,Operations,Actuary,2021-06-08,2026-11-22,FTE,terminated
+E00291,Jason Ellis,jason.ellis@meridian-energy.com,Engineering,Commercial/residential surveyor,2024-01-21,,Contractor,active
+E01130,Sarah Tate,sarah.tate@meridian-energy.com,Field Services,"Teacher, adult education",2020-05-10,,FTE,active
+E00405,Phillip Johnson,phillip.johnson@meridian-energy.com,Marketing,Research scientist (physical sciences),2026-07-16,,FTE,active
+E00857,William Brown,william.brown@meridian-energy.com,Engineering,Photographer,2020-07-12,,FTE,active
+E01100,Dalton Johnson,dalton.johnson@meridian-energy.com,Field Services,"Engineer, manufacturing systems",2012-06-01,,FTE,active
+E00434,Chad Aguirre,chad.aguirre@meridian-energy.com,Operations,"Scientist, marine",2015-10-09,,FTE,active
+E00661,Lindsey Davidson,lindsey.davidson@meridian-energy.com,Engineering,"Nurse, learning disability",2017-01-04,,FTE,active
+E00885,Daniel Weber,daniel.weber@meridian-energy.com,Operations,Barista,2023-03-21,,FTE,active
+E00020,James King,james.king@meridian-energy.com,Operations,"Scientist, physiological",2015-10-30,,FTE,active
+E00678,Lacey Rivera,lacey.rivera@meridian-energy.com,Operations,Administrator,2016-11-03,,FTE,active
+E00404,Amanda Fields,amanda.fields@meridian-energy.com,Operations,Pharmacologist,2012-05-22,,FTE,active
+E00845,Mary Hart,mary.hart@meridian-energy.com,Finance & Accounting,"Designer, interior/spatial",2015-10-23,,FTE,active
+E00880,Melanie Marshall,melanie.marshall@meridian-energy.com,Operations,"Presenter, broadcasting",2020-08-31,,FTE,active
+E00659,Andrew Wilson,andrew.wilson@meridian-energy.com,Human Resources,"Surveyor, quantity",2014-12-29,,FTE,active
+E00097,Kristin Glover,kristin.glover@meridian-energy.com,Engineering,"Designer, fashion/clothing",2020-06-30,,FTE,active
+E01033,Michael Shea,michael.shea@meridian-energy.com,Sales & Key Accounts,"Engineer, building services",2026-05-16,,FTE,active
+E00044,Russell Navarro,russell.navarro@meridian-energy.com,Legal & Compliance,Seismic interpreter,2021-11-05,,FTE,active
+E00414,Brandon Jones,brandon.jones@meridian-energy.com,Finance & Accounting,Pharmacologist,2013-10-13,,FTE,active
+E00122,Charles King,charles.king@meridian-energy.com,Operations,Cabin crew,2025-09-21,,FTE,active
+E01059,Richard Morales,richard.morales@meridian-energy.com,Customer Care,Accommodation manager,2023-04-07,,FTE,active
+E01024,Linda Griffin,linda.griffin@meridian-energy.com,Human Resources,"Runner, broadcasting/film/video",2012-05-19,,FTE,active
+E01049,George Stein,george.stein@meridian-energy.com,Operations,Immigration officer,2018-05-17,,FTE,active
+E01048,Suzanne Williams,suzanne.williams@meridian-energy.com,Procurement,"Scientist, forensic",2021-11-22,,FTE,active
+E01064,Lindsey Sweeney,lindsey.sweeney@meridian-energy.com,Field Services,Optometrist,2018-08-06,,FTE,active
+E00672,Patricia Russell,patricia.russell@meridian-energy.com,Operations,Medical sales representative,2017-05-11,,FTE,active
+E00791,Paul Garcia,paul.garcia@meridian-energy.com,Engineering,"Journalist, magazine",2013-09-01,,FTE,active
+E01092,George Lopez,george.lopez@meridian-energy.com,Engineering,"Scientist, research (physical sciences)",2015-04-14,,FTE,active
+E00067,Rita Odom,rita.odom@meridian-energy.com,Sales & Key Accounts,Community education officer,2015-04-22,,FTE,active
+E00307,Tyler Fields,tyler.fields@meridian-energy.com,Finance & Accounting,"Geologist, wellsite",2021-04-19,,FTE,active
+E01014,Elizabeth Johnson,elizabeth.johnson@meridian-energy.com,Operations,Materials engineer,2025-07-03,,FTE,active
+E00803,Helen Jennings,helen.jennings@meridian-energy.com,procurement,"Surveyor, hydrographic",2020-01-26,,FTE,active
+E00842,Taylor Vargas,taylor.vargas@meridian-energy.com,Operations,Logistics and distribution manager,2016-12-01,,FTE,active
+E00295,Joseph Kramer,joseph.kramer@meridian-energy.com,Engineering,"Scientist, forensic",2018-06-18,,FTE,active
+E01042,Jeffrey Smith,jeffrey.smith@meridian-energy.com, Customer Care ,"Engineer, broadcasting (operations)",2018-10-16,,FTE,active
+E00922,Brian Wolfe,brian.wolfe@meridian-energy.com,Engineering,Airline pilot,2014-03-21,,FTE,active
+E00882,Sierra Hudson,sierra.hudson@meridian-energy.com,Operations,"Engineer, petroleum",2020-02-25,,FTE,active
+E00269,Justin Rocha,justin.rocha@meridian-energy.com,Customer Care,IT sales professional,2016-04-02,,FTE,active
+E00317,Erin Ferguson,erin.ferguson@meridian-energy.com,Field Services,"Engineer, materials",2019-03-09,,FTE,active
+E00637,Brian Villarreal,brian.villarreal@meridian-energy.com,Field Services,Firefighter,2018-08-20,,FTE,active
+E00653,Brandy Andrews,brandy.andrews@meridian-energy.com,Customer Care,"Designer, blown glass/stained glass",2012-09-08,,FTE,active
+E00771,Thomas Wood,thomas.wood@meridian-energy.com,Customer Care,Data processing manager,2015-10-06,,FTE,active
+E00333,Lawrence Coleman,lawrence.coleman@meridian-energy.com,Marketing,Transport planner,2018-01-25,,FTE,active
+E00732,Christopher Smith,christopher.smith@meridian-energy.com,Operations,Associate Professor,2022-05-18,,FTE,active
+E00675,Amy Rodriguez,amy.rodriguez@meridian-energy.com,Operations,"Production designer, theatre/television/",2016-08-29,,FTE,active
+E00761,Christine Smith,christine.smith@meridian-energy.com,Operations,Exhibition designer,2022-03-19,,FTE,active
+E00463,Susan Walton,susan.walton@meridian-energy.com,Field Services,"Editor, commissioning",2020-11-07,2026-11-13,FTE,terminated
+E00795,Daniel Morris,daniel.morris@meridian-energy.com,Sales & Key Accounts,Probation officer,2017-09-16,,FTE,active
+E00260,Phillip Ryan,phillip.ryan@meridian-energy.com,Operations,"Designer, fashion/clothing",2014-02-15,,FTE,active
+E01056,Brian Gregory,brian.gregory@meridian-energy.com,Information Technology,Nutritional therapist,2018-04-07,,FTE,active
+E00776,Shawna James,shawna.james@meridian-energy.com,Operations,Toxicologist,2026-05-20,,FTE,active
+E00325,Paul Daugherty,paul.daugherty@meridian-energy.com,Procurement,Health visitor,2023-03-23,,FTE,active
+E00933,Kevin Acosta,kevin.acosta@meridian-energy.com,Engineering,Hydrogeologist,2013-11-11,,FTE,active
+E01115,Joseph Harris,joseph.harris@meridian-energy.com,Engineering,Public relations officer,2014-10-06,,FTE,active
+E00033,Patricia Blankenship,patricia.blankenship@meridian-energy.com,Operations,Prison officer,2015-12-17,,FTE,active
+E00390,Joseph Brown,joseph.brown@meridian-energy.com,Field Services,Retail manager,2014-04-26,,FTE,active
+E00358,Joseph Silva,joseph.silva@meridian-energy.com,Customer Care,Aeronautical engineer,2012-01-22,2026-10-17,FTE,terminated
+E00594,Allison Wilson,allison.wilson@meridian-energy.com,Customer Care,"Surveyor, commercial/residential",2025-04-16,,Contractor,active
+E00765,Samantha Tran,samantha.tran@meridian-energy.com, Customer Care ,Field trials officer,2021-04-09,,FTE,active
+E00081,Jill Morris,jill.morris@meridian-energy.com,Operations,Water engineer,2015-10-31,,FTE,active
+E00937,Edwin Galvan,edwin.galvan@meridian-energy.com,Sales & Key Accounts,"Engineer, aeronautical",2012-06-24,,FTE,active
+E00686,Brian Shah,brian.shah@meridian-energy.com,Operations,"Development worker, international aid",2014-12-16,,FTE,active
+E00569,Stacy Singh,stacy.singh@meridian-energy.com,Finance & Accounting,"Scientist, marine",2023-06-12,,FTE,active
+E00508,Blake Walsh,blake.walsh@meridian-energy.com,Information Technology,Art gallery manager,2014-06-19,,FTE,active
+E00051,Jamie Wyatt,jamie.wyatt@meridian-energy.com,Customer Care,"Accountant, chartered management",2024-02-06,,FTE,active
+E00835,Veronica Patterson,veronica.patterson@meridian-energy.com,Operations,"Surveyor, commercial/residential",2012-02-10,,FTE,active
+E00418,Christopher Reyes,christopher.reyes@meridian-energy.com,field services,Lawyer,2012-02-09,,Contractor,active
+E00574,Dawn Nelson,dawn.nelson@meridian-energy.com,Procurement,Research scientist (life sciences),2012-01-24,,FTE,active
+E00824,Jane Miller,jane.miller@meridian-energy.com,Information Technology,Chief of Staff,2019-09-27,,FTE,active
+E00983,David Blackwell,david.blackwell@meridian-energy.com,Finance & Accounting,Corporate treasurer,2015-04-30,,FTE,active
+E00287,Ian Morris,ian.morris@meridian-energy.com,Operations,Retail merchandiser,2026-05-21,,FTE,active
+E00108,Matthew Brown,matthew.brown@meridian-energy.com,Engineering,"Investment banker, corporate",2026-01-10,,Contractor,active
+E01087,Kimberly Miller,kimberly.miller@meridian-energy.com,Information Technology,Theatre manager,2025-12-17,,FTE,active
+E00115,Timothy Dunn,timothy.dunn@meridian-energy.com,Operations,Clinical embryologist,2018-10-23,,FTE,active
+E00898,Ashley Cruz,ashley.cruz@meridian-energy.com,Operations,Computer games developer,2013-12-10,,FTE,active
+E00128,Pamela Flores,pamela.flores@meridian-energy.com,Operations,"Secretary, company",2024-09-17,,FTE,active
+E00347,Michael Smith,michael.smith@meridian-energy.com,Customer Care,Restaurant manager,2014-01-21,,FTE,active
+E00187,Richard Trevino,richard.trevino@meridian-energy.com,Operations,"Accountant, chartered management",2015-06-04,,FTE,active
+E01194,Allen Atkinson,allen.atkinson@meridian-energy.com,Operations,"Nurse, adult",2018-01-16,,FTE,active
+E00530,Kristen Hudson,kristen.hudson@meridian-energy.com,Operations,Actor,2024-03-18,,FTE,active
+E00217,Michael Barnes,michael.barnes@meridian-energy.com,Finance & Accounting,Controller,2012-01-13,,FTE,active
+E00862,Jorge Wall,jorge.wall@meridian-energy.com,Engineering,Special educational needs teacher,2020-11-07,,FTE,active
+E01178,Stephanie Haynes,stephanie.haynes@meridian-energy.com,Customer Care,Sub,2018-06-03,,FTE,active
+E00896,John Wood,john.wood@meridian-energy.com,Executive,Community pharmacist,2022-09-07,2026-09-07,FTE,terminated
+E01010,Kathleen Conley,kathleen.conley@meridian-energy.com,Information Technology,Civil Service administrator,2022-07-08,,FTE,active
+E00074,Monica Salazar,monica.salazar@meridian-energy.com,Field Services,"Production assistant, radio",2023-01-13,,FTE,active
+E00458,William Howell,william.howell@meridian-energy.com,Field Services,Personal assistant,2016-06-27,,FTE,active
+E00524,Ronald Pacheco,ronald.pacheco@meridian-energy.com,Customer Care,Information officer,2026-08-20,,FTE,active
+E00533,Ashley Fields,ashley.fields@meridian-energy.com,Operations,"Administrator, Civil Service",2013-03-09,,FTE,active
+E00735,John Moore,john.moore@meridian-energy.com,Field Services,"Programmer, systems",2013-07-18,,FTE,active
+E00188,Tiffany Arnold,tiffany.arnold@meridian-energy.com,Engineering,"Surveyor, insurance",2018-12-23,,FTE,active
+E00998,Daniel DDS,daniel.dds@meridian-energy.com,Operations,"Engineer, structural",2022-09-11,,FTE,active
+E00399,Alyssa Sloan,alyssa.sloan@meridian-energy.com,Field Services,"Buyer, industrial",2026-08-26,,FTE,active
+E00608,Michael Davis,michael.davis@meridian-energy.com,Operations,"Education officer, environmental",2013-12-04,,FTE,active
+E00854,Timothy Bowman,timothy.bowman@meridian-energy.com,Information Technology,Health service manager,2016-08-05,,FTE,active
+E01123,Taylor Moreno,taylor.moreno@meridian-energy.com,Engineering,Medical illustrator,2017-09-20,,FTE,active
+E00408,Zachary Torres,zachary.torres@meridian-energy.com,Field Services,"Geneticist, molecular",2022-05-23,,Contractor,active
+E00724,Allen Smith,allen.smith@meridian-energy.com,Operations,Sport and exercise psychologist,2013-04-11,,FTE,active
+E01037,Carly Flynn,carly.flynn@meridian-energy.com,Operations,Arts development officer,2014-10-21,,FTE,active
+E00182,Brian James,brian.james@meridian-energy.com,Customer Care,"Development worker, international aid",2026-08-16,,FTE,active
+E00639,Joseph Gilmore,joseph.gilmore@meridian-energy.com,Operations,Television/film/video producer,2025-09-21,,FTE,active
+E00278,Robert Adams,robert.adams@meridian-energy.com,Operations,Community development worker,2020-10-29,,FTE,active
+E00797,Darryl Lewis,darryl.lewis@meridian-energy.com,Operations,Ecologist,2019-08-27,,FTE,active
+E00801,Carla Walters,carla.walters@meridian-energy.com,Human Resources,Community development worker,2012-09-15,,FTE,active
+E01011,Elizabeth Ingram,elizabeth.ingram@meridian-energy.com,Operations,"Solicitor, Scotland",2014-12-05,,FTE,active
+E00127,David Deleon,david.deleon@meridian-energy.com, Operations ,IT sales professional,2015-12-14,,FTE,active
+E00233,William White,william.white@meridian-energy.com,Operations,Camera operator,2026-06-25,,FTE,active
+E00684,Brian Hansen,brian.hansen@meridian-energy.com,Information Technology,"Accountant, chartered certified",2021-11-20,,FTE,active
+E01017,Ronald Stephens,ronald.stephens@meridian-energy.com,Sales & Key Accounts,Operational investment banker,2024-02-24,,FTE,active
+E00270,Scott Gallegos,scott.gallegos@meridian-energy.com,Field Services,Ambulance person,2012-05-27,,FTE,active
+E00701,Denise Tran,denise.tran@meridian-energy.com, Finance & Accounting ,Police officer,2022-09-14,,FTE,active
+E00268,Samantha Phillips,samantha.phillips@meridian-energy.com,Field Services,Commercial art gallery manager,2023-09-23,,FTE,active
+E01002,Eric DDS,eric.dds@meridian-energy.com,Operations,Diagnostic radiographer,2023-08-30,,FTE,active
+E00927,Michelle Graves,michelle.graves@meridian-energy.com,field services,Retail manager,2016-06-01,,FTE,active
+E00923,Amanda Andrews,amanda.andrews@meridian-energy.com,Operations,Exercise physiologist,2012-12-17,2026-10-17,FTE,terminated
+E00714,Bonnie Chase,bonnie.chase@meridian-energy.com,Customer Care,Architectural technologist,2024-12-22,,FTE,active
+E00335,Brittany Harrington,brittany.harrington@meridian-energy.com,Engineering,"Engineer, production",2013-11-05,,FTE,active
+E00084,Reginald Turner,reginald.turner@meridian-energy.com,Finance & Accounting,"Surveyor, building",2024-10-17,,FTE,active
+E00984,Kristin Hart,kristin.hart@meridian-energy.com,Field Services,Veterinary surgeon,2013-01-02,,FTE,active
+E00281,Kim Vargas,kim.vargas@meridian-energy.com,Sales & Key Accounts,Mudlogger,2025-12-24,,FTE,active
+E00787,Mark Pollard,mark.pollard@meridian-energy.com,Field Services,"Conservation officer, nature",2023-11-24,,FTE,active
+E01144,Kayla Thompson,kayla.thompson@meridian-energy.com,Operations,Fisheries officer,2019-01-02,,FTE,active
+E00042,Kaitlyn Hall,kaitlyn.hall@meridian-energy.com,Operations,"Producer, radio",2014-06-26,,FTE,active
+E00806,Ethan Schmidt,ethan.schmidt@meridian-energy.com,Sales & Key Accounts,Special educational needs teacher,2026-07-31,,FTE,active
+E00065,Jason Miller,jason.miller@meridian-energy.com,Operations,Health physicist,2017-07-27,,FTE,active
+E00315,Jamie Chen,jamie.chen@meridian-energy.com,Operations,Customer service manager,2023-11-28,,FTE,active
+E00423,Donald Torres,donald.torres@meridian-energy.com,Information Technology,Fitness centre manager,2020-08-29,,FTE,active
+E00429,Edward Brown,edward.brown@meridian-energy.com,OPERATIONS,Osteopath,2015-11-05,,FTE,active
+E00706,Ronald Mccarthy,ronald.mccarthy@meridian-energy.com,Operations,Armed forces training and education offi,2017-02-05,,FTE,active
+E00827,Holly Gibson,holly.gibson@meridian-energy.com,Customer Care,Artist,2015-03-01,,FTE,active
+E00311,Madison MD,madison.md@meridian-energy.com,Information Technology,"Teacher, adult education",2020-05-28,,FTE,on_leave
+E00016,Sophia Ford,sophia.ford@meridian-energy.com,Operations,"Administrator, arts",2012-03-13,,FTE,active
+E00282,Jessica DDS,jessica.dds@meridian-energy.com,Operations,"Therapist, occupational",2026-08-04,,FTE,active
+E00944,Jessica Robinson,jessica.robinson@meridian-energy.com,Sales & Key Accounts,Technical sales engineer,2015-08-08,,FTE,active
+E00447,Kimberly Lewis,kimberly.lewis@meridian-energy.com,Procurement,Location manager,2017-05-12,,FTE,active
+E00257,Austin Thomas,austin.thomas@meridian-energy.com,Operations,Physiological scientist,2016-02-09,,FTE,active
+E01117,Christopher Perez,christopher.perez@meridian-energy.com,Field Services,"Education officer, community",2020-05-23,,FTE,active
+E00655,Elijah Phillips,elijah.phillips@meridian-energy.com,Human Resources,Tax adviser,2023-02-13,2026-12-07,Contractor,active
+E00518,Roger Phillips,roger.phillips@meridian-energy.com,Human Resources,"Pharmacist, community",2019-09-16,,FTE,active
+E00707,Paul Garner,paul.garner@meridian-energy.com, Field Services ,"Designer, fashion/clothing",2012-08-07,,Contractor,active
+E01146,Misty Wall,misty.wall@meridian-energy.com,Operations,Museum/gallery conservator,2012-03-19,,FTE,active
+E01079,James Adams,james.adams@meridian-energy.com,Operations,Clinical biochemist,2022-09-16,,FTE,active
+E00658,Gregory Davidson,gregory.davidson@meridian-energy.com,Customer Care,Publishing copy,2012-04-21,,FTE,active
+E00737,Matthew Vincent,matthew.vincent@meridian-energy.com,Operations,"Surveyor, mining",2025-07-20,,FTE,active
+E00032,Michael Harvey,michael.harvey@meridian-energy.com,Operations,Clinical cytogeneticist,2013-11-18,,FTE,active
+E00119,Mary Phillips,mary.phillips@meridian-energy.com,Field Services,"Psychologist, occupational",2021-05-21,,FTE,active
+E00740,Greg Watson,greg.watson@meridian-energy.com,Operations,Advertising copywriter,2021-08-23,,FTE,active
+E00327,Daniel Osborne,daniel.osborne@meridian-energy.com,Operations,Architectural technologist,2022-12-25,,FTE,active
+E00861,Christopher Caldwell,christopher.caldwell@meridian-energy.com,Customer Care,Chief Strategy Officer,2022-06-18,,FTE,active
+E00171,David Smith,david.smith@meridian-energy.com,Operations,Art therapist,2026-05-11,,FTE,active
+E00275,Joseph Martinez,joseph.martinez@meridian-energy.com,Operations,Operational researcher,2016-11-12,,FTE,active
+E00422,Ashley Parker,ashley.parker@meridian-energy.com,Engineering,Health visitor,2012-02-11,,FTE,active
+E00674,Susan Lewis,susan.lewis@meridian-energy.com,Operations,Arts administrator,2022-02-13,,FTE,active
+E00626,Jennifer Johnson,jennifer.johnson@meridian-energy.com,Operations,"Production assistant, radio",2023-01-03,,FTE,active
+E00464,Christine Weber,christine.weber@meridian-energy.com,Customer Care,Catering manager,2020-03-28,,FTE,active
+E01180,Brian Wells,brian.wells@meridian-energy.com,Customer Care,Graphic designer,2024-12-11,,FTE,active
+E01193,Patrick King,patrick.king@meridian-energy.com,Finance & Accounting,Animal technologist,2013-04-22,,FTE,active
+E00619,Aaron Ponce,aaron.ponce@meridian-energy.com,Sales & Key Accounts,Artist,2012-05-23,,FTE,active
+E00546,Lauren Moore,lauren.moore@meridian-energy.com,Finance & Accounting,Editorial assistant,2014-04-17,,FTE,active
+E00262,Alan Ochoa,alan.ochoa@meridian-energy.com,Information Technology,Quality manager,2013-10-03,,FTE,active
+E00881,Christopher Jones,christopher.jones@meridian-energy.com,Operations,Cytogeneticist,2026-10-21,,FTE,active
+E00309,Kristine Fischer,kristine.fischer@meridian-energy.com,Human Resources,"Surveyor, quantity",2014-07-10,,FTE,active
+E01118,David Patterson,david.patterson@meridian-energy.com,Operations,Personnel officer,2025-12-27,,FTE,active
+E00901,Angela Andrews,angela.andrews@meridian-energy.com,Field Services,Nature conservation officer,2026-09-25,,Contractor,active
+E00807,Hailey Walker,hailey.walker@meridian-energy.com,Engineering,Metallurgist,2015-05-29,2026-12-17,Contractor,active
+E01063,Amy Morgan,amy.morgan@meridian-energy.com,Operations,Waste management officer,2026-09-03,,FTE,active
+E00719,Vanessa DVM,vanessa.dvm@meridian-energy.com,Customer Care,Software engineer,2012-06-30,,FTE,active
+E00471,Kathryn Thompson,kathryn.thompson@meridian-energy.com,Customer Care,"Journalist, magazine",2012-11-15,,FTE,active
+E00613,Yvonne Oneill,yvonne.oneill@meridian-energy.com,Finance & Accounting,Company secretary,2021-09-26,,FTE,active
+E00691,Cindy Hernandez,cindy.hernandez@meridian-energy.com,Field Services,Logistics and distribution manager,2024-08-04,,FTE,active
+E00344,Nicholas Arnold,nicholas.arnold@meridian-energy.com,Legal & Compliance,Archaeologist,2025-06-07,,FTE,active
+E00159,Angela Welch,angela.welch@meridian-energy.com,Field Services,Probation officer,2023-07-25,,FTE,active
+E00204,Patricia Diaz,patricia.diaz@meridian-energy.com,Operations,Arboriculturist,2013-06-15,,FTE,active
+E00664,Ronald Jimenez,ronald.jimenez@meridian-energy.com,Operations,Immigration officer,2023-09-28,,FTE,active
+E00103,Tiffany Phillips,tiffany.phillips@meridian-energy.com,Field Services,"Chemist, analytical",2015-03-23,,Contractor,active
+E00451,James Diaz,james.diaz@meridian-energy.com,Engineering,"Designer, furniture",2021-06-30,,FTE,active
+E01179,Juan Thomas,juan.thomas@meridian-energy.com,Field Services,Geoscientist,2023-01-08,,FTE,active
+E00135,Amanda Guzman,amanda.guzman@meridian-energy.com,Operations,"Engineer, biomedical",2012-08-29,,FTE,active
+E00682,Kelly Phillips,kelly.phillips@meridian-energy.com,Operations,Human resources officer,2019-10-04,,FTE,active
+E00057,Linda Johnson,linda.johnson@meridian-energy.com,Customer Care,Technical brewer,2026-06-04,,FTE,active
+E00649,Laura Velez,laura.velez@meridian-energy.com,Operations,Associate Professor,2014-12-29,,FTE,active
+E00509,Jose Lucero,jose.lucero@meridian-energy.com,Marketing,Fish farm manager,2013-05-07,,FTE,active
+E01133,Grant Allen,grant.allen@meridian-energy.com,Field Services,"Surveyor, land/geomatics",2014-06-26,,FTE,active
+E00021,Madison Sullivan,madison.sullivan@meridian-energy.com,Operations,Tour manager,2019-12-29,,FTE,active
+E00839,Patricia Hernandez,patricia.hernandez@meridian-energy.com,Operations,"Doctor, hospital",2018-09-08,2026-11-17,FTE,terminated
+E00197,Nicole Mann,nicole.mann@meridian-energy.com,Customer Care,Geochemist,2019-10-25,,FTE,active
+E00365,April Castro,april.castro@meridian-energy.com,Customer Care,"Nurse, mental health",2021-06-08,,FTE,active
+E00146,Kim Campbell,kim.campbell@meridian-energy.com,Operations,Industrial/product designer,2021-06-07,,FTE,active
+E01067,William Hubbard,william.hubbard@meridian-energy.com,Engineering,"Scientist, audiological",2012-07-13,,FTE,active
+E00397,Amy Thompson,amy.thompson@meridian-energy.com,Information Technology,Recycling officer,2019-03-21,,FTE,active
+E00055,Zachary Henry,zachary.henry@meridian-energy.com,Operations,Phytotherapist,2024-04-26,,FTE,active
+E00977,Jared Turner,jared.turner@meridian-energy.com,Field Services,Ergonomist,2026-06-08,,FTE,active
+E00071,Alex Watkins,alex.watkins@meridian-energy.com,Operations,Insurance risk surveyor,2020-11-27,,FTE,active
+E00242,Shane Adkins,shane.adkins@meridian-energy.com,Field Services,"Development worker, community",2023-07-25,,FTE,active
+E00387,Zachary Le,zachary.le@meridian-energy.com,Operations,Sports therapist,2022-04-19,,FTE,active
+E01089,Ronald Reynolds,ronald.reynolds@meridian-energy.com,Operations,"Sales professional, IT",2020-03-03,,FTE,active
+E00522,David Anderson,david.anderson@meridian-energy.com,Information Technology,Investment analyst,2025-06-27,,FTE,active
+E01142,Jessica Case,jessica.case@meridian-energy.com,Engineering,"Doctor, general practice",2020-10-03,,FTE,active
+E01191,Michelle Hinton,michelle.hinton@meridian-energy.com,Customer Care,Fast food restaurant manager,2021-07-18,,FTE,active
+E01101,Rebecca Mueller,rebecca.mueller@meridian-energy.com,Sales & Key Accounts,Chartered loss adjuster,2019-04-16,,FTE,active
+E00632,Eric Gallagher,eric.gallagher@meridian-energy.com,Finance & Accounting,Chief of Staff,2013-01-01,2026-09-13,FTE,terminated
+E01197,Brandon Williams,brandon.williams@meridian-energy.com,Operations,Personal assistant,2013-07-27,,FTE,active
+E00612,Samantha Thompson,samantha.thompson@meridian-energy.com,Customer Care,"Therapist, speech and language",2016-10-11,,FTE,active
+E00768,Patricia Anderson,patricia.anderson@meridian-energy.com,Customer Care,Event organiser,2024-09-01,,FTE,active
+E00584,Leonard Hansen,leonard.hansen@meridian-energy.com,Operations,Lexicographer,2020-08-20,,FTE,active
+E00246,George Garcia,george.garcia@meridian-energy.com,Engineering,"Engineer, broadcasting (operations)",2012-06-06,,FTE,active
+E00419,Ashley Evans,ashley.evans@meridian-energy.com,Engineering,Translator,2018-10-20,,Contractor,active
+E00503,David Gonzalez,david.gonzalez@meridian-energy.com,Human Resources,"Engineer, control and instrumentation",2018-11-17,,FTE,active
+E00955,Victoria Flores,victoria.flores@meridian-energy.com,Engineering,Museum education officer,2013-09-25,,FTE,active
+E00346,Derek Wiggins,derek.wiggins@meridian-energy.com,Operations,Purchasing manager,2021-09-13,,FTE,active
+E00671,Alicia Waller,alicia.waller@meridian-energy.com,OPERATIONS,"Merchandiser, retail",2013-03-29,,FTE,active
+E00436,Emma Forbes,emma.forbes@meridian-energy.com,Operations,Outdoor activities/education manager,2014-01-17,,FTE,active
+E01019,Linda Wilson,linda.wilson@meridian-energy.com,Field Services,Copy,2018-07-29,,FTE,active
+E01163,Belinda Martin,belinda.martin@meridian-energy.com,Procurement,Exhibition designer,2018-07-26,,FTE,active
+E00025,Christopher Robertson,christopher.robertson@meridian-energy.com,Engineering,"Programmer, systems",2026-02-05,,FTE,active
+E00756,Tina Burns,tina.burns@meridian-energy.com,Customer Care,"Surveyor, commercial/residential",2018-11-13,,Contractor,active
+E00170,Briana Brown,briana.brown@meridian-energy.com,Operations,Video editor,2022-06-11,,FTE,active
+E00322,James Nicholson,james.nicholson@meridian-energy.com,Field Services,Garment/textile technologist,2024-10-24,,Contractor,active
+E00249,Corey Gutierrez,corey.gutierrez@meridian-energy.com,Field Services,"Conservator, furniture",2020-08-19,,FTE,active
+E00060,Christopher Holden,christopher.holden@meridian-energy.com,Information Technology,Financial planner,2018-03-15,,FTE,active
+E01012,Adam Fuller,adam.fuller@meridian-energy.com,Operations,Video editor,2023-05-03,,FTE,active
+E00381,Caitlin Foster,caitlin.foster@meridian-energy.com,Operations,Visual merchandiser,2024-05-30,,FTE,active
+E00515,Beverly Munoz,beverly.munoz@meridian-energy.com,Field Services,Insurance risk surveyor,2018-07-26,,FTE,active
+E00630,Linda Armstrong,linda.armstrong@meridian-energy.com,Customer Care,Trade union research officer,2021-02-18,,FTE,active
+E00234,Cole Jones,cole.jones@meridian-energy.com,Information Technology,Community education officer,2022-01-16,,FTE,active
+E00169,Louis Lewis,louis.lewis@meridian-energy.com,Field Services,Research scientist (life sciences),2020-04-30,,FTE,active
+E01199,Jennifer Glover,jennifer.glover@meridian-energy.com,Engineering,Software engineer,2020-01-15,,FTE,active
+E00226,David Jordan,david.jordan@meridian-energy.com,Operations,Energy manager,2014-07-14,,FTE,active
+E00432,Jessica Yang,jessica.yang@meridian-energy.com,Finance & Accounting,"Investment banker, operational",2022-11-29,,FTE,active
+E00721,David Alvarez,david.alvarez@meridian-energy.com,Operations,Film/video editor,2019-08-04,,FTE,active
+E00053,Pamela Perez,pamela.perez@meridian-energy.com,Operations,"Therapist, music",2022-02-19,,FTE,active
+E00019,David Roberts,david.roberts@meridian-energy.com,Finance & Accounting,Senior Accountant,2024-01-04,,FTE,active
+E00638,Tommy White,tommy.white@meridian-energy.com, Operations ,"Teacher, English as a foreign language",2023-04-28,,FTE,active
+E00690,Todd Flores,todd.flores@meridian-energy.com,Engineering,Hydrologist,2020-07-20,,Contractor,active
+E00723,Stacy Patterson,stacy.patterson@meridian-energy.com,INFORMATION TECHNOLOGY,Commercial horticulturist,2026-03-15,,FTE,active
+E00755,Holly Robertson,holly.robertson@meridian-energy.com,Operations,Sport and exercise psychologist,2018-03-31,,FTE,active
+E00576,Patricia Delgado,patricia.delgado@meridian-energy.com,Field Services,Environmental manager,2022-09-29,,Contractor,active
+E00444,Kevin Moreno,kevin.moreno@meridian-energy.com,Information Technology,Jewellery designer,2021-03-20,,FTE,active
+E00298,Madison Obrien,madison.obrien@meridian-energy.com,Finance & Accounting,"Social research officer, government",2018-08-13,,FTE,active
+E00766,Juan Young,juan.young@meridian-energy.com,Engineering,"Conservation officer, nature",2026-04-28,,FTE,active
+E00910,Oscar Ryan,oscar.ryan@meridian-energy.com,Legal & Compliance,"Teacher, secondary school",2024-04-12,,FTE,active
+E00889,Linda Wilson,linda.wilson@meridian-energy.com,Operations,Waste management officer,2025-01-17,,FTE,active
+E01157,Alexander PhD,alexander.phd@meridian-energy.com,Field Services,Information officer,2017-09-20,,Contractor,active
+E00666,Sarah Lucas,sarah.lucas@meridian-energy.com,Engineering,Meteorologist,2012-07-25,,FTE,active
+E00218,Matthew Lynn,matthew.lynn@meridian-energy.com,Operations,"Administrator, sports",2025-12-27,,FTE,active
+E01057,Yolanda Calderon,yolanda.calderon@meridian-energy.com,Operations,Medical sales representative,2022-10-29,,FTE,active
+E00490,Barbara Lee,barbara.lee@meridian-energy.com,Operations,Medical physicist,2017-10-31,,FTE,active
+E00184,Bryan Gilbert,bryan.gilbert@meridian-energy.com,Operations,Environmental health practitioner,2024-10-12,,FTE,active
+E00545,Angela House,angela.house@meridian-energy.com,Field Services,Land/geomatics surveyor,2021-02-10,,Contractor,active
+E01143,Gary Rivers,gary.rivers@meridian-energy.com,Operations,Press sub,2019-09-25,,FTE,active
+E00038,Hannah Jackson,hannah.jackson@meridian-energy.com,Engineering,Financial risk analyst,2018-08-11,,FTE,active
+E01036,Megan Hamilton,megan.hamilton@meridian-energy.com,Sales & Key Accounts,Herbalist,2012-05-16,,FTE,active
+E00452,Thomas Morris,thomas.morris@meridian-energy.com,Procurement,"Accountant, chartered",2025-07-21,,FTE,active
+E00548,Christopher Hamilton,christopher.hamilton@meridian-energy.com,Field Services,"Therapist, nutritional",2014-07-04,,FTE,active
+E00024,Jessica Schmidt,jessica.schmidt@meridian-energy.com,Operations,Local government officer,2021-04-04,,FTE,active
+E00931,Diamond Walker,diamond.walker@meridian-energy.com,Operations,Financial adviser,2015-04-25,,FTE,active
+E00027,Timothy Cooke,timothy.cooke@meridian-energy.com,Customer Care,Osteopath,2021-05-06,,FTE,active
+E00488,Tony Romero,tony.romero@meridian-energy.com,Field Services,Museum education officer,2019-09-11,,FTE,active
+E00297,Scott Cantu,scott.cantu@meridian-energy.com,Field Services,Airline pilot,2018-02-09,,FTE,active
+E01139,Amanda Perkins,amanda.perkins@meridian-energy.com,Information Technology,"Teacher, adult education",2026-01-02,,FTE,active
+E00222,Robert Meyer,robert.meyer@meridian-energy.com,Procurement,Public librarian,2013-06-29,,FTE,active
+E00739,Bonnie Scott,bonnie.scott@meridian-energy.com,Field Services,Recycling officer,2020-02-01,,FTE,active
+E00494,Aaron Meyer,aaron.meyer@meridian-energy.com,Field Services,"Accountant, chartered",2024-09-20,,FTE,active
+E00932,Kristen Thompson,kristen.thompson@meridian-energy.com,Information Technology,"Administrator, sports",2020-08-05,,FTE,active
+E00953,Mark Jordan,mark.jordan@meridian-energy.com,Operations,Geophysical data processor,2023-08-19,,FTE,active
+E00680,Denise Lewis,denise.lewis@meridian-energy.com,Operations,Information systems manager,2014-08-25,,FTE,active
+E00492,Matthew White,matthew.white@meridian-energy.com,Field Services,Training and development officer,2024-01-17,,Contractor,active
+E00417,Jeremy Francis,jeremy.francis@meridian-energy.com,Field Services,Clothing/textile technologist,2014-01-30,,FTE,active
+E00003,Matthew Molina,matthew.molina@meridian-energy.com,Information Technology,Tourism officer,2021-06-07,,FTE,active
+E00993,Arthur Bradford,arthur.bradford@meridian-energy.com,operations,"Programmer, systems",2016-11-05,,FTE,active
+E00058,Charles Robinson,charles.robinson@meridian-energy.com,Engineering,"Biochemist, clinical",2018-06-15,,FTE,active
+E01183,Rachel Davis,rachel.davis@meridian-energy.com,Operations,Computer games developer,2015-09-14,,FTE,active
+E00366,Michael Lopez,michael.lopez@meridian-energy.com, Operations ,"Solicitor, Scotland",2016-07-12,,FTE,active
+E01166,Keith Raymond,keith.raymond@meridian-energy.com,Operations,Accommodation manager,2022-10-21,,FTE,active
+E00442,Shannon Rogers,shannon.rogers@meridian-energy.com,Engineering,Immigration officer,2015-03-18,,FTE,active
+E00484,Lori Hess,lori.hess@meridian-energy.com,Field Services,"Accountant, chartered public finance",2023-09-03,,Contractor,active
+E01032,Kevin Conner,kevin.conner@meridian-energy.com,Operations,Fitness centre manager,2020-06-18,,FTE,active
+E00622,Marisa Rice,marisa.rice@meridian-energy.com,Customer Care,Ecologist,2018-01-05,,FTE,active
+E00139,Holly Carroll,holly.carroll@meridian-energy.com,Field Services,"Lecturer, higher education",2013-09-16,,FTE,active
+E00775,Matthew Ruiz,matthew.ruiz@meridian-energy.com,Operations,Race relations officer,2013-08-06,,FTE,active
+E00301,Angelica Armstrong,angelica.armstrong@meridian-energy.com,Field Services,Orthoptist,2013-03-09,,FTE,active
+E00373,Brandon Schmidt,brandon.schmidt@meridian-energy.com,Human Resources,"Accountant, chartered management",2020-06-14,,FTE,active
+E00101,Paul Adams,paul.adams@meridian-energy.com,Marketing,Adult guidance worker,2021-05-27,,FTE,active
+E00223,James Brown,james.brown@meridian-energy.com,Operations,Corporate investment banker,2018-01-11,,FTE,active
+E00556,Kimberly English,kimberly.english@meridian-energy.com,Customer Care,Clinical psychologist,2022-02-01,,FTE,active
+E00853,Jared DVM,jared.dvm@meridian-energy.com,Operations,Hotel manager,2015-03-05,,FTE,active
+E00383,Evan Butler,evan.butler@meridian-energy.com,Customer Care,Accommodation manager,2025-11-18,,FTE,active
+E00523,Rebecca Bates,rebecca.bates@meridian-energy.com,Customer Care,Research scientist (life sciences),2013-06-14,,FTE,active
+E00847,Lauren Ferrell,lauren.ferrell@meridian-energy.com,Engineering,Dramatherapist,2016-01-10,,FTE,active
+E00095,Tony Sullivan,tony.sullivan@meridian-energy.com,Operations,Proofreader,2021-10-30,,FTE,active
+E00453,William Nelson,william.nelson@meridian-energy.com,Operations,Brewing technologist,2022-10-27,,FTE,active
+E00361,Gregory Nunez,gregory.nunez@meridian-energy.com,Operations,Retail manager,2023-05-11,,FTE,active
+E00154,Linda Johnson,linda.johnson@meridian-energy.com,Field Services,Trade mark attorney,2013-12-11,,FTE,active
+E00587,Roy Jones,roy.jones@meridian-energy.com,Operations,Ambulance person,2014-12-24,,FTE,active
+E00920,Douglas Young,douglas.young@meridian-energy.com,Sales & Key Accounts,Ranger/warden,2024-07-07,,FTE,active
+E01007,Hannah Frey,hannah.frey@meridian-energy.com,Customer Care,Television production assistant,2022-01-02,,FTE,active
+E00785,Miss DVM,miss.dvm@meridian-energy.com,Field Services,Interior and spatial designer,2022-03-25,,Contractor,active
+E00145,Latasha Harrison,latasha.harrison@meridian-energy.com,Operations,Chemical engineer,2013-12-01,,FTE,active
+E00886,Mark Murphy,mark.murphy@meridian-energy.com,Engineering,Drilling engineer,2023-05-22,,FTE,active
+E00487,Nicole Bowman,nicole.bowman@meridian-energy.com,Operations,Fast food restaurant manager,2018-04-28,,FTE,active
+E00443,Brett Lee,brett.lee@meridian-energy.com,Sales & Key Accounts,Public librarian,2022-09-30,,FTE,active
+E01135,Greg Morales,greg.morales@meridian-energy.com,Engineering,Charity fundraiser,2020-05-22,,FTE,active
+E01160,Marissa Orr,marissa.orr@meridian-energy.com,Field Services,Learning mentor,2016-05-17,,FTE,active
+E00897,Cassandra Buckley,cassandra.buckley@meridian-energy.com,Field Services,Banker,2026-02-22,,FTE,active
+E00621,Natalie Griffin,natalie.griffin@meridian-energy.com,operations,Diagnostic radiographer,2019-04-15,,FTE,active
+E00540,Audrey DVM,audrey.dvm@meridian-energy.com,Field Services,Retail banker,2024-09-17,,Contractor,active
+E00575,Kimberly DVM,kimberly.dvm@meridian-energy.com,Operations,Games developer,2017-06-10,,FTE,active
+E00542,Robert Orr,robert.orr@meridian-energy.com,Sales & Key Accounts,Fine artist,2012-02-17,,FTE,active
+E00844,Amanda Murphy,amanda.murphy@meridian-energy.com,Operations,Accounting technician,2026-07-20,,FTE,active
+E00199,Kyle Clay,kyle.clay@meridian-energy.com,Customer Care,"Accountant, chartered management",2017-09-26,,FTE,active
+E00388,Joseph Porter,joseph.porter@meridian-energy.com,Field Services,"Teacher, English as a foreign language",2014-07-31,,Contractor,active
+E00140,Lynn Palmer,lynn.palmer@meridian-energy.com,Operations,Horticultural consultant,2016-04-14,,FTE,active
+E00511,Daniel Turner,daniel.turner@meridian-energy.com,Operations,Financial risk analyst,2013-04-11,,FTE,active
+E01090,Allison Kelley,allison.kelley@meridian-energy.com, Operations ,Armed forces training and education offi,2013-08-27,,FTE,active
+E00410,Scott Garcia,scott.garcia@meridian-energy.com,Customer Care,Psychiatrist,2025-03-15,,FTE,active
+E01189,Kayla Lang,kayla.lang@meridian-energy.com,Engineering,Technical author,2017-12-23,,Contractor,active
+E00834,Jennifer Jimenez,jennifer.jimenez@meridian-energy.com,Engineering,Make,2023-11-22,,FTE,active
+E01097,Gabrielle Barnes,gabrielle.barnes@meridian-energy.com,Engineering,IT sales professional,2021-10-21,,FTE,active
+E01136,Sophia Townsend,sophia.townsend@meridian-energy.com,Engineering,Accommodation manager,2022-07-18,,Contractor,active
+E00784,Ray Williams,ray.williams@meridian-energy.com,Field Services,Production engineer,2025-03-04,,FTE,active
+E01076,Hannah Phillips,hannah.phillips@meridian-energy.com,Information Technology,"Engineer, electronics",2019-02-11,,FTE,active
+E00568,Abigail Allen,abigail.allen@meridian-energy.com,Engineering,"Teacher, adult education",2014-02-01,,FTE,active
+E00391,Samantha Morris,samantha.morris@meridian-energy.com,Customer Care,Ranger/warden,2013-02-03,,FTE,active
+E00591,Seth Kim,seth.kim@meridian-energy.com,Field Services,Senior tax professional/tax inspector,2023-07-24,,FTE,active
+E00656,Ian Graham,ian.graham@meridian-energy.com,Customer Care,Medical technical officer,2018-09-21,,Contractor,active
+E00633,Antonio Tate,antonio.tate@meridian-energy.com,Field Services,"Librarian, academic",2023-01-20,,Contractor,active
+E01028,Cory Olsen,cory.olsen@meridian-energy.com,Operations,Control and instrumentation engineer,2019-03-16,,FTE,active
+E01195,Brianna Reed,brianna.reed@meridian-energy.com,Customer Care,"Education officer, environmental",2017-12-19,,FTE,active
+E01111,Amy Alvarez,amy.alvarez@meridian-energy.com,Human Resources,Chartered public finance accountant,2014-06-03,,FTE,active
+E00709,Sandra Lambert,sandra.lambert@meridian-energy.com,Operations,Press photographer,2017-10-01,,FTE,active
+E00130,Raymond Lopez,raymond.lopez@meridian-energy.com,Operations,"Journalist, broadcasting",2021-09-29,,FTE,active
+E00196,Dale Wilkinson,dale.wilkinson@meridian-energy.com,Operations,"Librarian, academic",2012-10-21,,FTE,active
+E00624,Jennifer Young,jennifer.young@meridian-energy.com,Customer Care,Catering manager,2025-06-26,,FTE,active
+E00229,Paige Watts,paige.watts@meridian-energy.com,Operations,Holiday representative,2012-08-03,,FTE,active
+E00836,Robert Sanchez,robert.sanchez@meridian-energy.com,Operations,Public relations officer,2026-03-04,,FTE,active
+E00919,Janet Monroe,janet.monroe@meridian-energy.com,Customer Care,Broadcast presenter,2016-11-02,,FTE,active
+E00427,Jonathan Vazquez,jonathan.vazquez@meridian-energy.com,CUSTOMER CARE,Consulting civil engineer,2021-07-24,,FTE,active
+E00369,Corey Hull,corey.hull@meridian-energy.com,Marketing,"Teacher, English as a foreign language",2017-09-01,,FTE,active
+E00043,Janice Moore,janice.moore@meridian-energy.com,Sales & Key Accounts,Camera operator,2026-03-22,,FTE,active
+E00277,Joan White,joan.white@meridian-energy.com,Operations,Advice worker,2024-04-29,,FTE,active
+E00629,Catherine Berry,catherine.berry@meridian-energy.com,FINANCE & ACCOUNTING,Senior Accountant,2023-01-09,,FTE,active
+E00777,Jacqueline Reed,jacqueline.reed@meridian-energy.com,Field Services,Clinical biochemist,2012-03-13,,Contractor,active
+E00273,April Wells,april.wells@meridian-energy.com,Engineering,Environmental manager,2018-04-08,,FTE,active
+E00243,Robert Reed,robert.reed@meridian-energy.com,Operations,Occupational psychologist,2024-10-20,,FTE,active
+E01046,Amber Gay,amber.gay@meridian-energy.com,Information Technology,Public house manager,2023-04-15,,FTE,active
+E00804,Steven Smith,steven.smith@meridian-energy.com,Customer Care,Higher education careers adviser,2013-02-28,,Contractor,active
+E00996,Jennifer Anderson,jennifer.anderson@meridian-energy.com,Operations,"Scientist, water quality",2020-12-28,,FTE,active
+E00774,Nicole Foster,nicole.foster@meridian-energy.com, Field Services ,"Surveyor, land/geomatics",2022-07-15,,FTE,active
+E00255,Susan Zimmerman,susan.zimmerman@meridian-energy.com,Information Technology,"Horticulturist, amenity",2015-10-09,,FTE,active
+E00717,William MD,william.md@meridian-energy.com,Operations,Proofreader,2025-12-14,,FTE,active
+E01073,Caitlin Freeman,caitlin.freeman@meridian-energy.com,Sales & Key Accounts,Personal assistant,2020-06-06,,FTE,active
+E00858,Pamela Mason,pamela.mason@meridian-energy.com,Finance & Accounting,Professor Emeritus,2020-09-11,,FTE,active
+E00603,Catherine Beasley,catherine.beasley@meridian-energy.com,Marketing,Museum/gallery conservator,2022-12-19,,FTE,active
+E00293,Jerry Curtis,jerry.curtis@meridian-energy.com,Operations,Music therapist,2015-04-15,,FTE,on_leave
+E00389,Katrina Tran,katrina.tran@meridian-energy.com,Customer Care,Hospital pharmacist,2020-04-28,,FTE,active
+E00483,Emily Jones,emily.jones@meridian-energy.com,Engineering,Metallurgist,2015-05-09,,FTE,active
+E00940,Jason Guzman,jason.guzman@meridian-energy.com,Sales & Key Accounts,"Administrator, education",2016-04-15,,FTE,active
+E00645,Julie Flowers,julie.flowers@meridian-energy.com,Customer Care,"Designer, exhibition/display",2018-02-02,,FTE,active
+E00559,Donald Wood,donald.wood@meridian-energy.com,Operations,Diplomatic Services operational officer,2021-10-13,,FTE,active
+E00280,Austin MD,austin.md@meridian-energy.com,Sales & Key Accounts,Textile designer,2021-02-10,,FTE,active
+E00725,Nicholas Padilla,nicholas.padilla@meridian-energy.com,Operations,Professor Emeritus,2013-04-30,,FTE,active
+E00852,Kayla Krause,kayla.krause@meridian-energy.com,Operations,Adult guidance worker,2015-09-20,,FTE,active
+E00573,Henry Mosley,henry.mosley@meridian-energy.com,Engineering,Best boy,2013-12-02,,FTE,active
+E00695,Anthony Bender,anthony.bender@meridian-energy.com,Field Services,Actor,2021-06-02,,FTE,active
+E00812,Jennifer Calderon,jennifer.calderon@meridian-energy.com,Customer Care,"Loss adjuster, chartered",2021-01-14,,FTE,active
+E00643,Kristin Vasquez,kristin.vasquez@meridian-energy.com,Operations,Science writer,2018-10-31,,FTE,active
+E00450,Stephanie Becker,stephanie.becker@meridian-energy.com,Field Services,Soil scientist,2018-08-21,,Contractor,active
+E00068,Michael Mcneil,michael.mcneil@meridian-energy.com,Information Technology,Operational investment banker,2019-09-27,,FTE,active
+E00535,Vickie Young,vickie.young@meridian-energy.com,Operations,Chartered legal executive (England and W,2017-01-25,,FTE,active
+E00859,Kelly Jenkins,kelly.jenkins@meridian-energy.com,Field Services,Archivist,2012-08-16,,FTE,active
+E01107,Sabrina Lawson,sabrina.lawson@meridian-energy.com,Sales & Key Accounts,Energy manager,2025-06-15,,FTE,active
+E01075,Catherine White,catherine.white@meridian-energy.com,Field Services,Product designer,2012-03-25,,FTE,active
+E00992,Shawn Sullivan,shawn.sullivan@meridian-energy.com,Field Services,English as a second language teacher,2015-06-16,,FTE,active
+E01158,Jill Martin,jill.martin@meridian-energy.com,Field Services,Advice worker,2025-09-21,,Contractor,active
+E00967,Sharon Moore,sharon.moore@meridian-energy.com,Operations,"Pharmacist, community",2015-04-22,,FTE,active
+E00876,Rachel Douglas,rachel.douglas@meridian-energy.com,Engineering,Futures trader,2016-10-23,,FTE,active
+E01053,Andrew Carpenter,andrew.carpenter@meridian-energy.com,Operations,Information officer,2014-01-18,,FTE,active
+E00256,Paul Perez,paul.perez@meridian-energy.com,Field Services,Systems analyst,2024-11-18,,Contractor,active
+E00597,Lisa Jacobs,lisa.jacobs@meridian-energy.com,Engineering,Furniture designer,2019-06-11,,FTE,active
+E00849,Frank Johns,frank.johns@meridian-energy.com,Operations,Adult nurse,2019-10-29,,FTE,active
+E00395,Rachel Perez,rachel.perez@meridian-energy.com,Operations,Community arts worker,2020-08-21,,FTE,active
+E00572,Gregory Ramirez,gregory.ramirez@meridian-energy.com,Field Services,Theatre manager,2017-01-03,,Contractor,active
+E00030,Brittany Wright,brittany.wright@meridian-energy.com,Field Services,"Engineer, broadcasting (operations)",2015-07-26,,FTE,active
+E00099,Elizabeth Armstrong,elizabeth.armstrong@meridian-energy.com,Operations,"Scientist, water quality",2020-02-11,,FTE,active
+E01170,Andrea Henderson,andrea.henderson@meridian-energy.com,Operations,Barrister,2021-09-05,,FTE,active
+E00220,Cheryl Woods,cheryl.woods@meridian-energy.com,Operations,Manufacturing engineer,2012-05-29,,FTE,active
+E01061,Kathryn Griffin,kathryn.griffin@meridian-energy.com,Engineering,Building surveyor,2016-05-01,,FTE,active
+E00263,Sandra Donovan,sandra.donovan@meridian-energy.com,OPERATIONS,Fitness centre manager,2024-01-05,,FTE,active
+E00070,Rachael MD,rachael.md@meridian-energy.com,Marketing,Art therapist,2015-04-15,,FTE,active
+E00469,John Baker,john.baker@meridian-energy.com,Operations,Building services engineer,2021-09-01,,FTE,active
+E01148,Vickie Dillon,vickie.dillon@meridian-energy.com,Customer Care,Physiological scientist,2020-07-16,,FTE,active
+E00538,Sheryl Cox,sheryl.cox@meridian-energy.com,operations,Event organiser,2022-05-03,,FTE,active
+E00402,Douglas Graham,douglas.graham@meridian-energy.com,Operations,Chief Executive Officer,2023-01-30,,FTE,active
+E00162,Nicole Nichols,nicole.nichols@meridian-energy.com,Executive,Trading standards officer,2013-08-22,,FTE,active
+E01126,Andrew Smith,andrew.smith@meridian-energy.com,Operations,Warehouse manager,2019-01-23,,FTE,active
+E00415,Christopher Bush,christopher.bush@meridian-energy.com,Operations,"Nurse, children's",2013-01-07,,FTE,active
+E01001,Patricia Mcguire,patricia.mcguire@meridian-energy.com,Field Services,"Psychologist, educational",2023-06-14,,FTE,active
+E00891,Bethany Spence,bethany.spence@meridian-energy.com,Field Services,Financial adviser,2017-08-04,,Contractor,active
+E00793,Chelsea Cruz,chelsea.cruz@meridian-energy.com,Field Services,Air broker,2017-08-26,,FTE,active
+E01112,Devin Rodriguez,devin.rodriguez@meridian-energy.com,Operations,Ecologist,2025-09-14,,FTE,active
+E00744,Troy Riley,troy.riley@meridian-energy.com,Operations,"Surveyor, rural practice",2016-12-29,,FTE,active
+E00560,Danielle Williamson,danielle.williamson@meridian-energy.com,Operations,Industrial buyer,2016-11-05,,FTE,active
+E00549,Keith Gardner,keith.gardner@meridian-energy.com, Field Services ,Senior tax professional/tax inspector,2016-01-09,,Contractor,active
+E00251,David Yang,david.yang@meridian-energy.com,Operations,Technical brewer,2024-01-25,,FTE,active
+E00292,Morgan Reyes,morgan.reyes@meridian-energy.com,Field Services,"Teacher, secondary school",2023-12-07,,FTE,active
+E01110,James DDS,james.dds@meridian-energy.com,Operations,"Civil engineer, contracting",2021-08-01,,FTE,active
+E00676,Keith Smith,keith.smith@meridian-energy.com,Field Services,Travel agency manager,2019-08-20,,FTE,active
+E00228,Dale Burke,dale.burke@meridian-energy.com,CUSTOMER CARE,Set designer,2026-01-29,,FTE,active
+E00324,Ryan Vaughan,ryan.vaughan@meridian-energy.com,Customer Care,"Merchandiser, retail",2022-05-28,,FTE,active
+E00683,Kayla Cannon,kayla.cannon@meridian-energy.com,Human Resources,Rural practice surveyor,2026-02-14,,FTE,active
+E01131,Ryan Simpson,ryan.simpson@meridian-energy.com,Information Technology,"Scientist, clinical (histocompatibility ",2022-02-08,,FTE,active
+E00433,Christopher Glover,christopher.glover@meridian-energy.com,Field Services,Child psychotherapist,2020-02-12,,Contractor,active
+E00635,Eric Wilson,eric.wilson@meridian-energy.com,Customer Care,"Radiographer, therapeutic",2013-06-08,,Contractor,active
+E00912,Jimmy Brown,jimmy.brown@meridian-energy.com,Operations,Sales executive,2023-08-30,,FTE,active
+E00728,Lydia Hernandez,lydia.hernandez@meridian-energy.com,Operations,Event organiser,2020-02-21,,FTE,active
+E01008,Dorothy Hahn,dorothy.hahn@meridian-energy.com,Field Services,Recruitment consultant,2015-12-08,,Contractor,active
+E00736,Shannon Harrison,shannon.harrison@meridian-energy.com,Sales & Key Accounts,"Radiographer, diagnostic",2017-04-11,,FTE,active
+E00368,Adam Rogers,adam.rogers@meridian-energy.com,Engineering,Glass blower/designer,2023-11-27,,FTE,active
+E00394,James Brady,james.brady@meridian-energy.com,Operations,Financial adviser,2020-07-16,,FTE,active
+E00536,Megan Martinez,megan.martinez@meridian-energy.com,Field Services,Control and instrumentation engineer,2021-11-17,,FTE,active
+E00288,Adam Brown,adam.brown@meridian-energy.com,Operations,Control and instrumentation engineer,2021-12-20,,FTE,active
+E00772,Jaime Jimenez,jaime.jimenez@meridian-energy.com,Legal & Compliance,"Therapist, drama",2013-03-25,,FTE,active
+E00961,William Nguyen,william.nguyen@meridian-energy.com,Operations,Psychiatric nurse,2021-03-15,,FTE,active
+E00958,Ellen Stewart,ellen.stewart@meridian-energy.com,Sales & Key Accounts,Land/geomatics surveyor,2016-06-28,,FTE,active
+E00874,Kayla Berger,kayla.berger@meridian-energy.com,Operations,"Designer, textile",2012-07-31,,FTE,active
+E00871,Anna Dodson,anna.dodson@meridian-energy.com,Operations,Analytical chemist,2020-05-03,,FTE,active
+E00201,Ellen Reid,ellen.reid@meridian-energy.com,OPERATIONS,Broadcast presenter,2012-04-15,,FTE,active
+E00929,Ricky Williams,ricky.williams@meridian-energy.com,Field Services,Pension scheme manager,2012-05-26,,FTE,active
+E01072,Vanessa Miller,vanessa.miller@meridian-energy.com,Operations,Emergency planning/management officer,2018-01-05,,FTE,active
+E00088,Emily Wood,emily.wood@meridian-energy.com,Operations,Purchasing manager,2015-06-11,,FTE,active
+E00129,Bruce Miller,bruce.miller@meridian-energy.com,Operations,Tax inspector,2014-04-25,,FTE,active
+E00308,Crystal Rangel,crystal.rangel@meridian-energy.com,Marketing,Community arts worker,2021-09-30,,FTE,active
+E00758,Sandra Morris,sandra.morris@meridian-energy.com,Operations,"Accountant, chartered public finance",2026-07-17,,FTE,active
+E00211,Jason Berger,jason.berger@meridian-energy.com,Customer Care,Youth worker,2024-11-28,,FTE,active
+E00808,Edward Brown,edward.brown@meridian-energy.com,Operations,Product manager,2022-08-18,,FTE,active
+E00823,Jodi Duncan,jodi.duncan@meridian-energy.com,Operations,Musician,2012-04-06,,FTE,active
+E00753,Taylor Shaw,taylor.shaw@meridian-energy.com,Sales & Key Accounts,"Development worker, community",2021-06-22,,FTE,active
+E00123,Jenna Hernandez,jenna.hernandez@meridian-energy.com,Operations,"Engineer, electrical",2015-09-04,,FTE,active
+E01083,Ashley Hernandez,ashley.hernandez@meridian-energy.com,Procurement,"Administrator, local government",2025-07-05,,FTE,active
+E00975,Tamara George,tamara.george@meridian-energy.com,operations,Herpetologist,2019-01-19,,FTE,active
+E00905,Donald Miller,donald.miller@meridian-energy.com,Operations,Environmental consultant,2026-01-15,,FTE,active
+E00646,Ryan Reilly,ryan.reilly@meridian-energy.com,Operations,Facilities manager,2026-07-09,,FTE,active
+E00581,Ashley Hernandez,ashley.hernandez@meridian-energy.com,Legal & Compliance,Further education lecturer,2013-11-30,,FTE,active
+E01129,Benjamin Combs,benjamin.combs@meridian-energy.com,Finance & Accounting,"Conservator, furniture",2024-03-06,,FTE,active
+E00279,Holly Lopez,holly.lopez@meridian-energy.com,Field Services,"Doctor, general practice",2015-10-11,,FTE,active
+E00989,Brian Patterson,brian.patterson@meridian-energy.com,Field Services,Electrical engineer,2015-09-21,,FTE,active
+E00577,Paula Lyons,paula.lyons@meridian-energy.com,Operations,"Surveyor, minerals",2022-07-10,,FTE,active
+E01080,Heather Phillips,heather.phillips@meridian-energy.com,Operations,Dance movement psychotherapist,2021-07-21,,FTE,active
+E00821,Steven Black,steven.black@meridian-energy.com,Customer Care,Exercise physiologist,2013-01-30,,FTE,active
+E00245,Todd Thornton,todd.thornton@meridian-energy.com, Information Technology ,Arboriculturist,2026-03-23,,FTE,active
+E00543,Denise Anderson,denise.anderson@meridian-energy.com,Operations,Clinical research associate,2016-03-20,,FTE,active
+E00046,Joshua Lewis,joshua.lewis@meridian-energy.com,Information Technology,Software engineer,2023-03-23,,FTE,active
+E00441,Steven Morrison,steven.morrison@meridian-energy.com,Operations,"Designer, television/film set",2013-10-11,,FTE,active
+E00235,Erin Knight,erin.knight@meridian-energy.com,Customer Care,"Education officer, environmental",2018-07-28,,FTE,active
+E00705,Jim Johnson,jim.johnson@meridian-energy.com,Sales & Key Accounts,Financial trader,2014-02-20,,FTE,active
+E00354,Amanda Booker,amanda.booker@meridian-energy.com,Customer Care,Clinical embryologist,2012-06-15,,FTE,active
+E00240,Steven Hughes,steven.hughes@meridian-energy.com,Field Services,Financial planner,2014-06-02,,FTE,active
+E01119,Jennifer Mann,jennifer.mann@meridian-energy.com,Customer Care,Forest/woodland manager,2024-04-22,,Contractor,active
+E00152,Kirsten Miller,kirsten.miller@meridian-energy.com,Finance & Accounting,"Designer, furniture",2025-10-27,,FTE,active
+E00179,Mary Young,mary.young@meridian-energy.com,Engineering,Banker,2017-07-29,,FTE,active
+E01091,Ray Bowers,ray.bowers@meridian-energy.com,Operations,Metallurgist,2023-10-02,,FTE,active
+E01105,Nicholas Zimmerman,nicholas.zimmerman@meridian-energy.com,Operations,Records manager,2019-07-18,,FTE,active
+E01050,Tammy Mcgee,tammy.mcgee@meridian-energy.com,Operations,Museum/gallery curator,2012-12-30,,FTE,active
+E00193,Kyle Walker,kyle.walker@meridian-energy.com,Operations,Financial controller,2013-11-15,,FTE,active
+E00943,Ashley Ross,ashley.ross@meridian-energy.com,Marketing,"Loss adjuster, chartered",2020-11-23,,FTE,active
+E00778,Erin Hodges,erin.hodges@meridian-energy.com,Operations,Chartered accountant,2015-09-21,,FTE,active
+E00813,Paul Thomas,paul.thomas@meridian-energy.com,Field Services,Careers adviser,2019-01-30,,FTE,active
+E00435,Michael Walker,michael.walker@meridian-energy.com,Field Services,Ophthalmologist,2018-09-10,,FTE,active
+E00212,Daryl Wang,daryl.wang@meridian-energy.com,Operations,Office manager,2014-11-24,,FTE,active
+E00086,Charles Landry,charles.landry@meridian-energy.com,Operations,Adult nurse,2013-10-13,,FTE,active
+E00926,Jesus Walker,jesus.walker@meridian-energy.com,Operations,Charity officer,2014-10-15,,FTE,active
+E00972,Meghan Murray,meghan.murray@meridian-energy.com,Engineering,"Administrator, Civil Service",2022-08-07,,FTE,active
+E00312,Krystal Hernandez,krystal.hernandez@meridian-energy.com,Executive,"Programmer, multimedia",2014-07-27,,FTE,active
+E00049,Ricky Mason,ricky.mason@meridian-energy.com,Field Services,"Designer, fashion/clothing",2015-07-22,,Contractor,active
+E00166,Roy Brooks,roy.brooks@meridian-energy.com,Field Services,Graphic designer,2013-06-27,,FTE,active
+E00121,Jeff Robinson,jeff.robinson@meridian-energy.com,Field Services,Chemical engineer,2023-01-13,,FTE,active
+E01081,Ashley Spencer,ashley.spencer@meridian-energy.com,Operations,Actuary,2020-01-18,,FTE,active
+E00035,Stephanie Rodriguez,stephanie.rodriguez@meridian-energy.com,Field Services,Public relations officer,2020-07-30,,FTE,active
+E00890,Cory Velasquez,cory.velasquez@meridian-energy.com,operations,Accommodation manager,2020-05-21,,FTE,active
+E00185,Jennifer Moore,jennifer.moore@meridian-energy.com,Field Services,Tour manager,2012-07-18,,FTE,active
+E00075,Teresa Ray,teresa.ray@meridian-energy.com,Operations,Animal technologist,2019-10-29,,FTE,active
+E00866,Megan Stewart,megan.stewart@meridian-energy.com, Operations ,"Designer, exhibition/display",2022-11-29,,FTE,active
+E00815,Rebecca Bowman,rebecca.bowman@meridian-energy.com,Operations,Petroleum engineer,2017-09-15,,FTE,active
+E01039,Paul Sharp,paul.sharp@meridian-energy.com,Operations,Petroleum engineer,2015-05-29,,FTE,active
+E00978,Tiffany Perez,tiffany.perez@meridian-energy.com,Field Services,"Engineer, structural",2025-05-04,,Contractor,active
+E00063,Jessica West,jessica.west@meridian-energy.com,Field Services,Public librarian,2018-06-26,,FTE,active
+E00990,Matthew Rivera,matthew.rivera@meridian-energy.com,Executive,Tax inspector,2018-03-09,,FTE,active
+E00015,Rita DVM,rita.dvm@meridian-energy.com,Operations,"Librarian, academic",2013-07-16,,FTE,active
+E01116,Robert Cox,robert.cox@meridian-energy.com,Operations,Retail merchandiser,2023-05-02,,FTE,active
+E00363,Adam Peterson,adam.peterson@meridian-energy.com,Customer Care,"Optician, dispensing",2020-10-03,,FTE,active
+E00407,Johnathan Rivera,johnathan.rivera@meridian-energy.com,Sales & Key Accounts,"Exhibitions officer, museum/gallery",2017-09-16,,FTE,active
+E00688,Frank Soto,frank.soto@meridian-energy.com,Field Services,Management consultant,2012-09-27,,FTE,active
+E00553,Nicholas Thompson,nicholas.thompson@meridian-energy.com,Operations,Environmental health practitioner,2014-08-20,,FTE,active
+E00014,Daniel Thomas,daniel.thomas@meridian-energy.com,Operations,Bonds trader,2024-01-09,,FTE,active
+E00711,Stacy DVM,stacy.dvm@meridian-energy.com,Operations,Plant breeder/geneticist,2021-07-07,,FTE,active
+E00409,Anna Charles,anna.charles@meridian-energy.com,Field Services,"Engineer, electronics",2022-08-22,,FTE,active
+E00498,Paul Marquez,paul.marquez@meridian-energy.com,Operations,Aid worker,2024-10-24,,FTE,active
+E00238,Michelle Thomas,michelle.thomas@meridian-energy.com,Operations,Merchant navy officer,2021-10-18,,FTE,active
+E00502,Laurie Hawkins,laurie.hawkins@meridian-energy.com,Operations,"Horticulturist, amenity",2015-07-23,,FTE,active
+E00749,Amanda Gomez,amanda.gomez@meridian-energy.com,Operations,Financial trader,2012-08-09,,FTE,active
+E00147,Roberta Wood,roberta.wood@meridian-energy.com,Information Technology,Osteopath,2020-11-16,,FTE,active
+E00195,Lauren Alexander,lauren.alexander@meridian-energy.com,Operations,Operational researcher,2014-08-17,,FTE,active
+E00867,Elizabeth Taylor,elizabeth.taylor@meridian-energy.com,Information Technology,Proofreader,2019-10-17,,FTE,active
+E00652,Leslie Mitchell,leslie.mitchell@meridian-energy.com,Operations,Commercial art gallery manager,2019-12-25,,FTE,active
+E00751,Kimberly Byrd,kimberly.byrd@meridian-energy.com,Operations,"Designer, television/film set",2018-06-14,,FTE,active
+E01015,Nicole Chapman,nicole.chapman@meridian-energy.com,Field Services,Advertising art director,2025-01-15,,Contractor,active
+E00870,Cynthia Schmidt,cynthia.schmidt@meridian-energy.com,Information Technology,Health and safety adviser,2022-01-09,,FTE,active
+E01027,Amanda Edwards,amanda.edwards@meridian-energy.com,Operations,Sports development officer,2020-11-27,,FTE,active
+E00459,Mary Bauer,mary.bauer@meridian-energy.com,Operations,Barrister's clerk,2024-02-12,,FTE,active
+E00018,Shelby Diaz,shelby.diaz@meridian-energy.com,Operations,Osteopath,2020-10-02,,FTE,active
+E00831,Kenneth Diaz,kenneth.diaz@meridian-energy.com,Operations,Music therapist,2026-04-02,,FTE,active
+E00214,Phillip Ramsey,phillip.ramsey@meridian-energy.com,Operations,Facilities manager,2023-07-02,,FTE,active
+E00345,Sarah Donovan,sarah.donovan@meridian-energy.com, Operations ,Historic buildings inspector/conservatio,2013-01-08,,FTE,active
+E01102,Tina Franklin,tina.franklin@meridian-energy.com,Operations,Recycling officer,2023-04-14,,FTE,active
+E00657,Charles Owens,charles.owens@meridian-energy.com,Operations,"Pilot, airline",2019-03-03,,FTE,active
+E00851,Megan Young,megan.young@meridian-energy.com,Field Services,Call centre manager,2013-06-20,,FTE,active
+E01174,Timothy Mcdowell,timothy.mcdowell@meridian-energy.com,Sales & Key Accounts,Chartered public finance accountant,2022-04-28,,FTE,active
+E00598,Kevin Hester,kevin.hester@meridian-energy.com,Operations,"Teacher, early years/pre",2015-09-27,,FTE,active
+E01038,Kaylee Villegas,kaylee.villegas@meridian-energy.com,Customer Care,Games developer,2024-03-07,,FTE,active
+E00951,Cassandra Rodriguez,cassandra.rodriguez@meridian-energy.com,Operations,Agricultural engineer,2014-05-18,,FTE,active
+E00364,Nicholas Morrison,nicholas.morrison@meridian-energy.com,Engineering,"Programmer, applications",2015-02-18,,FTE,active
+E00770,Michael Hoffman,michael.hoffman@meridian-energy.com,Operations,"Scientist, research (physical sciences)",2014-02-14,,FTE,active
+E00480,Richard Love,richard.love@meridian-energy.com,Customer Care,Barrister's clerk,2016-06-04,,FTE,active
+E00974,John DDS,john.dds@meridian-energy.com,Operations,Minerals surveyor,2013-07-05,,FTE,active
+E00800,Cole Yang,cole.yang@meridian-energy.com,Field Services,Sales executive,2020-07-02,,FTE,active
+E00265,Logan Khan,logan.khan@meridian-energy.com,Operations,Exercise physiologist,2016-12-19,,FTE,active
+E00868,Christine Cook,christine.cook@meridian-energy.com,Operations,Marketing executive,2017-10-27,,FTE,active
+E00037,Tara Prince,tara.prince@meridian-energy.com,Operations,Biomedical scientist,2021-12-11,,FTE,active
+E00379,Candice Diaz,candice.diaz@meridian-energy.com,Customer Care,Housing manager/officer,2024-07-13,,Contractor,active
+E00022,Marissa Ramos,marissa.ramos@meridian-energy.com,Information Technology,Agricultural engineer,2018-06-22,,FTE,active
+E01164,Michaela Garcia,michaela.garcia@meridian-energy.com,Operations,"Psychotherapist, child",2013-09-04,,FTE,active
+E00176,Clinton Cummings,clinton.cummings@meridian-energy.com,Information Technology,"Conservation officer, nature",2026-03-20,,FTE,active
+E00039,Stephen David,stephen.david@meridian-energy.com,Sales & Key Accounts,"Programmer, applications",2019-11-12,,FTE,active
+E01175,Eric Perez,eric.perez@meridian-energy.com,Engineering,Legal executive,2019-02-04,,Contractor,active
+E00050,Sophia Jackson,sophia.jackson@meridian-energy.com,Sales & Key Accounts,Cartographer,2018-05-01,,FTE,active
+E00137,Emily Webb,emily.webb@meridian-energy.com,Operations,Diplomatic Services operational officer,2016-11-04,,FTE,active
+E00120,Joseph Scott,joseph.scott@meridian-energy.com,Sales & Key Accounts,Oceanographer,2019-01-13,,FTE,active
+E00384,Cassandra Mosley,cassandra.mosley@meridian-energy.com,Field Services,Fashion designer,2023-08-27,,FTE,active
+E00865,Daniel Peterson,daniel.peterson@meridian-energy.com,ENGINEERING,Proofreader,2020-07-28,,FTE,active
+E00942,Kimberly Tucker,kimberly.tucker@meridian-energy.com,Field Services,Clinical psychologist,2024-10-23,,Contractor,active
+E00470,Joanna Sanchez,joanna.sanchez@meridian-energy.com,Operations,"Solicitor, Scotland",2024-06-14,,FTE,active
+E01132,Kelly Turner,kelly.turner@meridian-energy.com,Customer Care,Paramedic,2022-04-08,,FTE,active
+E00248,Tara MD,tara.md@meridian-energy.com,Engineering,Armed forces technical officer,2021-10-16,,FTE,active
+E00934,Leah Cole,leah.cole@meridian-energy.com,Field Services,Ophthalmologist,2015-03-09,,FTE,active
+E00304,Brandon White,brandon.white@meridian-energy.com,Engineering,"Education officer, community",2014-05-08,,FTE,active
+E01161,Debra Davis,debra.davis@meridian-energy.com,Operations,Veterinary surgeon,2018-08-14,,FTE,active
+E01021,Jennifer Lopez,jennifer.lopez@meridian-energy.com,Field Services,Telecommunications researcher,2016-07-11,,FTE,active
+E01113,Yvette Hawkins,yvette.hawkins@meridian-energy.com,OPERATIONS,"Radiographer, therapeutic",2014-10-27,,FTE,active
+E00760,Steve Smith,steve.smith@meridian-energy.com,Field Services,Statistician,2016-08-02,,Contractor,active
+E01167,Melissa Montes,melissa.montes@meridian-energy.com,Operations,"Designer, ceramics/pottery",2023-11-02,,FTE,active
+E00237,Suzanne Snyder,suzanne.snyder@meridian-energy.com,Operations,Air traffic controller,2015-04-20,,FTE,active
+E00467,Alan Taylor,alan.taylor@meridian-energy.com,Customer Care,"Engineer, broadcasting (operations)",2022-04-28,,Contractor,active
+E00971,Robin Bennett,robin.bennett@meridian-energy.com,Field Services,Dispensing optician,2015-07-13,2026-12-01,FTE,terminated
+E00041,Michele Williams,michele.williams@meridian-energy.com,Field Services,"Scientist, research (physical sciences)",2025-12-19,,FTE,active
+E00939,Jonathan Campos,jonathan.campos@meridian-energy.com,Operations,Sales executive,2026-06-04,,FTE,active
+E00338,Matthew Miller,matthew.miller@meridian-energy.com,Operations,"Surveyor, building",2014-03-22,,FTE,active
+E00947,Jimmy Stout,jimmy.stout@meridian-energy.com,Operations,TEFL teacher,2016-12-20,,FTE,active
+E00593,Jennifer Graham,jennifer.graham@meridian-energy.com,Operations,Tourist information centre manager,2016-02-12,,FTE,active
+E00741,Alexis Le,alexis.le@meridian-energy.com,Finance & Accounting,"Designer, textile",2019-06-16,,FTE,active
+E00406,Kimberly Mcintosh,kimberly.mcintosh@meridian-energy.com,Operations,Lobbyist,2017-12-12,,FTE,active
+E00244,Robert Wood,robert.wood@meridian-energy.com,Operations,Metallurgist,2022-05-07,,FTE,active
+E00731,Summer Burton,summer.burton@meridian-energy.com,Operations,Medical laboratory scientific officer,2020-10-25,,FTE,active
+E00461,Robert Johnson,robert.johnson@meridian-energy.com,Field Services,Stage manager,2016-05-29,,FTE,active
+E01065,Ellen Brown,ellen.brown@meridian-energy.com,Engineering,Insurance account manager,2015-07-02,,FTE,active
+E01172,Drew Thompson,drew.thompson@meridian-energy.com,Customer Care,Community education officer,2017-12-26,,FTE,active
+E00310,Anthony Johnson,anthony.johnson@meridian-energy.com,Field Services,Occupational therapist,2022-03-31,,FTE,active
+E00697,Shelley Dunn,shelley.dunn@meridian-energy.com,Field Services,Occupational psychologist,2016-12-03,,Contractor,active
+E00163,Megan Edwards,megan.edwards@meridian-energy.com,Operations,"Surveyor, land/geomatics",2016-08-20,,FTE,active
+E00987,Heather Richardson,heather.richardson@meridian-energy.com,Engineering,Publishing rights manager,2017-02-27,,FTE,active
+E00013,Michael Reed,michael.reed@meridian-energy.com,Customer Care,"Engineer, energy",2021-09-22,,FTE,active
+E00579,Kevin Campbell,kevin.campbell@meridian-energy.com,Finance & Accounting,Risk analyst,2024-04-20,,FTE,active
+E00631,Jennifer Brooks,jennifer.brooks@meridian-energy.com,Operations,"Scientist, clinical (histocompatibility ",2013-02-15,,FTE,active
+E00903,Tracy Smith,tracy.smith@meridian-energy.com,Customer Care,Science writer,2025-03-03,,FTE,active
+E00200,Michael Le,michael.le@meridian-energy.com,Customer Care,Dispensing optician,2017-12-21,,Contractor,active
+E00332,Sarah Bates,sarah.bates@meridian-energy.com,Field Services,Geophysicist/field seismologist,2016-05-22,,FTE,active
+E00914,Robert James,robert.james@meridian-energy.com,Operations,Public relations account executive,2023-11-06,,FTE,active
+E01013,Karl Reyes,karl.reyes@meridian-energy.com,Field Services,Logistics and distribution manager,2026-03-31,,FTE,active
+E01137,Brett Williams,brett.williams@meridian-energy.com,Human Resources,Audiological scientist,2014-05-11,,FTE,active
+E00618,Robert Johnson,robert.johnson@meridian-energy.com,Operations,Building control surveyor,2025-07-21,,FTE,active
+E00850,Lisa Smith,lisa.smith@meridian-energy.com,Operations,Medical technical officer,2018-06-04,,FTE,active
+E00054,Mark Smith,mark.smith@meridian-energy.com,FIELD SERVICES,Oncologist,2015-12-25,,FTE,active
+E00007,Paul Miller,paul.miller@meridian-energy.com,Sales & Key Accounts,Tourism officer,2014-02-12,,FTE,active
+E00207,Herbert Marshall,herbert.marshall@meridian-energy.com,Executive,Counselling psychologist,2017-09-12,,FTE,active
+E00340,Julia Scott,julia.scott@meridian-energy.com,Field Services,Ergonomist,2023-11-21,,FTE,active
+E00367,Brenda Smith,brenda.smith@meridian-energy.com,Operations,"Programmer, systems",2026-01-12,,FTE,active
+E01138,Peter Turner,peter.turner@meridian-energy.com,Operations,Corporate treasurer,2020-03-08,,FTE,active
+E00006,Michele Lee,michele.lee@meridian-energy.com,Operations,"Chemist, analytical",2023-04-10,,FTE,active
+E00329,Emily Davis,emily.davis@meridian-energy.com,Customer Care,Magazine features editor,2025-07-16,,FTE,active
+E00351,Claudia Black,claudia.black@meridian-energy.com,Operations,Financial manager,2024-12-01,,FTE,active
+E00571,Justin Meza,justin.meza@meridian-energy.com,Sales & Key Accounts,Communications engineer,2016-07-28,,FTE,active
+E00481,Robert Summers,robert.summers@meridian-energy.com,Engineering,Television camera operator,2012-11-11,,FTE,active
+E01200,Ashley Mccarthy,ashley.mccarthy@meridian-energy.com,field services,Prison officer,2015-03-10,,Contractor,active
+E00138,Garrett Jimenez,garrett.jimenez@meridian-energy.com,Operations,Nutritional therapist,2023-05-21,,FTE,active
+E00863,David Fischer,david.fischer@meridian-energy.com,Field Services,Associate Professor,2019-08-05,,Contractor,active
+E01145,Mary Smith,mary.smith@meridian-energy.com,Operations,"Radiographer, diagnostic",2022-05-28,,FTE,active
+E01000,Nicholas Carr,nicholas.carr@meridian-energy.com,Field Services,Social researcher,2024-06-14,,FTE,active
+E00247,Elizabeth Stevenson,elizabeth.stevenson@meridian-energy.com,Engineering,General practice doctor,2021-04-05,,FTE,active
+E00936,John Brown,john.brown@meridian-energy.com,Human Resources,Event organiser,2019-02-27,,FTE,active
+E00832,Sarah Griffin,sarah.griffin@meridian-energy.com,Sales & Key Accounts,Games developer,2021-03-17,,FTE,active
+E00111,Katherine Campbell,katherine.campbell@meridian-energy.com,Operations,"Engineer, manufacturing",2020-07-31,,FTE,active
+E00323,Lauren Barker,lauren.barker@meridian-energy.com,Operations,Early years teacher,2017-08-04,,FTE,active
+E00727,Patricia Lopez,patricia.lopez@meridian-energy.com,Operations,"Scientist, forensic",2019-11-02,,FTE,active
+E00468,Betty Walker,betty.walker@meridian-energy.com,Operations,Lexicographer,2024-04-04,,FTE,active
+E01134,Margaret Jones,margaret.jones@meridian-energy.com,Customer Care,Horticultural therapist,2026-05-03,,FTE,active
+E00782,Alexis Simmons,alexis.simmons@meridian-energy.com,Engineering,"Designer, blown glass/stained glass",2015-10-09,,FTE,active
+E00763,Christopher Suarez,christopher.suarez@meridian-energy.com,Engineering,"Development worker, international aid",2014-12-23,,FTE,active
+E00615,Stephanie Terrell,stephanie.terrell@meridian-energy.com,Field Services,Osteopath,2024-02-28,,Contractor,active
+E00585,Jeremy Hunt,jeremy.hunt@meridian-energy.com,Finance & Accounting,Chief Technology Officer,2025-11-02,,FTE,active
+E00321,Lee Payne,lee.payne@meridian-energy.com,Operations,Clinical research associate,2026-10-20,,FTE,active
+E00848,Alice Jones,alice.jones@meridian-energy.com,Sales & Key Accounts,Television camera operator,2017-07-23,,FTE,active
+E00073,Andrea Garrison,andrea.garrison@meridian-energy.com,Information Technology,"Engineer, broadcasting (operations)",2017-10-11,,FTE,active
+E00271,Elizabeth Wiggins,elizabeth.wiggins@meridian-energy.com,Operations,Gaffer,2015-10-12,,FTE,active
+E00102,Sara Price,sara.price@meridian-energy.com,Finance & Accounting,Paramedic,2015-11-25,,FTE,active
+E00284,Heather Hartman,heather.hartman@meridian-energy.com,Operations,Agricultural consultant,2022-09-10,,FTE,active
+E01154,Misty Perez,misty.perez@meridian-energy.com,Operations,Advertising copywriter,2016-06-27,,FTE,active
+E00702,Kathleen Rios,kathleen.rios@meridian-energy.com,operations,Make,2022-04-09,,FTE,active
+E00738,Stephen Mcclain,stephen.mcclain@meridian-energy.com,Sales & Key Accounts,"Civil engineer, contracting",2021-07-14,,FTE,active
+E00306,Gregory Cole,gregory.cole@meridian-energy.com,Field Services,Chief of Staff,2025-03-17,,FTE,active
+E00465,Samantha Lopez,samantha.lopez@meridian-energy.com,Information Technology,Theatre stage manager,2020-12-15,,FTE,active
+E00589,Patrick Davis,patrick.davis@meridian-energy.com,Operations,Social researcher,2022-08-25,,FTE,active
+E00917,Abigail Hughes,abigail.hughes@meridian-energy.com,Engineering,Chief Operating Officer,2017-08-04,,FTE,active
+E00430,Erik Jones,erik.jones@meridian-energy.com,Operations,Tourism officer,2014-03-21,,FTE,active
+E00769,Karen Andrews,karen.andrews@meridian-energy.com,Operations,Actuary,2014-09-25,,FTE,active
+E00872,Cynthia Molina,cynthia.molina@meridian-energy.com,Field Services,"Journalist, broadcasting",2023-03-04,,FTE,active
+E00582,Amber Jones,amber.jones@meridian-energy.com,Operations,"Designer, television/film set",2016-05-01,,FTE,active
+E00320,Frances Miller,frances.miller@meridian-energy.com,Operations,Retail merchandiser,2021-04-23,,FTE,active
+E00045,Tracey Phelps,tracey.phelps@meridian-energy.com,Sales & Key Accounts,Sports therapist,2017-07-05,,FTE,active
+E00930,Seth Greene,seth.greene@meridian-energy.com,Marketing,Environmental education officer,2013-02-10,,FTE,active
+E00838,Kevin Ward,kevin.ward@meridian-energy.com,Information Technology,Chief Technology Officer,2015-10-13,,FTE,active
+E00906,Richard Vaughn,richard.vaughn@meridian-energy.com,Customer Care,Bookseller,2014-08-17,,FTE,active
+E00486,Michael Hinton,michael.hinton@meridian-energy.com,Customer Care,"Teacher, secondary school",2023-06-25,,FTE,active
+E00142,Natalie Chavez,natalie.chavez@meridian-energy.com,Sales & Key Accounts,Diagnostic radiographer,2026-10-31,,FTE,active
+E00285,George Barnes,george.barnes@meridian-energy.com,Finance & Accounting,Private music teacher,2019-12-23,,FTE,active
+E00818,Melissa Evans,melissa.evans@meridian-energy.com,Customer Care,Estate manager/land agent,2023-05-11,,Contractor,active
+E00198,Kristin Lopez,kristin.lopez@meridian-energy.com,Field Services,Theatre director,2024-05-31,,FTE,active
+E01023,Richard Walker,richard.walker@meridian-energy.com,Customer Care,Teaching laboratory technician,2020-06-16,,FTE,active
+E00980,Julie Ward,julie.ward@meridian-energy.com,Field Services,Trade union research officer,2018-06-06,,FTE,active
+E00203,Dakota Turner,dakota.turner@meridian-energy.com,Finance & Accounting,Holiday representative,2025-02-23,,FTE,active
+E00114,Anthony Riley,anthony.riley@meridian-energy.com,Field Services,"Psychotherapist, child",2025-04-15,,FTE,active
+E00439,Caroline Singh,caroline.singh@meridian-energy.com,Operations,Broadcast engineer,2026-08-26,,FTE,active
+E00745,Perry Williams,perry.williams@meridian-energy.com,Operations,"Chemist, analytical",2021-08-26,,FTE,active
+E00599,Amanda Cortez,amanda.cortez@meridian-energy.com,Operations,Prison officer,2022-07-12,,FTE,active
+E00773,Michele Martinez,michele.martinez@meridian-energy.com,Operations,"Programmer, systems",2020-12-27,,FTE,active
+E00722,Larry Padilla,larry.padilla@meridian-energy.com,Operations,"Psychologist, occupational",2018-06-07,,FTE,active
+E01094,Anthony Potts,anthony.potts@meridian-energy.com,Operations,Industrial/product designer,2012-11-26,,FTE,active
+E00810,Amber Cole,amber.cole@meridian-energy.com,Operations,Art gallery manager,2018-04-18,,FTE,active
+E00879,Jacob Raymond,jacob.raymond@meridian-energy.com,Field Services,Acupuncturist,2023-03-04,2026-12-16,Contractor,active
+E00752,Shannon Mendez,shannon.mendez@meridian-energy.com,Customer Care,Medical physicist,2012-02-15,,FTE,active
+E00495,Mary Miller,mary.miller@meridian-energy.com,Operations,Geoscientist,2014-11-16,,FTE,active
+E00017,Jaime Patrick,jaime.patrick@meridian-energy.com,Operations,Hydrologist,2013-10-14,,FTE,active
+E00357,Samuel Jordan,samuel.jordan@meridian-energy.com,Field Services,"Psychologist, clinical",2018-08-08,,Contractor,active
+E01060,Kathryn DDS,kathryn.dds@meridian-energy.com,Field Services,Community education officer,2012-12-25,,Contractor,active
+E00781,Robert Gonzalez,robert.gonzalez@meridian-energy.com,Operations,Health promotion specialist,2013-12-03,,FTE,active
+E01069,Robert Hall,robert.hall@meridian-energy.com,Operations,"Doctor, hospital",2012-10-06,,FTE,active
+E00567,Tina Perry,tina.perry@meridian-energy.com,Sales & Key Accounts,Arts development officer,2018-06-28,,FTE,active
+E00189,Christopher Adams,christopher.adams@meridian-energy.com,Operations,"Investment banker, corporate",2018-12-02,,FTE,active
+E00819,Natalie Kramer,natalie.kramer@meridian-energy.com,Finance & Accounting,Research scientist (physical sciences),2014-07-23,,FTE,active
+E00921,Guy Castillo,guy.castillo@meridian-energy.com,Customer Care,Advertising account planner,2018-05-01,,FTE,active
+E00662,Johnny Abbott,johnny.abbott@meridian-energy.com,Field Services,Camera operator,2012-11-24,,FTE,active
+E00911,Rebecca Pitts,rebecca.pitts@meridian-energy.com,Field Services,Tourism officer,2012-10-17,,Contractor,active
+E00500,John Bond,john.bond@meridian-energy.com,Engineering,Ambulance person,2021-05-22,,Contractor,active
+E00994,Julie Jimenez,julie.jimenez@meridian-energy.com, Finance & Accounting ,Airline pilot,2022-06-24,,FTE,active
+E00359,Mark Clements,mark.clements@meridian-energy.com,Field Services,"Conservator, furniture",2026-06-30,,FTE,active
+E00299,Kelly Blanchard,kelly.blanchard@meridian-energy.com,Finance & Accounting,Ranger/warden,2017-09-04,,FTE,active
+E00377,Steven Turner,steven.turner@meridian-energy.com,Customer Care,Proofreader,2023-07-20,,FTE,active
+E00607,Jerry York,jerry.york@meridian-energy.com,Operations,"Solicitor, Scotland",2022-08-18,,FTE,active
+E01004,Christopher Curry,christopher.curry@meridian-energy.com,Operations,Multimedia specialist,2025-02-07,,FTE,active
+E01165,Amy Marshall,amy.marshall@meridian-energy.com,Customer Care,Warehouse manager,2020-05-27,,FTE,active
+E01106,Courtney Moore,courtney.moore@meridian-energy.com,Field Services,"Therapist, art",2025-05-31,,FTE,active
+E01084,Julie Whitaker,julie.whitaker@meridian-energy.com,Engineering,Trade mark attorney,2015-06-20,,FTE,active
+E00010,Rachel Patel,rachel.patel@meridian-energy.com,Operations,Race relations officer,2026-07-21,,FTE,active
+E00762,Edward Miller,edward.miller@meridian-energy.com,Field Services,"Designer, exhibition/display",2018-10-18,,FTE,active
+E00348,Dillon Martin,dillon.martin@meridian-energy.com,Engineering,Broadcast presenter,2012-09-09,,FTE,active
+E00401,Harry Briggs,harry.briggs@meridian-energy.com,Operations,"Editor, magazine features",2013-05-22,,FTE,active
+E01047,Marcia Ochoa,marcia.ochoa@meridian-energy.com,Operations,Market researcher,2016-04-08,,FTE,active
+E01070,Victoria Scott,victoria.scott@meridian-energy.com,Operations,Futures trader,2022-12-09,,FTE,active
+E00177,Daniel Garcia,daniel.garcia@meridian-energy.com,Operations,"Therapist, nutritional",2021-05-07,,FTE,active
+E00959,Terri Jackson,terri.jackson@meridian-energy.com,Information Technology,"Librarian, public",2026-03-08,,FTE,active
+E00202,Yolanda Harris,yolanda.harris@meridian-energy.com,Field Services,Arboriculturist,2021-10-14,,Contractor,active
+E00155,Bianca Cummings,bianca.cummings@meridian-energy.com,Customer Care,Psychotherapist,2021-02-07,,FTE,active
+E00370,Michael Hicks,michael.hicks@meridian-energy.com,Customer Care,Manufacturing engineer,2012-11-15,,FTE,active
+E00529,Jason Graham,jason.graham@meridian-energy.com,Operations,Chief Executive Officer,2019-10-21,,FTE,active
+E00225,Samantha Ritter,samantha.ritter@meridian-energy.com,Operations,Quality manager,2014-07-09,,FTE,active
+E00064,David Sampson,david.sampson@meridian-energy.com,Operations,Dietitian,2025-11-01,,FTE,active
+E00715,Randy Houston,randy.houston@meridian-energy.com,Engineering,"Surveyor, land/geomatics",2018-03-31,,FTE,active
+E00473,Michelle Cole,michelle.cole@meridian-energy.com,Finance & Accounting,Sports development officer,2024-11-17,,FTE,active
+E00314,James Rivas,james.rivas@meridian-energy.com,Finance & Accounting,Oncologist,2023-04-18,,FTE,active
+E01041,Christopher Murphy,christopher.murphy@meridian-energy.com,Customer Care,Furniture designer,2017-11-19,,FTE,active
+E00840,Johnathan Mayer,johnathan.mayer@meridian-energy.com,Operations,"Merchandiser, retail",2021-07-07,,FTE,active
+E00061,David Rasmussen,david.rasmussen@meridian-energy.com,Operations,Commercial/residential surveyor,2018-10-12,,FTE,active
+E00924,Jonathan Morton,jonathan.morton@meridian-energy.com,Engineering,Printmaker,2024-06-29,,FTE,active
+E00997,Scott Lawrence,scott.lawrence@meridian-energy.com,Legal & Compliance,Education administrator,2015-09-02,,FTE,active
+E01051,Diana Garcia,diana.garcia@meridian-energy.com,Operations,Air cabin crew,2019-04-11,,FTE,active
+E00525,Caitlin Diaz,caitlin.diaz@meridian-energy.com,Operations,"Administrator, arts",2019-09-12,,FTE,active
+E00873,Amanda Chavez,amanda.chavez@meridian-energy.com,Operations,Training and development officer,2013-03-24,,FTE,active
+E00398,Wesley Melton,wesley.melton@meridian-energy.com,Customer Care,"Scientist, research (medical)",2020-06-17,,FTE,active
+E00011,Jason Bell,jason.bell@meridian-energy.com,Procurement,Town planner,2016-04-27,,FTE,active
+E00052,Daniel Mendoza,daniel.mendoza@meridian-energy.com,Operations,Food technologist,2014-09-07,,FTE,active
+E00040,Edward Holt,edward.holt@meridian-energy.com,Operations,Cartographer,2022-08-22,,FTE,active
+E00150,Cynthia Grant,cynthia.grant@meridian-energy.com,Information Technology,Therapeutic radiographer,2017-08-12,,FTE,active
+E00477,Mary Wilkinson,mary.wilkinson@meridian-energy.com,operations,Industrial/product designer,2024-04-14,,FTE,active
+E00386,Erica Wood,erica.wood@meridian-energy.com,Field Services,Exercise physiologist,2016-04-17,,FTE,active
+E00811,Alison Soto,alison.soto@meridian-energy.com,Field Services,Landscape architect,2016-10-09,,Contractor,active
+E00949,Madison Miranda,madison.miranda@meridian-energy.com,Operations,Advertising copywriter,2021-01-01,,FTE,active
+E00611,Jordan Anderson,jordan.anderson@meridian-energy.com,Field Services,"Doctor, hospital",2026-09-09,,FTE,active
+E00878,Mark Hood,mark.hood@meridian-energy.com,Procurement,Physiotherapist,2019-08-27,,FTE,active
+E00790,Miss King,miss.king@meridian-energy.com,Engineering,"Surveyor, hydrographic",2025-02-16,,Contractor,active
+E00337,Deborah Mckenzie,deborah.mckenzie@meridian-energy.com,Operations,Wellsite geologist,2019-11-02,,FTE,active
+E01005,Charlene Collins,charlene.collins@meridian-energy.com,Operations,"Psychotherapist, child",2019-12-10,,FTE,active
+E01149,Deborah Williams,deborah.williams@meridian-energy.com,Customer Care,"Social research officer, government",2016-07-30,,FTE,active
+E00215,Larry Kemp,larry.kemp@meridian-energy.com,Human Resources,Research scientist (physical sciences),2017-02-04,,FTE,active
+E00734,Amanda DDS,amanda.dds@meridian-energy.com,Information Technology,"Producer, radio",2019-02-21,,FTE,active
+E00421,Joanne Vasquez,joanne.vasquez@meridian-energy.com,Field Services,Astronomer,2021-09-18,,FTE,active
+E00552,Nicholas Mccann,nicholas.mccann@meridian-energy.com,Engineering,"Production assistant, television",2020-01-11,,FTE,active
+E00982,Victoria Becker,victoria.becker@meridian-energy.com,Operations,"Nurse, children's",2024-05-11,,FTE,active
+E01055,Karen Marshall,karen.marshall@meridian-energy.com,Marketing,Health promotion specialist,2022-01-20,,FTE,active
+E00460,Robert Lewis,robert.lewis@meridian-energy.com,Field Services,Applications developer,2019-09-25,,FTE,active
+E00236,Laura Wilson,laura.wilson@meridian-energy.com,Operations,Sports development officer,2019-05-27,,FTE,active
+E01020,Brian Martin,brian.martin@meridian-energy.com,Operations,"Social research officer, government",2026-08-26,,FTE,active
+E00092,Krista Hutchinson,krista.hutchinson@meridian-energy.com,Field Services,Furniture designer,2020-11-19,,FTE,active
+E00730,Donald Spears,donald.spears@meridian-energy.com,Engineering,English as a foreign language teacher,2015-02-12,,FTE,active
+E01150,Teresa Hamilton,teresa.hamilton@meridian-energy.com,Marketing,Photographer,2021-05-03,,FTE,active
+E00002,Susan Estrada,susan.estrada@meridian-energy.com,Customer Care,Press sub,2015-03-17,,FTE,active
+E00677,Mark Middleton,mark.middleton@meridian-energy.com,Engineering,"Buyer, industrial",2024-09-11,,FTE,active
+E00094,Scott Dixon,scott.dixon@meridian-energy.com,Sales & Key Accounts,Advertising art director,2018-12-17,,FTE,active
+E00667,Tonya Trujillo,tonya.trujillo@meridian-energy.com,Operations,Barrister,2012-03-18,,FTE,active
+E00950,Amanda Rose,amanda.rose@meridian-energy.com,Engineering,Musician,2012-01-25,,FTE,active
+E00551,Andrea Vargas,andrea.vargas@meridian-energy.com,Customer Care,"Civil engineer, contracting",2022-09-27,,FTE,active
+E01141,Jeremy Ferguson,jeremy.ferguson@meridian-energy.com,Customer Care,"Conservator, museum/gallery",2014-10-16,,Contractor,active
+E00326,Michael Mason,michael.mason@meridian-energy.com,Operations,Armed forces training and education offi,2012-11-17,,FTE,active
+E01162,Ronald Bell,ronald.bell@meridian-energy.com,Customer Care,"Therapist, drama",2017-01-06,,Contractor,active
+E00031,Teresa Bates,teresa.bates@meridian-energy.com,Executive,"Scientist, marine",2025-06-13,,FTE,active
+E00918,Angela Livingston,angela.livingston@meridian-energy.com,Operations,Warehouse manager,2014-05-10,,FTE,active
+E00710,Mary Hernandez,mary.hernandez@meridian-energy.com,Field Services,"Surveyor, hydrographic",2026-08-06,,FTE,active
+E00380,Scott Davis,scott.davis@meridian-energy.com,Customer Care,"Scientist, research (maths)",2014-02-21,,FTE,active
+E00259,Kathryn Pearson,kathryn.pearson@meridian-energy.com,Customer Care,Commercial/residential surveyor,2021-04-18,,FTE,active
+E00820,Larry Morris,larry.morris@meridian-energy.com,Finance & Accounting,Chief of Staff,2023-11-26,,FTE,active
+E00887,Brian Rogers,brian.rogers@meridian-energy.com,OPERATIONS,"Engineer, technical sales",2025-08-03,,FTE,active
+E00617,Adrienne Ewing,adrienne.ewing@meridian-energy.com,Engineering,"Teacher, secondary school",2015-09-10,,FTE,active
+E00505,Megan Riley,megan.riley@meridian-energy.com,Procurement,Social worker,2024-01-20,,FTE,active
+E00136,Penny Santiago,penny.santiago@meridian-energy.com,Field Services,Oncologist,2015-09-09,,FTE,active
+E01192,Clayton Jones,clayton.jones@meridian-energy.com,Operations,Immunologist,2016-12-09,,FTE,active
+E00720,Laura Harris,laura.harris@meridian-energy.com,Customer Care,"Scientist, biomedical",2012-01-31,,Contractor,active
+E00693,Gabriel Leonard,gabriel.leonard@meridian-energy.com,Sales & Key Accounts,"Librarian, public",2022-04-04,,FTE,active
+E00132,David Wilson,david.wilson@meridian-energy.com,Operations,Comptroller,2012-05-12,,FTE,active
+E01018,Antonio Nunez,antonio.nunez@meridian-energy.com,Operations,"Therapist, horticultural",2026-03-02,,FTE,active
+E00385,Patricia Garza,patricia.garza@meridian-energy.com,Engineering,Optometrist,2017-08-21,,FTE,active
+E00562,Tommy Liu,tommy.liu@meridian-energy.com,Procurement,Barista,2019-04-26,,FTE,active
+E01058,Andrew Oconnor,andrew.oconnor@meridian-energy.com,Customer Care,Midwife,2017-12-08,,FTE,active
+E00527,Dawn Richardson,dawn.richardson@meridian-energy.com,Field Services,Risk analyst,2025-05-21,,FTE,active
+E00336,Nathan West,nathan.west@meridian-energy.com,Customer Care,Orthoptist,2019-10-09,,FTE,active
+E00623,Monica Foster,monica.foster@meridian-energy.com,Engineering,Meteorologist,2024-05-10,,FTE,active
+E00454,Robert Gomez,robert.gomez@meridian-energy.com,Information Technology,Data processing manager,2015-12-18,,FTE,active
+E00600,Sean Collins,sean.collins@meridian-energy.com,Engineering,Technical author,2014-06-04,,FTE,active
+E00371,Katie Hernandez,katie.hernandez@meridian-energy.com,Field Services,"Radiographer, diagnostic",2024-11-01,,FTE,active
+E01016,David Obrien,david.obrien@meridian-energy.com,Sales & Key Accounts,"Sound technician, broadcasting/film/vide",2015-10-07,,FTE,active
+E00283,Cheyenne Randall,cheyenne.randall@meridian-energy.com,Operations,Speech and language therapist,2025-06-03,,FTE,active
+E01152,Gerald Butler,gerald.butler@meridian-energy.com,Operations,Youth worker,2021-06-04,,FTE,active
+E00788,Kristina Harris,kristina.harris@meridian-energy.com,Operations,"Surveyor, commercial/residential",2020-12-09,,FTE,active
+E00644,Jonathan Horn,jonathan.horn@meridian-energy.com,operations,Product/process development scientist,2026-07-20,,FTE,active
+E00276,Brian Mercer,brian.mercer@meridian-energy.com,Field Services,Games developer,2023-07-23,,Contractor,active
+E01198,Thomas Martin,thomas.martin@meridian-energy.com,Operations,International aid/development worker,2015-05-30,,FTE,active
+E00733,Carrie Ward,carrie.ward@meridian-energy.com,Operations,Chartered management accountant,2022-11-17,,FTE,active
+E01052,Tiffany Zuniga,tiffany.zuniga@meridian-energy.com,Operations,Broadcast journalist,2020-12-20,,FTE,active
+E00700,Andrew Pearson,andrew.pearson@meridian-energy.com,Sales & Key Accounts,Energy engineer,2018-01-03,,FTE,active
+E01159,Deborah Sharp,deborah.sharp@meridian-energy.com,Field Services,"Exhibitions officer, museum/gallery",2016-05-01,,FTE,active
+E00072,Joshua Duncan,joshua.duncan@meridian-energy.com,Customer Care,Dentist,2015-03-12,,FTE,active
+E00789,Amy Willis,amy.willis@meridian-energy.com,Field Services,"Designer, ceramics/pottery",2017-03-28,,FTE,active
+E00767,Frank Hall,frank.hall@meridian-energy.com,Information Technology,"Teacher, secondary school",2026-09-24,,FTE,active
+E00090,Vanessa Woodard,vanessa.woodard@meridian-energy.com,Operations,Youth worker,2022-03-08,,FTE,active
+E00343,Mark Lee,mark.lee@meridian-energy.com,Customer Care,Consulting civil engineer,2015-06-06,,FTE,active
+E00382,Anthony Edwards,anthony.edwards@meridian-energy.com,Operations,"Clinical scientist, histocompatibility a",2016-09-25,,FTE,active
+E01185,Sharon Nicholson,sharon.nicholson@meridian-energy.com,Engineering,"Surveyor, minerals",2013-04-02,,FTE,active
+E00938,James Armstrong,james.armstrong@meridian-energy.com,Operations,English as a foreign language teacher,2015-02-02,,FTE,active
+E00916,Jill Wiggins,jill.wiggins@meridian-energy.com,Customer Care,Company secretary,2016-06-21,,FTE,active
+E00149,Brenda Hanna,brenda.hanna@meridian-energy.com,Field Services,"Research officer, government",2013-04-24,,Contractor,active
+E01040,Roberto Snyder,roberto.snyder@meridian-energy.com,Human Resources,"Engineer, site",2016-12-03,,FTE,active
+E00616,Brandon Anderson,brandon.anderson@meridian-energy.com,Operations,Architect,2025-05-26,,FTE,active
+E01114,Robert Roth,robert.roth@meridian-energy.com,Sales & Key Accounts,Counsellor,2012-01-19,,FTE,active
+E00476,Todd Moyer,todd.moyer@meridian-energy.com,engineering,"Presenter, broadcasting",2015-10-16,,FTE,active
+E00985,Jordan Kennedy,jordan.kennedy@meridian-energy.com,Operations,"Journalist, broadcasting",2013-10-14,,FTE,active
+E01168,Gregory Clark,gregory.clark@meridian-energy.com,Sales & Key Accounts,"Exhibitions officer, museum/gallery",2022-04-28,,FTE,active
+E00252,Erin Keller,erin.keller@meridian-energy.com,Operations,Community development worker,2024-09-19,,FTE,active
+E00528,Suzanne Griffin,suzanne.griffin@meridian-energy.com,Operations,Games developer,2017-12-30,,FTE,active
+E01045,Kiara Johnson,kiara.johnson@meridian-energy.com,Operations,"Designer, multimedia",2015-03-01,,FTE,active
+E00604,Julie Knight,julie.knight@meridian-energy.com,Operations,Geographical information systems officer,2026-08-02,,FTE,active
+E00764,Jeffrey Parker,jeffrey.parker@meridian-energy.com,Field Services,Sports coach,2016-07-29,,Contractor,active
+E00726,William Cannon,william.cannon@meridian-energy.com,Engineering,Chief Operating Officer,2019-04-19,,FTE,active
+E00988,Jessica Austin,jessica.austin@meridian-energy.com,Customer Care,Phytotherapist,2014-08-26,,FTE,active
+E00602,Pamela Scott,pamela.scott@meridian-energy.com,Field Services,Technical sales engineer,2014-12-07,,FTE,active
+E00219,Tracey Harvey,tracey.harvey@meridian-energy.com,Engineering,Town planner,2022-01-24,,FTE,active
+E00148,Amanda Hill,amanda.hill@meridian-energy.com,Customer Care,IT consultant,2025-11-22,,FTE,active
+E00457,Antonio Henderson,antonio.henderson@meridian-energy.com,Operations,Stage manager,2022-09-27,,FTE,active
+E00028,Jordan Cole,jordan.cole@meridian-energy.com,Field Services,Pension scheme manager,2015-05-30,,FTE,active
+E00578,Isaac Park,isaac.park@meridian-energy.com,Field Services,Financial risk analyst,2022-10-01,,FTE,active
+E00213,Michael Ward,michael.ward@meridian-energy.com,Customer Care,Armed forces logistics/support/administr,2024-02-16,,FTE,active
+E00673,James Stevenson,james.stevenson@meridian-energy.com,Legal & Compliance,"Engineer, manufacturing systems",2013-09-08,,FTE,active
+E00227,Mike Watson,mike.watson@meridian-energy.com,Human Resources,Energy engineer,2012-07-31,,FTE,active
+E00181,Shane Bailey,shane.bailey@meridian-energy.com,Operations,Forest/woodland manager,2015-12-19,,FTE,active
+E00048,Kyle Jackson,kyle.jackson@meridian-energy.com,Field Services,"Engineer, civil (consulting)",2013-10-07,,Contractor,active
+E00636,Ralph Russell,ralph.russell@meridian-energy.com,Human Resources,Chief of Staff,2012-09-16,,FTE,active
+E00253,Karen Dixon,karen.dixon@meridian-energy.com,Marketing,Dentist,2012-03-16,,FTE,active
+E00513,Susan Anderson,susan.anderson@meridian-energy.com,Information Technology,"Engineer, maintenance",2022-10-27,,FTE,active
+E00437,David Richardson,david.richardson@meridian-energy.com,Operations,Furniture designer,2024-12-30,,FTE,active
+E01155,Sandra Barrett,sandra.barrett@meridian-energy.com,Operations,"Therapist, music",2013-03-11,,FTE,active
+E00210,Sean Roy,sean.roy@meridian-energy.com,Information Technology,"Psychologist, forensic",2014-07-15,,FTE,active
+E00694,Amber Black,amber.black@meridian-energy.com,Field Services,"Accountant, chartered management",2014-06-09,,Contractor,active
+E00609,Courtney Curtis,courtney.curtis@meridian-energy.com,Marketing,"Surveyor, building",2026-07-17,,FTE,active
+E00757,Jason Pierce,jason.pierce@meridian-energy.com,Customer Care,Database administrator,2020-08-31,,Contractor,active
+E00077,Courtney Myers,courtney.myers@meridian-energy.com,Field Services,Camera operator,2021-10-27,,FTE,active
+E00431,Deborah Rodriguez,deborah.rodriguez@meridian-energy.com,Legal & Compliance,Insurance risk surveyor,2023-07-30,,FTE,active
+E01173,Henry Sullivan,henry.sullivan@meridian-energy.com,Operations,Best boy,2020-10-02,,FTE,active
+E00274,Ashley Zavala,ashley.zavala@meridian-energy.com,Engineering,Patent attorney,2018-06-13,,Contractor,active
+E00843,Kathleen Madden,kathleen.madden@meridian-energy.com,Sales & Key Accounts,Materials engineer,2024-12-27,,FTE,active
+E00258,Maria Mccall,maria.mccall@meridian-energy.com,Information Technology,"Buyer, industrial",2021-09-09,,FTE,active
+E00118,Stephanie Arias,stephanie.arias@meridian-energy.com,Operations,"Producer, television/film/video",2025-05-04,,FTE,active
+E00900,Lori Davis,lori.davis@meridian-energy.com,Operations,Broadcast presenter,2013-03-20,,FTE,active
+E00482,Richard Perry,richard.perry@meridian-energy.com,Operations,"Research officer, political party",2019-07-21,,FTE,active
+E00096,Martin Jones,martin.jones@meridian-energy.com,Finance & Accounting,Learning mentor,2013-09-18,,FTE,active
+E01025,Jonathan Frazier,jonathan.frazier@meridian-energy.com,Engineering,"Surveyor, land/geomatics",2019-01-29,,FTE,active
+E00286,Alexa Warren,alexa.warren@meridian-energy.com,OPERATIONS,Building surveyor,2022-06-30,,FTE,active
+E00647,Trevor Foley,trevor.foley@meridian-energy.com,Field Services,Telecommunications researcher,2019-04-04,,FTE,active
+E00510,Angela Knight,angela.knight@meridian-energy.com,Engineering,Architectural technologist,2024-01-21,,FTE,active
+E00669,Julia Ingram,julia.ingram@meridian-energy.com,Information Technology,Tourist information centre manager,2015-04-30,,FTE,active
+E00557,Barbara Chang,barbara.chang@meridian-energy.com,Customer Care,Community pharmacist,2014-12-18,,FTE,active
+E00696,Tony Vaughn,tony.vaughn@meridian-energy.com,Operations,Fish farm manager,2017-07-09,,FTE,active
+E00250,Travis Roberts,travis.roberts@meridian-energy.com,operations,Historic buildings inspector/conservatio,2013-04-21,,FTE,active
+E00378,Cassandra Rogers,cassandra.rogers@meridian-energy.com,Operations,"Designer, blown glass/stained glass",2012-04-20,,FTE,active
+E00089,Ronald Hill,ronald.hill@meridian-energy.com,Operations,Amenity horticulturist,2025-02-12,,FTE,active
+E00586,Kevin Medina,kevin.medina@meridian-energy.com,Customer Care,Science writer,2017-09-12,,FTE,active
+E00341,Jeremy Stark,jeremy.stark@meridian-energy.com,Operations,"Accountant, chartered management",2024-11-26,,FTE,active
+E00499,Casey Martinez,casey.martinez@meridian-energy.com,Field Services,Advertising art director,2019-08-05,,Contractor,active
+E00742,David Sullivan,david.sullivan@meridian-energy.com,Operations,Manufacturing systems engineer,2019-09-08,,FTE,active
+E01122,Melissa Roberts,melissa.roberts@meridian-energy.com,Operations,"Teacher, music",2021-04-20,,FTE,active
+E00670,Heather Medina,heather.medina@meridian-energy.com,Engineering,Chief Marketing Officer,2023-07-29,,FTE,active
+E00362,Kevin Ramirez,kevin.ramirez@meridian-energy.com,Operations,Education administrator,2013-02-02,,FTE,active
+E01121,Brittany Mitchell,brittany.mitchell@meridian-energy.com,Customer Care,Naval architect,2015-05-09,,FTE,active
+E00374,Zachary Lee,zachary.lee@meridian-energy.com,Field Services,Television camera operator,2018-04-01,,FTE,active
+E00296,Matthew Stewart,matthew.stewart@meridian-energy.com,operations,"Engineer, building services",2018-04-09,,FTE,active
+E00563,Nancy Schaefer,nancy.schaefer@meridian-energy.com,Customer Care,Medical physicist,2012-02-21,,FTE,active
+E00376,Karen Wilson,karen.wilson@meridian-energy.com,Field Services,Theatre director,2020-07-25,,Contractor,active
+E00541,Charles Reeves,charles.reeves@meridian-energy.com,Customer Care,Marketing executive,2016-12-02,,FTE,active
+E00888,Christine Jones,christine.jones@meridian-energy.com,Field Services,"Investment banker, corporate",2019-04-07,,FTE,active
+E01176,Nicholas Smith,nicholas.smith@meridian-energy.com,Engineering,"Editor, film/video",2026-08-30,,FTE,active
+E00564,Steven Haynes,steven.haynes@meridian-energy.com,Operations,"Engineer, control and instrumentation",2015-06-09,,FTE,active
+E01190,Scott Roy,scott.roy@meridian-energy.com,Customer Care,Agricultural engineer,2025-04-12,,Contractor,active
+E00116,Christopher Hampton,christopher.hampton@meridian-energy.com,Field Services,Quality manager,2020-02-20,,Contractor,active
+E00970,Donna Hill,donna.hill@meridian-energy.com,Operations,Systems analyst,2015-09-21,,FTE,active
+E00743,Courtney Best,courtney.best@meridian-energy.com,Field Services,Recruitment consultant,2015-12-25,,FTE,active
+E00946,James Rosario,james.rosario@meridian-energy.com,Operations,"Engineer, site",2019-11-27,,FTE,active
+E00945,Donna Shaw,donna.shaw@meridian-energy.com,Operations,"Civil engineer, consulting",2024-11-01,,FTE,active
+E01104,Tina Mendoza,tina.mendoza@meridian-energy.com,Finance & Accounting,Site engineer,2016-07-21,,FTE,active
+E01029,Jennifer Mathis,jennifer.mathis@meridian-energy.com,OPERATIONS,Retail manager,2018-01-22,,FTE,active
+E00829,Monica Henderson,monica.henderson@meridian-energy.com,Operations,"Engineer, technical sales",2025-08-20,,FTE,active
+E00141,Kimberly Ward,kimberly.ward@meridian-energy.com,Engineering,Graphic designer,2023-01-01,,FTE,active
+E00172,Sara Brown,sara.brown@meridian-energy.com,Executive,"Teacher, English as a foreign language",2026-06-06,,FTE,active
+E00689,Jonathan Ross,jonathan.ross@meridian-energy.com,Finance & Accounting,Controller,2014-08-02,,FTE,active
+E01120,Patrick Welch,patrick.welch@meridian-energy.com,Engineering,"Scientist, audiological",2021-06-19,,Contractor,active
+E01035,Mark Chambers,mark.chambers@meridian-energy.com,Finance & Accounting,Music tutor,2017-01-29,,FTE,active
+E00798,Emily Holt,emily.holt@meridian-energy.com,Engineering,"Therapist, horticultural",2026-09-28,,FTE,active
+E00909,Sarah Cruz,sarah.cruz@meridian-energy.com,Operations,"Lighting technician, broadcasting/film/v",2016-06-26,,FTE,active
+E00580,Richard Miller,richard.miller@meridian-energy.com,Operations,"Programmer, systems",2021-04-12,,FTE,active
+E00902,Alan Medina,alan.medina@meridian-energy.com,Finance & Accounting,"Nurse, adult",2025-08-16,,FTE,active
+E00192,William Baker,william.baker@meridian-energy.com,Operations,Best boy,2023-10-05,,FTE,active
+E00491,Matthew Morgan,matthew.morgan@meridian-energy.com,Operations,"Engineer, broadcasting (operations)",2025-12-16,,FTE,active
+E00267,Robin Hughes,robin.hughes@meridian-energy.com,Operations,"Accountant, chartered public finance",2020-01-08,,FTE,active
+E00828,Gerald Cameron,gerald.cameron@meridian-energy.com,Operations,Insurance underwriter,2024-02-28,,FTE,active
+E00496,Ashley Baird,ashley.baird@meridian-energy.com,Operations,Radiation protection practitioner,2024-05-19,,FTE,active
+E00156,Brian Fischer,brian.fischer@meridian-energy.com,Operations,Dispensing optician,2019-01-11,,FTE,active
+E00531,Kendra Oliver,kendra.oliver@meridian-energy.com,Operations,Insurance underwriter,2013-08-12,,FTE,active
+E00180,Amy Parker,amy.parker@meridian-energy.com,Finance & Accounting,Clinical embryologist,2024-02-05,,FTE,active
+E00884,Heather Mercer,heather.mercer@meridian-energy.com,Customer Care,"Surveyor, planning and development",2020-12-01,,FTE,active
+E01009,Michael Holder,michael.holder@meridian-energy.com,Operations,Diagnostic radiographer,2019-07-15,,FTE,active
+E00641,Jennifer Hart,jennifer.hart@meridian-energy.com,Operations,Graphic designer,2021-01-31,,FTE,active
+E01156,Joseph Ford,joseph.ford@meridian-energy.com,Information Technology,Geographical information systems officer,2023-09-09,,FTE,active
+E00963,Thomas Edwards,thomas.edwards@meridian-energy.com,Operations,Television production assistant,2024-11-29,,FTE,active
+E00023,Ronald Mason,ronald.mason@meridian-energy.com,Information Technology,Dancer,2015-09-18,,FTE,active
+E00826,Melissa King,melissa.king@meridian-energy.com,Information Technology,Network engineer,2014-05-31,,FTE,active
+E00991,Michael Hughes,michael.hughes@meridian-energy.com,Customer Care,Quarry manager,2014-03-20,,FTE,active
+E00698,Paula Berry,paula.berry@meridian-energy.com,Operations,Illustrator,2022-02-01,,FTE,active
+E01184,Sydney Wolf,sydney.wolf@meridian-energy.com,Operations,Child psychotherapist,2013-08-13,,FTE,active
+E00446,Daniel Olson,daniel.olson@meridian-energy.com,Operations,Barrister's clerk,2020-05-02,,FTE,active
+E00425,Deborah Wong,deborah.wong@meridian-energy.com,Field Services,Primary school teacher,2024-12-31,,Contractor,active
+E00976,Miranda Sanchez,miranda.sanchez@meridian-energy.com,Engineering,Commercial/residential surveyor,2019-07-07,,FTE,active
+E00592,Brian Taylor,brian.taylor@meridian-energy.com,Operations,Research scientist (medical),2021-02-19,,FTE,active
+E00241,Jasmine Collins,jasmine.collins@meridian-energy.com,Operations,"Designer, ceramics/pottery",2014-06-20,,FTE,active
+E00718,Angela Jones,angela.jones@meridian-energy.com,Operations,Patent attorney,2018-07-22,,FTE,active
+E00100,Spencer Edwards,spencer.edwards@meridian-energy.com,Sales & Key Accounts,Tour manager,2016-12-11,,FTE,active
+E00565,Angela Campbell,angela.campbell@meridian-energy.com,Operations,Garment/textile technologist,2019-11-09,,FTE,active
+E00117,Susan MD,susan.md@meridian-energy.com,ENGINEERING,Early years teacher,2012-01-23,,FTE,active
+E00687,Stephanie Martinez,stephanie.martinez@meridian-energy.com,Finance & Accounting,Sports administrator,2025-10-11,,FTE,active
+E00294,Dalton Davis,dalton.davis@meridian-energy.com,Marketing,Radio broadcast assistant,2015-10-20,,FTE,active
+E00981,Luis Brown,luis.brown@meridian-energy.com,Sales & Key Accounts,Human resources officer,2015-08-30,,FTE,active
+E00066,Timothy Smith,timothy.smith@meridian-energy.com,Executive,Armed forces training and education offi,2024-12-20,,FTE,active
+E00892,George Smith,george.smith@meridian-energy.com,Field Services,Retail banker,2020-05-13,,FTE,active
+E00231,Jeffrey Peters,jeffrey.peters@meridian-energy.com,Field Services,Higher education lecturer,2025-04-17,,FTE,active
+E00353,Danielle Munoz,danielle.munoz@meridian-energy.com,Field Services,Colour technologist,2015-11-23,,FTE,active
+E00056,Matthew Miller,matthew.miller@meridian-energy.com,Operations,"Education officer, community",2024-05-17,,FTE,active
+E00570,Sabrina Trevino,sabrina.trevino@meridian-energy.com,Engineering,Politician's assistant,2022-12-17,,FTE,active
+E00109,Melanie Davis,melanie.davis@meridian-energy.com,Information Technology,Occupational psychologist,2026-05-13,,FTE,active
+E00699,Jacqueline Little,jacqueline.little@meridian-energy.com,Engineering,Museum education officer,2023-05-10,,FTE,active
+E01147,Kathleen Farrell,kathleen.farrell@meridian-energy.com,Customer Care,Ship broker,2017-12-20,,Contractor,active
+E00825,Stephen Ramirez,stephen.ramirez@meridian-energy.com,Operations,Primary school teacher,2024-10-18,,FTE,active
+E00224,Jonathan Porter,jonathan.porter@meridian-energy.com,Marketing,"Engineer, chemical",2023-07-21,,FTE,active
+E00786,Debbie Johnson,debbie.johnson@meridian-energy.com,Sales & Key Accounts,Politician's assistant,2019-02-07,,FTE,active
+E00780,Veronica Bradshaw,veronica.bradshaw@meridian-energy.com,Customer Care,"Teacher, secondary school",2023-09-25,,FTE,active
+E00606,Michael James,michael.james@meridian-energy.com,Information Technology,Tree surgeon,2015-01-26,,FTE,active
+E00516,Hunter Mendoza,hunter.mendoza@meridian-energy.com,Information Technology,"Surveyor, land/geomatics",2014-01-25,,FTE,active
+E01151,Tyler Lawrence,tyler.lawrence@meridian-energy.com,Operations,"Surveyor, building",2026-08-16,,FTE,active
+E00105,Leon Ford,leon.ford@meridian-energy.com,Marketing,Nature conservation officer,2019-04-20,,FTE,active
+E01103,Leslie Cook,leslie.cook@meridian-energy.com,Customer Care,Retail banker,2013-09-16,,FTE,active
+E00907,Willie Thomas,willie.thomas@meridian-energy.com,Sales & Key Accounts,Television camera operator,2013-10-29,,FTE,active
+E00254,Elizabeth Robinson,elizabeth.robinson@meridian-energy.com,Field Services,Financial controller,2014-05-18,,FTE,active
+E00504,Mario Cortez,mario.cortez@meridian-energy.com,customer care,Company secretary,2023-01-21,,FTE,active
+E01153,Denise Ramos,denise.ramos@meridian-energy.com,Operations,Chiropractor,2024-07-14,,FTE,active
+E00475,Brenda Wallace,brenda.wallace@meridian-energy.com,Field Services,"Engineer, automotive",2019-12-14,,FTE,active
+E01088,Andrew Jennings,andrew.jennings@meridian-energy.com,Customer Care,Economist,2022-01-11,,Contractor,active
+E00164,Jeremiah Fletcher,jeremiah.fletcher@meridian-energy.com,Operations,"Therapist, occupational",2023-02-23,,FTE,active
+E00396,Sherri Wells,sherri.wells@meridian-energy.com,Operations,Land/geomatics surveyor,2021-06-11,,FTE,active
+E00131,Richard Swanson,richard.swanson@meridian-energy.com,Field Services,Travel agency manager,2025-09-04,,FTE,active
+E00403,Mary Martinez,mary.martinez@meridian-energy.com, Information Technology ,Passenger transport manager,2014-09-01,,FTE,active
+E00627,Bradley Fox,bradley.fox@meridian-energy.com,Field Services,Press photographer,2015-02-10,,FTE,active
+E00512,Nathan Mayo,nathan.mayo@meridian-energy.com,Marketing,Energy engineer,2015-12-24,,FTE,active
+E00628,Julia Taylor,julia.taylor@meridian-energy.com,Operations,Chief Marketing Officer,2023-03-22,,FTE,active
+E00194,Christopher Bond,christopher.bond@meridian-energy.com,Sales & Key Accounts,Fashion designer,2014-05-25,,FTE,active
+E00747,Cathy Rodriguez,cathy.rodriguez@meridian-energy.com,Operations,Location manager,2013-12-12,,FTE,active
+E00507,Shelley Smith,shelley.smith@meridian-energy.com,Field Services,Management consultant,2021-12-29,,Contractor,active
+E00521,Shane Watson,shane.watson@meridian-energy.com,Operations,Airline pilot,2022-02-22,,FTE,active
+E00660,Lydia Mooney,lydia.mooney@meridian-energy.com,Engineering,Call centre manager,2024-03-25,,FTE,active
+E00833,Maria Gonzalez,maria.gonzalez@meridian-energy.com,Field Services,Musician,2023-02-03,,FTE,active
+E00360,Tracie Day,tracie.day@meridian-energy.com,Operations,"Engineer, mining",2021-09-22,,FTE,active
+E00125,Jacqueline Grant,jacqueline.grant@meridian-energy.com,Operations,Health service manager,2021-06-02,,FTE,active
+E00962,William Long,william.long@meridian-energy.com,Operations,Telecommunications researcher,2022-02-23,,FTE,active
+E00449,Brenda Rogers,brenda.rogers@meridian-energy.com,Operations,Sales promotion account executive,2015-03-27,,FTE,active
+E00860,David Zavala,david.zavala@meridian-energy.com,Marketing,Clinical molecular geneticist,2025-04-27,,FTE,active
+E01093,Thomas Howell,thomas.howell@meridian-energy.com,Operations,Fashion designer,2015-07-20,,FTE,active
+E00069,Catherine Lucas,catherine.lucas@meridian-energy.com,Procurement,Sports administrator,2015-02-14,,FTE,active
+E00208,Melissa Smith,melissa.smith@meridian-energy.com,Operations,Orthoptist,2016-03-22,,FTE,active
+E00168,Monica Burke,monica.burke@meridian-energy.com,Operations,Administrator,2020-10-22,,FTE,active
+E00520,Julie Glover,julie.glover@meridian-energy.com,customer care,Location manager,2016-12-24,,FTE,active
+E00456,Michelle Salazar,michelle.salazar@meridian-energy.com,Sales & Key Accounts,Personal assistant,2013-12-03,2026-11-26,FTE,terminated
+E01062,Maria Mcdonald,maria.mcdonald@meridian-energy.com,information technology,Clothing/textile technologist,2020-07-16,,FTE,active
+E00692,Judith Allen,judith.allen@meridian-energy.com,Customer Care,Wellsite geologist,2020-11-24,,Contractor,active
+E01044,Joseph Cooper,joseph.cooper@meridian-energy.com,Finance & Accounting,"Psychologist, educational",2013-04-04,,FTE,active
+E00941,Connor Sullivan,connor.sullivan@meridian-energy.com, Operations ,Prison officer,2012-06-10,,FTE,active
+E00485,Susan Rocha,susan.rocha@meridian-energy.com,Operations,Data scientist,2014-12-04,,FTE,active
+E00855,Valerie Williams,valerie.williams@meridian-energy.com,Operations,Hydrogeologist,2025-03-22,,FTE,active
+E00869,Cynthia Foster,cynthia.foster@meridian-energy.com,Operations,Meteorologist,2023-12-06,,FTE,active
+E00206,Denise Wood,denise.wood@meridian-energy.com,OPERATIONS,Fitness centre manager,2019-09-07,,FTE,active
+E00342,Amy Salazar,amy.salazar@meridian-energy.com,Finance & Accounting,Dietitian,2020-01-28,,FTE,active
+E00746,Michael Bell,michael.bell@meridian-energy.com,finance & accounting,"Therapist, horticultural",2015-12-03,,FTE,active
+E00748,Derrick Hall,derrick.hall@meridian-energy.com,Field Services,Trading standards officer,2025-11-06,,FTE,active
+E00079,Kevin Hall,kevin.hall@meridian-energy.com,Operations,Dentist,2014-11-23,,FTE,active
+E01031,Stephen Bryan,stephen.bryan@meridian-energy.com,Operations,Environmental education officer,2026-03-02,,FTE,active
+E00300,Megan Le,megan.le@meridian-energy.com,Operations,Medical technical officer,2019-08-05,,FTE,active
+E00620,Dorothy Campbell,dorothy.campbell@meridian-energy.com,Field Services,Industrial buyer,2012-10-14,,FTE,active
+E00029,Olivia Yang,olivia.yang@meridian-energy.com,Operations,Acupuncturist,2021-07-02,,FTE,active
+E00519,William Harvey,william.harvey@meridian-energy.com,Sales & Key Accounts,Aid worker,2023-01-25,,FTE,active
+E00685,Linda Rodriguez,linda.rodriguez@meridian-energy.com,Field Services,Administrator,2014-10-09,,FTE,active
+E00925,Jennifer Burke,jennifer.burke@meridian-energy.com,Operations,Airline pilot,2016-04-08,,FTE,active
+E00183,Charles Garza,charles.garza@meridian-energy.com,Operations,"Engineer, biomedical",2012-01-20,,FTE,active
+E00472,Melinda Gonzalez,melinda.gonzalez@meridian-energy.com,Information Technology,Tree surgeon,2020-07-10,,FTE,active
+E00554,Deborah Ibarra,deborah.ibarra@meridian-energy.com,Operations,Barrister's clerk,2021-08-26,,FTE,active
+E01169,Megan Murray,megan.murray@meridian-energy.com,Field Services,Records manager,2016-09-29,,FTE,active
+E00595,Stephanie Morales,stephanie.morales@meridian-energy.com,Operations,"Conservator, museum/gallery",2017-01-14,,FTE,active
+E00904,Willie Wright,willie.wright@meridian-energy.com,Operations,"Editor, commissioning",2022-07-25,,FTE,active
+E00062,Jeffrey Myers,jeffrey.myers@meridian-energy.com,Operations,"Engineer, maintenance",2021-12-30,,FTE,active
+E00076,Lisa Smith,lisa.smith@meridian-energy.com,customer care,Ranger/warden,2015-03-31,,FTE,active
+E00679,Douglas Weaver,douglas.weaver@meridian-energy.com,Operations,Product manager,2023-12-28,,FTE,active
+E01082,Christopher Gomez,christopher.gomez@meridian-energy.com,Operations,Records manager,2026-02-12,,FTE,active
+E01054,Jacqueline Curtis,jacqueline.curtis@meridian-energy.com,Operations,"Physicist, medical",2015-04-14,,FTE,active
+E00899,Nicholas Rowe,nicholas.rowe@meridian-energy.com,Operations,"Scientist, physiological",2013-06-08,,FTE,active
+E00489,Gary Diaz,gary.diaz@meridian-energy.com,Operations,"Development worker, international aid",2021-07-26,,FTE,active
+E00532,Mario Murray,mario.murray@meridian-energy.com,Procurement,Textile designer,2025-09-22,,FTE,active
+E00948,Lynn Deleon,lynn.deleon@meridian-energy.com,Field Services,Physiotherapist,2025-07-18,,Contractor,active
+E00526,Deborah Moore,deborah.moore@meridian-energy.com,Operations,Ceramics designer,2012-05-11,,FTE,active
+E00792,Corey Smith,corey.smith@meridian-energy.com,operations,"Psychologist, forensic",2015-11-24,,FTE,active
+E00964,Rachel Mills,rachel.mills@meridian-energy.com,Field Services,"Administrator, Civil Service",2014-06-03,,FTE,active
+E00841,Deanna Meza,deanna.meza@meridian-energy.com,Operations,Higher education careers adviser,2025-07-20,,FTE,active
+E00036,Robert Choi,robert.choi@meridian-energy.com,Operations,Pharmacologist,2018-06-11,,FTE,active
+E00426,Victoria Barnes,victoria.barnes@meridian-energy.com,Operations,Volunteer coordinator,2012-03-28,,FTE,active
+E00082,Jeffrey Bennett,jeffrey.bennett@meridian-energy.com,Marketing,Regulatory affairs officer,2024-02-20,,FTE,active
+E00356,Lauren Nolan,lauren.nolan@meridian-energy.com,Operations,Lexicographer,2017-10-14,,FTE,active
+E00438,Lisa Miranda,lisa.miranda@meridian-energy.com,Field Services,English as a foreign language teacher,2012-07-15,,Contractor,active
+E00330,Nathan Ward,nathan.ward@meridian-energy.com,Operations,"Engineer, electrical",2016-07-26,,FTE,active
+E00601,Sarah Jones,sarah.jones@meridian-energy.com,Customer Care,"Scientist, biomedical",2018-12-07,,FTE,active
+E00328,Michael Adams,michael.adams@meridian-energy.com,Field Services,Advertising account planner,2013-09-24,,Contractor,active
+E01124,Kayla Higgins,kayla.higgins@meridian-energy.com,Field Services,Health promotion specialist,2012-05-02,,Contractor,active
+E00153,Linda Payne,linda.payne@meridian-energy.com,Engineering,Freight forwarder,2025-07-22,,FTE,active
+E00794,Gregory Nelson,gregory.nelson@meridian-energy.com,Sales & Key Accounts,Technical sales engineer,2020-05-08,,FTE,active
+E00393,Paul Davis,paul.davis@meridian-energy.com,Sales & Key Accounts,Information officer,2013-10-20,,FTE,active
+E01128,Stacy Brown,stacy.brown@meridian-energy.com,Operations,Energy manager,2023-12-09,,FTE,active
+E00665,Cheryl Garcia,cheryl.garcia@meridian-energy.com,Operations,"Journalist, magazine",2017-12-31,,FTE,active
+E00124,Alexa Chavez,alexa.chavez@meridian-energy.com,Operations,"Therapist, music",2015-03-22,,FTE,active
+E00098,Autumn Gonzalez,autumn.gonzalez@meridian-energy.com,Operations,Jewellery designer,2025-05-22,,FTE,active
+E00973,Alan White,alan.white@meridian-energy.com,Operations,Legal executive,2020-02-19,,FTE,active
+E00893,Ashley Buck,ashley.buck@meridian-energy.com,Customer Care,Landscape architect,2013-11-23,,FTE,active
+E00133,Gina Frost,gina.frost@meridian-energy.com,Engineering,Tourism officer,2017-03-24,,FTE,active
+E01030,James Williams,james.williams@meridian-energy.com,Customer Care,Medical illustrator,2016-02-03,,FTE,active
+E00012,Abigail Martinez,abigail.martinez@meridian-energy.com,Procurement,Drilling engineer,2018-01-09,,FTE,active
+E00349,Rhonda Chambers,rhonda.chambers@meridian-energy.com,Engineering,Optometrist,2025-04-10,,FTE,active
+E00158,Michael Galloway,michael.galloway@meridian-energy.com,Operations,Occupational psychologist,2016-04-27,,FTE,active
+E00864,Leslie Brown,leslie.brown@meridian-energy.com,Finance & Accounting,Probation officer,2022-04-10,,FTE,active
+E00894,Cynthia Carrillo,cynthia.carrillo@meridian-energy.com,Sales & Key Accounts,Freight forwarder,2020-04-11,,FTE,active
+E01187,Kyle Smith,kyle.smith@meridian-energy.com,Customer Care,Estate agent,2020-12-06,,FTE,active
+E00610,Barbara Carrillo,barbara.carrillo@meridian-energy.com,Operations,"Clinical scientist, histocompatibility a",2021-03-11,,FTE,active
+E00372,Laurie Johnson,laurie.johnson@meridian-energy.com,Operations,Electronics engineer,2026-03-20,,FTE,active
+E00837,Amber Knapp,amber.knapp@meridian-energy.com,Field Services,Music therapist,2022-01-23,,FTE,active
+E00960,Molly Miller,molly.miller@meridian-energy.com,Finance & Accounting,Learning disability nurse,2023-03-19,,FTE,active
+E00969,Julie Moore,julie.moore@meridian-energy.com,Engineering,Sports development officer,2026-04-27,,FTE,active
+E00221,Marcus Santiago,marcus.santiago@meridian-energy.com,Field Services,Human resources officer,2024-01-22,,Contractor,active
+E01086,Tracy Lara,tracy.lara@meridian-energy.com,Field Services,Land/geomatics surveyor,2018-12-30,,FTE,active
+E00411,Diana Steele,diana.steele@meridian-energy.com,Operations,Optometrist,2023-09-23,,FTE,active
+E00596,Jeffrey Crane,jeffrey.crane@meridian-energy.com,Field Services,Sports therapist,2021-12-11,,FTE,active
+E00165,Julia Ellison,julia.ellison@meridian-energy.com,information technology,Museum/gallery curator,2022-05-03,,FTE,active
+E01085,Stephanie Rodriguez,stephanie.rodriguez@meridian-energy.com,Operations,"Surveyor, commercial/residential",2015-08-20,,FTE,active
+E00264,Douglas Ward,douglas.ward@meridian-energy.com,Field Services,Human resources officer,2021-01-08,,FTE,active
+E00654,Jennifer Espinoza,jennifer.espinoza@meridian-energy.com,Operations,IT technical support officer,2016-02-13,,FTE,active
+E01077,Michael Johnson,michael.johnson@meridian-energy.com,Operations,"Designer, blown glass/stained glass",2019-06-25,,FTE,active
+E00802,Donna Weber,donna.weber@meridian-energy.com,Legal & Compliance,"Designer, blown glass/stained glass",2012-05-23,,FTE,active
+E00085,Jenna Reilly,jenna.reilly@meridian-energy.com,Customer Care,Civil Service administrator,2017-02-28,,FTE,active
+E00313,Allison Evans,allison.evans@meridian-energy.com,Operations,Associate Professor,2014-08-12,,FTE,active
+E00113,Jennifer Shaffer,jennifer.shaffer@meridian-energy.com,Customer Care,Airline pilot,2018-02-05,,Contractor,active
+E00957,Anita Valdez,anita.valdez@meridian-energy.com,Engineering,Volunteer coordinator,2014-07-09,,Contractor,active
+E00497,Christopher Perez,christopher.perez@meridian-energy.com,Field Services,Soil scientist,2014-05-20,,FTE,active
+E00059,Elizabeth Ortega,elizabeth.ortega@meridian-energy.com,Engineering,"Editor, commissioning",2021-08-11,,FTE,active
+E00143,Cynthia King,cynthia.king@meridian-energy.com,Sales & Key Accounts,Manufacturing engineer,2026-06-12,,FTE,active
+E01071,Lori Vincent,lori.vincent@meridian-energy.com,Marketing,Engineering geologist,2017-07-30,,FTE,active
+E01186,Candice Wood,candice.wood@meridian-energy.com,Operations,"Librarian, public",2021-05-29,,FTE,active
+E00424,Casey Hickman,casey.hickman@meridian-energy.com, Operations ,International aid/development worker,2015-09-05,,FTE,active
+E00290,Samuel West,samuel.west@meridian-energy.com,Operations,Retail merchandiser,2023-05-07,,FTE,active
+E00093,Sean Mayo,sean.mayo@meridian-energy.com,Field Services,Fisheries officer,2022-01-11,,FTE,active
+E00350,Devon Ponce,devon.ponce@meridian-energy.com,Field Services,"Radiographer, diagnostic",2025-12-25,,FTE,active
+E01098,James Torres,james.torres@meridian-energy.com,Engineering,Actuary,2026-05-13,,FTE,active
+E00216,Ashley Carroll,ashley.carroll@meridian-energy.com,Engineering,Theatre manager,2013-06-24,,FTE,active
+E00605,Lisa Graham,lisa.graham@meridian-energy.com,Operations,Theme park manager,2019-06-28,,FTE,active
+E00883,Anthony Nelson,anthony.nelson@meridian-energy.com,Finance & Accounting,Accounting technician,2026-04-23,,FTE,active
+E00514,Bobby Fields,bobby.fields@meridian-energy.com,Customer Care,Firefighter,2023-03-17,,FTE,active
+E01196,Leah Roy,leah.roy@meridian-energy.com,Operations,Building control surveyor,2019-12-08,,FTE,active
+E00339,Christopher Lawrence,christopher.lawrence@meridian-energy.com,Operations,Arboriculturist,2015-09-14,,FTE,active
+E00126,Kristie Alvarez,kristie.alvarez@meridian-energy.com,Field Services,"Conservation officer, historic buildings",2018-01-17,,FTE,active
+E00174,Alyssa Dean,alyssa.dean@meridian-energy.com,Marketing,Armed forces training and education offi,2012-04-05,,FTE,active
+E00047,Daniel Garner,daniel.garner@meridian-energy.com,Marketing,Geophysicist/field seismologist,2014-11-27,,FTE,active
+E00566,Nicholas Moore,nicholas.moore@meridian-energy.com,operations,Dispensing optician,2018-04-16,,FTE,active
+E00517,Aaron Nolan,aaron.nolan@meridian-energy.com,Field Services,Personnel officer,2013-01-28,,FTE,active
+E00729,John Brown,john.brown@meridian-energy.com, Procurement ,"Buyer, retail",2012-05-01,,FTE,active
+E00965,Carlos Alvarado,carlos.alvarado@meridian-energy.com,Finance & Accounting,Controller,2012-09-05,,FTE,active
+E00107,George Little,george.little@meridian-energy.com,Engineering,"Engineer, materials",2021-06-25,,FTE,active
+E00713,Brianna Hayes,brianna.hayes@meridian-energy.com,FINANCE & ACCOUNTING,Music tutor,2016-02-20,,FTE,active
+E00986,Joseph Wilson,joseph.wilson@meridian-energy.com,Customer Care,Site engineer,2012-07-09,,FTE,active
+E00466,Angela DDS,angela.dds@meridian-energy.com,Engineering,"Production assistant, television",2017-09-05,,FTE,active
+E00412,Nicole Goodwin,nicole.goodwin@meridian-energy.com,Sales & Key Accounts,Financial controller,2021-02-25,,FTE,active
+E00952,Colin Foster,colin.foster@meridian-energy.com,Customer Care,Marketing executive,2019-12-06,,FTE,active
+E01095,Jennifer Stevens,jennifer.stevens@meridian-energy.com,Customer Care,IT technical support officer,2025-10-15,,FTE,active
+E00759,Albert Kim,albert.kim@meridian-energy.com,Human Resources,Location manager,2025-02-08,,FTE,active
+E00614,Paula Perry,paula.perry@meridian-energy.com,Operations,"Chemist, analytical",2013-08-10,,FTE,active
+E00157,Walter Johnson,walter.johnson@meridian-energy.com,Engineering,Environmental health practitioner,2026-11-01,,Contractor,active
+E00703,Jose Townsend,jose.townsend@meridian-energy.com,Engineering,Quality manager,2012-02-27,2026-11-21,FTE,terminated
+E00588,Joseph Brown,joseph.brown@meridian-energy.com,Customer Care,Contracting civil engineer,2021-03-07,,FTE,active
+E00112,Randall Steele,randall.steele@meridian-energy.com,Engineering,Commercial/residential surveyor,2014-10-17,,FTE,active
+E00537,Isaac Jones,isaac.jones@meridian-energy.com,Operations,Geoscientist,2026-10-10,,FTE,active
+E00134,Christina Collins,christina.collins@meridian-energy.com,Engineering,Financial planner,2016-06-19,,FTE,active
+E00895,Brian Harris,brian.harris@meridian-energy.com,Legal & Compliance,Chartered management accountant,2024-08-27,,FTE,active
+E01066,Kelly Young,kelly.young@meridian-energy.com,Engineering,Equality and diversity officer,2025-01-17,,FTE,active
+E00539,Brandon Hernandez,brandon.hernandez@meridian-energy.com,Information Technology,"Therapist, art",2016-12-12,,FTE,active
+E00830,Caroline Jackson,caroline.jackson@meridian-energy.com,Operations,"Scientist, research (life sciences)",2023-11-02,,FTE,active
+E00305,Kenneth Sparks,kenneth.sparks@meridian-energy.com,Operations,Oceanographer,2025-03-04,,FTE,active
+E01140,Jodi Meyers,jodi.meyers@meridian-energy.com,Sales & Key Accounts,"Civil engineer, consulting",2012-03-24,,FTE,active
+E01171,Jose Boyd,jose.boyd@meridian-energy.com,Customer Care,Firefighter,2016-01-27,,FTE,active
+E01096,Walter Bender,walter.bender@meridian-energy.com,Finance & Accounting,"Designer, ceramics/pottery",2026-06-13,,FTE,active
+E00167,Edward Espinoza,edward.espinoza@meridian-energy.com,Procurement,Chief Financial Officer,2016-08-18,,FTE,active
+E00640,Robert Hill,robert.hill@meridian-energy.com,Sales & Key Accounts,Field seismologist,2016-03-15,,FTE,active
+E00935,Clayton Dominguez,clayton.dominguez@meridian-energy.com,Operations,Multimedia specialist,2021-09-06,,FTE,active
+E00190,Patrick Kent,patrick.kent@meridian-energy.com,Field Services,"Designer, exhibition/display",2023-07-09,,Contractor,active
+E01022,Calvin Mitchell,calvin.mitchell@meridian-energy.com,Engineering,Forest/woodland manager,2014-11-12,,FTE,active
+E00846,Ryan Thompson,ryan.thompson@meridian-energy.com,Operations,"Development worker, international aid",2017-08-24,,FTE,active
+E00355,Julie Buchanan,julie.buchanan@meridian-energy.com,Customer Care,Farm manager,2025-07-09,,Contractor,active
+E00026,William Soto,william.soto@meridian-energy.com,Information Technology,Petroleum engineer,2024-11-07,,FTE,active
+E00716,Jeffrey Anderson,jeffrey.anderson@meridian-energy.com,Field Services,"Psychologist, forensic",2016-03-06,,Contractor,active
+E00445,Melissa Ford,melissa.ford@meridian-energy.com,OPERATIONS,"Surveyor, building control",2021-10-28,,FTE,active
+E00968,Christian Berry,christian.berry@meridian-energy.com,Field Services,Education administrator,2023-03-31,,Contractor,active
+E00908,Ariel Tanner,ariel.tanner@meridian-energy.com,Customer Care,"Accountant, chartered management",2020-10-06,,Contractor,active
+E00561,Erica Webb,erica.webb@meridian-energy.com,Operations,Production manager,2012-01-17,,FTE,on_leave
+E01125,Jodi Walker,jodi.walker@meridian-energy.com,Human Resources,Chief Technology Officer,2017-10-01,,FTE,active
+E00232,Joseph Marks,joseph.marks@meridian-energy.com,Operations,Hydrogeologist,2015-02-01,,FTE,active
+E00004,James Walsh,james.walsh@meridian-energy.com,Operations,Occupational hygienist,2012-10-08,,FTE,active
+E00478,Michael Smith,michael.smith@meridian-energy.com,Customer Care,"Scientist, product/process development",2025-05-13,,Contractor,active
+E00289,Alexandra Ward,alexandra.ward@meridian-energy.com,Operations,Medical technical officer,2023-12-30,,FTE,active
+E00144,Adam Baxter,adam.baxter@meridian-energy.com,Field Services,Meteorologist,2025-08-15,,FTE,active
+E01078,Antonio Kirk,antonio.kirk@meridian-energy.com,Engineering,"Surveyor, building",2022-11-25,,FTE,active
+E00400,Jennifer Bradshaw,jennifer.bradshaw@meridian-energy.com,Information Technology,"Surveyor, building",2024-04-08,,FTE,active
+E00877,Kelly Miller,kelly.miller@meridian-energy.com,Operations,Arts development officer,2014-09-26,,FTE,active

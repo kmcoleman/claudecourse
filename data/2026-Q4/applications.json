@@ -1,0 +1,314 @@
+[
+  {
+    "name": "Atlas ERP",
+    "tier": "crown",
+    "roles": [
+      "AP Clerk",
+      "AP Manager",
+      "Vendor Admin",
+      "GL Accountant",
+      "Controller",
+      "ERP Admin"
+    ],
+    "privileged_roles": [
+      "Vendor Admin",
+      "Controller",
+      "ERP Admin"
+    ],
+    "owning_dept": "Finance & Accounting",
+    "implementation_date": "2014-05-01"
+  },
+  {
+    "name": "MeridianPay",
+    "tier": "crown",
+    "roles": [
+      "Payroll Clerk",
+      "Payroll Approver",
+      "Payroll Admin"
+    ],
+    "privileged_roles": [
+      "Payroll Approver",
+      "Payroll Admin"
+    ],
+    "owning_dept": "Human Resources",
+    "implementation_date": "2016-02-01"
+  },
+  {
+    "name": "Gateway",
+    "tier": "crown",
+    "roles": [
+      "Help Desk",
+      "User Admin",
+      "App Admin",
+      "Super Admin"
+    ],
+    "privileged_roles": [
+      "User Admin",
+      "App Admin",
+      "Super Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2013-09-01"
+  },
+  {
+    "name": "Active Directory",
+    "tier": "crown",
+    "roles": [
+      "Standard",
+      "Account Operator",
+      "Domain Admin"
+    ],
+    "privileged_roles": [
+      "Account Operator",
+      "Domain Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2010-01-01"
+  },
+  {
+    "name": "Vault",
+    "tier": "crown",
+    "roles": [
+      "Reader",
+      "Writer",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2018-06-01"
+  },
+  {
+    "name": "Compass CRM",
+    "tier": "business",
+    "roles": [
+      "User",
+      "Manager",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Sales & Key Accounts",
+    "implementation_date": "2017-03-01"
+  },
+  {
+    "name": "Helix ITSM",
+    "tier": "business",
+    "roles": [
+      "Agent",
+      "Change Approver",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Change Approver",
+      "Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2015-07-01"
+  },
+  {
+    "name": "PeopleHub HRIS",
+    "tier": "business",
+    "roles": [
+      "Employee",
+      "HR Partner",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Human Resources",
+    "implementation_date": "2016-08-01"
+  },
+  {
+    "name": "Procure",
+    "tier": "business",
+    "roles": [
+      "Requisitioner",
+      "Buyer",
+      "Receiver",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Procurement",
+    "implementation_date": "2017-11-01"
+  },
+  {
+    "name": "Expense",
+    "tier": "business",
+    "roles": [
+      "Submitter",
+      "Approver",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Finance & Accounting",
+    "implementation_date": "2018-01-01"
+  },
+  {
+    "name": "Tableau",
+    "tier": "business",
+    "roles": [
+      "Viewer",
+      "Author",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Engineering",
+    "implementation_date": "2019-04-01"
+  },
+  {
+    "name": "DocuSign",
+    "tier": "business",
+    "roles": [
+      "Sender",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Legal & Compliance",
+    "implementation_date": "2018-09-01"
+  },
+  {
+    "name": "Box",
+    "tier": "business",
+    "roles": [
+      "Member",
+      "Co-Owner",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2026-07-21"
+  },
+  {
+    "name": "GitHub Enterprise",
+    "tier": "infra",
+    "roles": [
+      "Member",
+      "Maintainer",
+      "Org Admin"
+    ],
+    "privileged_roles": [
+      "Org Admin"
+    ],
+    "owning_dept": "Engineering",
+    "implementation_date": "2017-02-01"
+  },
+  {
+    "name": "AWS Prod",
+    "tier": "infra",
+    "roles": [
+      "ReadOnly",
+      "Developer",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Engineering",
+    "implementation_date": "2016-06-01"
+  },
+  {
+    "name": "AWS NonProd",
+    "tier": "infra",
+    "roles": [
+      "ReadOnly",
+      "Developer",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Engineering",
+    "implementation_date": "2016-06-01"
+  },
+  {
+    "name": "Snowflake",
+    "tier": "infra",
+    "roles": [
+      "Reader",
+      "Analyst",
+      "SysAdmin"
+    ],
+    "privileged_roles": [
+      "SysAdmin"
+    ],
+    "owning_dept": "Engineering",
+    "implementation_date": "2020-10-01"
+  },
+  {
+    "name": "Jenkins",
+    "tier": "infra",
+    "roles": [
+      "Viewer",
+      "Builder",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Engineering",
+    "implementation_date": "2015-01-01"
+  },
+  {
+    "name": "Slack",
+    "tier": "universal",
+    "roles": [
+      "Member",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2016-01-01"
+  },
+  {
+    "name": "Zoom",
+    "tier": "universal",
+    "roles": [
+      "Member",
+      "Admin"
+    ],
+    "privileged_roles": [
+      "Admin"
+    ],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2017-01-01"
+  },
+  {
+    "name": "VPN",
+    "tier": "universal",
+    "roles": [
+      "User"
+    ],
+    "privileged_roles": [],
+    "owning_dept": "Information Technology",
+    "implementation_date": "2012-01-01"
+  },
+  {
+    "name": "Badge access",
+    "tier": "universal",
+    "roles": [
+      "Standard",
+      "Facilities Admin"
+    ],
+    "privileged_roles": [
+      "Facilities Admin"
+    ],
+    "owning_dept": "Operations",
+    "implementation_date": "2009-01-01"
+  }
+]

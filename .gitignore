@@ -12,9 +12,8 @@ dist/
 # Kit secrets — never commit the real key (.env.example is committed)
 .env
 
-# Q4 is answer/ground-truth for Day 5; students regenerate it from seed.
-# Q3 IS committed as the course data set, so do NOT ignore /data wholesale.
-/data/2026-Q4/
+# Both quarters are committed course data: Q3 is the quarter students review,
+# Q4 ships pre-generated for the Day 5 transfer lesson. Do NOT ignore /data.
 
 # Learner-produced artifacts (Day 4/5 outputs)
 /findings*.json

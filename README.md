@@ -26,7 +26,7 @@ claudecourse/
 │                          optional `course-source` extra)
 ├── data/
 │   ├── 2026-Q3/    KIT  — committed course data (the quarter students review)
-│   └── 2026-Q4/    ANSWER — Day 5 ground-truth quarter (git-ignored; regen from seed)
+│   └── 2026-Q4/    KIT  — pre-generated Day 5 transfer quarter (committed; ships to students)
 ├── src/            KIT  — meridian_capstone package (contract + MCP server)
 ├── tests/          KIT  — the green light (`pytest -m "not api"`)
 ├── scripts/        KIT  — bootstrap.sh / bootstrap.ps1
@@ -55,13 +55,12 @@ Clone this repo, then from the clone's root:
 
 ```bash
 rm -rf course meridian world docs      # answer material
-rm -rf data/2026-Q4                     # Day 5 ground truth (also git-ignored)
 mv README.student.md README.md          # swap in the student-facing README
 # optional: drop the generator extra from pyproject.toml's [project.optional-dependencies]
 ```
 
-What remains is the runnable student kit at root. **Heads-up:** Day 5 Cycle 1
-currently tells students to run `python -m meridian.generate ...` to create Q4 —
-that command needs `meridian/`, which the strip removes. Decide before publishing
-whether to (a) pre-ship `data/2026-Q4/` in the student repo, (b) keep a trimmed
-generator, or (c) reword Day 5. See the consolidation notes for details.
+What remains is the runnable student kit at root — including both quarters of
+data. Q4 (`data/2026-Q4/`) ships pre-generated so Day 5's transfer lesson works
+without the generator (which the strip removes); Cycle 1 has students *read*
+the pre-shipped Q4, not create it. No Day 5 coupling to resolve before
+publishing.
