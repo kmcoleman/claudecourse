@@ -1,0 +1,1370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pre-Work — Get Ready for the Bootcamp · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (matched to course/day-1.html) ---------- */
+  :root {
+    --ink:      #1b2733;   /* primary text, deep slate */
+    --muted:    #5a6673;   /* secondary text */
+    --faint:    #8b95a1;   /* captions, meta */
+    --bg:       #f5f6f8;   /* page background */
+    --card:     #ffffff;   /* surfaces */
+    --border:   #e2e7ec;   /* hairlines */
+    --brand:    #2f4bd0;   /* interactive / cycle spine (indigo) */
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;   /* "What is X?" callout */
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;   /* task block tint (warm paper) */
+    --task-br:  #c9a227;   /* task block spine (amber) */
+    --ok:       #1c7a52;   /* checkpoint / success green */
+    --ok-bg:    #edf7f1;
+    --warn-bg:  #fdf6e6;   /* caution callout */
+    --warn-br:  #c9a227;
+    --warn-ink: #7a5c0a;
+    --term-bg:  #10161e;   /* terminal */
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink);
+    color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .day {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600; color: #fff;
+  }
+  .site .day em { color: #c9a227; font-style: normal; }
+  .site .home {
+    font-size: 13px; color: #c7d2e8; text-decoration: none;
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .site .home:hover { background: rgba(255,255,255,.10); color: #fff; }
+  .counter {
+    margin-left: auto;
+    font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 48px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Opener ---------- */
+  .opener { margin-top: 36px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif);
+    font-size: 40px; line-height: 1.12; font-weight: 600;
+    margin: 0 0 18px; letter-spacing: -.01em;
+  }
+  .narrative { color: var(--ink); }
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  ul.prereq { list-style: none; margin: 0; padding: 0; }
+  ul.prereq li { padding: 6px 0 6px 30px; position: relative; }
+  ul.prereq li::before {
+    content: "✓"; position: absolute; left: 0; top: 6px;
+    color: var(--ok); font-weight: 700;
+  }
+
+  /* ---------- Caution callout (the "don't struggle alone" framing) ---------- */
+  .callout {
+    background: var(--warn-bg);
+    border: 1px solid #eadcae;
+    border-left: 4px solid var(--warn-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px; margin: 20px 0;
+    color: var(--warn-ink);
+  }
+  .callout .tag {
+    display: block; font-weight: 700; color: #6b4f08;
+    font-size: 13px; letter-spacing: .04em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .callout p { margin: 0; color: #5c4506; }
+
+  /* ---------- Inline placeholder (Kevin fills these in) ---------- */
+  .ph {
+    font-family: var(--sans); font-weight: 700; font-size: .94em;
+    color: #7a5c0a; background: #fff4d6;
+    border: 1px solid #e6d08a; border-radius: 4px;
+    padding: 0 6px; white-space: nowrap;
+  }
+
+  /* ---------- Cycle ---------- */
+  .cycle { margin-top: 56px; }
+  .cycle-head {
+    display: flex; align-items: flex-start; gap: 18px;
+    border-top: 2px solid var(--ink);
+    padding-top: 16px;
+  }
+  .cycle-num {
+    font-family: var(--serif);
+    font-size: 46px; line-height: .9; font-weight: 600;
+    color: var(--brand); flex: 0 0 auto; min-width: 54px;
+  }
+  .cycle-head .meta { padding-top: 2px; }
+  .cycle-head .eyebrow {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+  }
+  .cycle-head h2 {
+    font-family: var(--serif);
+    font-size: 27px; font-weight: 600; margin: 2px 0 4px;
+  }
+  .cycle-head .time {
+    display: inline-block; font-size: 12.5px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px;
+  }
+
+  /* Concept block */
+  .concept { margin: 22px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg);
+    border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px; margin: 16px 0;
+    font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk);
+    display: block; margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0; color: #2c3a4a; }
+
+  /* Recommended-watch callout */
+  .watch {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--brand);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px; margin: 16px 0;
+  }
+  .watch .tag {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--brand-dk); font-weight: 700; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .watch .dur {
+    font-size: 11px; font-weight: 700; letter-spacing: .03em;
+    color: var(--muted); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 1px 9px; font-variant-numeric: tabular-nums;
+  }
+  .watch a { color: var(--brand); font-weight: 600; }
+  .watch p { margin: 4px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  /* Task block */
+  .task {
+    background: var(--task-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 8px;
+    margin: 20px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 6px;
+  }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step;
+    padding: 16px 0 16px 44px;
+    position: relative;
+    border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px;
+    margin-top: 12px; font-size: 14px; color: var(--muted);
+    cursor: pointer; user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* Code block */
+  .code {
+    position: relative;
+    background: #f2f4f7;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre;
+  }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff;
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 3px 8px; cursor: pointer; opacity: 0;
+    transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700;
+    pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* Terminal output */
+  .terminal {
+    background: var(--term-bg);
+    border-radius: 6px; margin: 12px 0;
+    padding: 14px 16px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    color: var(--term-fg); overflow-x: auto;
+  }
+  .terminal .cmd::before { content: "$ "; color: var(--term-pmt); }
+  .terminal .cmd { color: #fff; }
+  .terminal .out { color: var(--term-dim); white-space: pre; }
+
+  /* Stuck? details */
+  details.stuck {
+    margin: 10px 0 2px; border: 1px solid var(--border);
+    border-radius: 6px; background: #fff;
+  }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px;
+    font-size: 14px; font-weight: 600; color: var(--brand);
+    list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 8px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+
+  /* Checkpoint */
+  .checkpoint {
+    background: var(--ok-bg);
+    border: 1px solid #c5e6d5;
+    border-radius: var(--radius);
+    padding: 16px 18px 16px 46px;
+    margin: 22px 0 0; position: relative;
+  }
+  .checkpoint::before {
+    content: "✓"; position: absolute; left: 16px; top: 15px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .checkpoint .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 2px;
+  }
+  .checkpoint p { margin: 0; color: #234a37; }
+
+  /* Verification + wrap */
+  .verify { border-top: 2px solid var(--ink); padding-top: 22px; }
+  .wrap-recap ul { padding-left: 20px; }
+  .tomorrow {
+    font-family: var(--serif); font-size: 19px; line-height: 1.5;
+    color: #33414f; border-left: 3px solid #c9a227;
+    padding-left: 18px; margin: 8px 0 0;
+  }
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Small screens */
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 30px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .cycle-num { font-size: 36px; min-width: 42px; }
+    .counter { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="day">Pre-Work — <em>Get Ready</em></span>
+    <a class="home" href="../index.html">↑ Course portal</a>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ OPENER ============ -->
+  <section class="opener">
+    <div class="kicker">Before you arrive · Do this first</div>
+    <h1>Pre-Work: Get Ready for the Bootcamp</h1>
+
+    <div class="narrative">
+      <p class="lede">The bootcamp moves fast, and Day 1 assumes your laptop is already set up.
+      This pre-work gets you there — every tool installed, your access working, and the course kit
+      running green — so day one is about building, not troubleshooting.</p>
+      <p>You don't need any coding experience. Each step below explains what a tool is the first time
+      you meet it, gives you the exact thing to do, and tells you how to prove it worked. Work through
+      it in order; later cycles build on earlier ones.</p>
+    </div>
+
+    <div class="panel">
+      <h3>Timeline</h3>
+      <p>Complete this in the <strong>three weeks before class starts</strong>. Budget
+      <strong>4–6 hours over the three weeks</strong> — a couple of sittings, not one marathon.
+      Office hours are available if you get stuck —
+      <span class="ph">[office hours schedule]</span>.</p>
+      <!-- TODO: office hours schedule — days/times + join link (Kevin to fill in) -->
+    </div>
+
+    <div class="panel">
+      <h3>What you'll accomplish</h3>
+      <ul class="learn">
+        <li>Install your development environment — a terminal, VS&nbsp;Code, git, and Python</li>
+        <li>Get your <strong>GitHub Enterprise</strong> access working, and authenticated from both the terminal and VS&nbsp;Code</li>
+        <li>Install and test <strong>Claude Code</strong>, your coding partner for the week</li>
+        <li>Clone the course kit and run its <strong>smoke test</strong> — the "green light" that proves everything works</li>
+        <li>Be <strong>fully ready for Day&nbsp;1</strong>, with nothing left to install or configure</li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <span class="tag">The one rule of pre-work</span>
+      <p>If you get stuck for more than <strong>15 minutes</strong> on ANY step, do not struggle
+      alone. Bring it to office hours (<span class="ph">[office hours schedule]</span>). Setup snags
+      are normal, they're usually a one-line fix, and sorting them out early is exactly what this
+      window is for. Being stuck is not a sign you're behind — waiting until Day&nbsp;1 to ask is.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 1 ============ -->
+  <section class="cycle" id="cycle-1">
+    <div class="cycle-head">
+      <div class="cycle-num">1</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 1</div>
+        <h2>Get oriented</h2>
+        <span class="time">≈ 30 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Before you install anything, get a feel for what you'll be building and the company you'll
+      build it for. Nothing to set up in this cycle — just read, click around, and let the shape of
+      the week sink in. Everything opens in your web browser.</p>
+
+      <div class="whatis">
+        <span class="tag">Who is Meridian Regional Energy?</span>
+        <p>Meridian is the fictional client you'll work for all week — a regional gas &amp; electric
+        utility with about 1,200 employees, two dozen applications, and a compliance team drowning in
+        access spreadsheets. Everything you build reviews <em>their</em> access data. Getting to know
+        them now means Day&nbsp;1's exercises land in context instead of cold.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Open the course portal and read the "Meet Meridian Regional Energy" primer.</div>
+          <p class="step-why">Why: the portal is your home base for the week. Its <em>The World</em>
+          section introduces Meridian — who they are, why their access is a mess, and what a regulator
+          is asking them to prove. Read it once so the client feels real.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>../index.html</pre>
+          </div>
+          <p class="step-why">Open <code>index.html</code> at the root of the course kit (or the URL
+          your instructor shares). If you're reading this page from inside the kit, the link in the
+          header above takes you straight there.</p>
+          <label class="done"><input type="checkbox" data-task="c1-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Tour the portal, then poke at the <em>Explore the data</em> browser.</div>
+          <p class="step-why">Why: the portal has a built-in data browser that shows the same messy
+          exports you'll wrangle during the week — the HR roster, access tickets, application list,
+          and policies. Click through a couple of tables and skim a policy. You don't need to
+          understand any of it yet; the point is to see the raw material before you shape it.</p>
+          <label class="done"><input type="checkbox" data-task="c1-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Read one short piece on what "agentic development" means.</div>
+          <p class="step-why">Why: the whole course is about directing an AI agent to build software.
+          Anthropic's own explainer lays out the core idea — you describe the outcome, the agent
+          reasons and uses tools to get there. Read it for the mental model, not the technical detail.</p>
+          <div class="watch">
+            <div class="tag">Read <span class="dur">~10 min</span></div>
+            <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building Effective AI Agents</a> — Anthropic Engineering
+            <p>Skip the code samples if they're unfamiliar; focus on the distinction between a fixed
+            <em>workflow</em> and an <em>agent</em> that decides its own next step.</p>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c1-s3"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 1 when</strong> you can say in a sentence who Meridian is and
+      why their access data is a problem, you've clicked through the portal's data browser, and you've
+      read the agentic-development piece. No installs yet — that starts next.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 2 ============ -->
+  <section class="cycle" id="cycle-2">
+    <div class="cycle-head">
+      <div class="cycle-num">2</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 2</div>
+        <h2>Terminal, git, VS&nbsp;Code, and GitHub Enterprise</h2>
+        <span class="time">≈ 2 hours</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>This is the longest cycle — the workhorse of pre-work. By the end you'll have the three tools
+      every engineer lives in, and you'll be able to reach your company's <strong>GitHub
+      Enterprise</strong> from both the terminal and VS&nbsp;Code. Take it a step at a time, and
+      remember the 15-minute rule.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a terminal (command prompt)?</span>
+        <p>The terminal is a window where you type commands as text instead of clicking buttons. It
+        looks intimidating and isn't — it's just a different door into your computer. On Windows it's
+        called PowerShell or Terminal; on Mac it's Terminal. You'll run everything this week from here.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is VS&nbsp;Code?</span>
+        <p>Visual Studio Code is a free editor built for code, and the primary editor for this course.
+        It's where you'll read files, open a terminal, and see your whole project in one window.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is git — and what is GitHub Enterprise?</span>
+        <p><strong>git</strong> tracks the history of your files: every save point is a labeled
+        snapshot called a <em>commit</em> that you can always return to. <strong>GitHub</strong> is a
+        website where git projects live online so they can be shared and copied. <strong>GitHub
+        Enterprise</strong> is your company's private, self-hosted version of GitHub — same idea,
+        behind your company's login. The course kit and your team's work both live there.</p>
+      </div>
+    </div>
+
+    <div class="watch">
+      <div class="tag">Watch <span class="dur">≈ 20 min</span></div>
+      <a href="https://www.youtube.com/watch?v=v5gnvDUWqFM" target="_blank" rel="noopener">GitHub Tutorial for Beginners (2025)</a> — CodeWithChris
+      <p>A friendly, no-coding-required walkthrough of what GitHub is and how the basic workflow
+      feels. Watch it before the hands-on steps below so the vocabulary isn't brand new.</p>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Install VS&nbsp;Code, then open it.</div>
+          <p class="step-why">Why: it's your workspace for the week. Download from the official site
+          and run the installer for your operating system.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://code.visualstudio.com/download</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Windows:</strong> choose the "User Installer" for your architecture (almost
+              always x64). <strong>Mac:</strong> unzip and drag VS&nbsp;Code into Applications; if it
+              won't open, right-click the app and choose "Open" once to clear the security prompt.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Install git, then verify it in a terminal.</div>
+          <p class="step-why">Why: <code>--version</code> is the universal "are you installed and
+          reachable?" check. Open VS&nbsp;Code's terminal (<strong>Terminal → New Terminal</strong>)
+          and run the check there.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://git-scm.com/downloads</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git --version</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">git --version</span>
+<span class="out">git version 2.45.1</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"command not found"?</strong> Close the terminal completely and open a fresh
+              one — newly installed tools often aren't visible until you do. On Windows, if it still
+              fails, reboot; the installer updates a system setting that needs a restart.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Do the 15-minute GitHub "Hello World" tutorial.</div>
+          <p class="step-why">Why: this is the fastest way to feel the whole GitHub loop end to end —
+          create a repository, make a branch, commit a change, and open a pull request — on a throwaway
+          repo where nothing matters. Follow GitHub's official walkthrough start to finish.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://docs.github.com/en/get-started/start-your-journey/hello-world</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c2-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Verify your GitHub Enterprise access in the browser.</div>
+          <p class="step-why">Why: this is the one thing most likely to need IT's help, so prove it
+          early. Browse to your company's GitHub Enterprise, sign in with SSO or your company
+          credentials, and confirm you can see your team's organization.</p>
+          <div class="code labeled">
+            <span class="kind">Browser — your company's GitHub Enterprise</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://[GH Enterprise URL]</pre>
+          </div>
+          <!-- TODO: GH Enterprise URL to be filled by Kevin (e.g., github.enterprise.example.com) -->
+          <p class="step-why">Replace <span class="ph">[GH Enterprise URL]</span> with the address
+          your instructor gives you. Once signed in, confirm you can see your team's org.</p>
+          <label class="done"><input type="checkbox" data-task="c2-s4"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>SSO won't let you in, or you can't see your org?</strong> This is almost
+              always an access-provisioning issue on your company's side, not something you can fix
+              alone. Note exactly what you see and bring it to office hours
+              (<span class="ph">[office hours schedule]</span>) so it can be sorted with IT well before
+              Day&nbsp;1.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Set up authentication to GitHub Enterprise — SSH key <em>or</em> Personal Access Token.</div>
+          <p class="step-why">Why: signing in through the browser isn't enough — the terminal needs its
+          own way to prove it's you. There are two common methods; you only need <strong>one</strong>.
+          An <strong>SSH key</strong> is a pair of cryptographic files your machine uses to identify
+          itself. A <strong>Personal Access Token (PAT)</strong> is a long password-like string with
+          specific permissions ("scopes"). If you're unsure, a PAT is the quicker path to start.</p>
+          <div class="whatis">
+            <span class="tag">Option A — SSH key</span>
+            <p>In your GitHub Enterprise <strong>Settings → SSH and GPG keys</strong>, follow the
+            "generate a new SSH key" steps, then add the resulting <em>public</em> key to your account.
+            GitHub's docs walk through it for Mac and Windows.</p>
+          </div>
+          <div class="whatis">
+            <span class="tag">Option B — Personal Access Token (PAT)</span>
+            <p>In <strong>Settings → Developer settings → Personal access tokens</strong>, generate a
+            token with <code>repo</code> scope (enough to clone and pull). Copy it when it appears —
+            you won't see it again — and paste it as the password when git prompts you.</p>
+          </div>
+          <p class="step-why">Test that it works by listing a repo's refs without downloading anything:</p>
+          <div class="code labeled">
+            <span class="kind">Terminal — test your auth (no files downloaded)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git ls-remote https://[GH Enterprise URL]/[placeholder repo path]</pre>
+          </div>
+          <!-- TODO: placeholder repo path for the auth test / clone (e.g., your-org/onboarding-sandbox) -->
+          <p class="step-why">Swap in your <span class="ph">[GH Enterprise URL]</span> and a real
+          repo at <span class="ph">[placeholder repo path]</span> (your instructor will name one you
+          can reach). A list of refs printing back means your terminal is authenticated. For an SSH
+          key, use the <code>git@…:…</code> form of the address instead of <code>https://…</code>.</p>
+          <label class="done"><input type="checkbox" data-task="c2-s5"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — common auth failures</summary>
+            <div class="body">
+              <p><strong>SSH: "Permission denied (publickey)."</strong> Your public key isn't on your
+              GitHub Enterprise account, or you added the private half by mistake. Re-add the
+              <em>public</em> key (the <code>.pub</code> file) under Settings → SSH and GPG keys.</p>
+              <p><strong>PAT: "Authentication failed" or "403."</strong> The token is missing the
+              <code>repo</code> scope, has expired, or wasn't SSO-authorized for your org — some
+              Enterprise setups require you to click "Configure SSO / Authorize" next to the token.
+              Regenerate with the right scope and authorize it.</p>
+              <p><strong>Either way</strong>, if it doesn't clear in 15 minutes, bring it to office
+              hours (<span class="ph">[office hours schedule]</span>).</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Configure VS&nbsp;Code for GitHub Enterprise.</div>
+          <p class="step-why">Why: you'll want to browse and open repos from inside your editor, not
+          just the terminal. Install the <strong>"GitHub Pull Requests and Issues"</strong> extension,
+          sign in, and confirm you can see a GitHub Enterprise repo in the VS&nbsp;Code sidebar.</p>
+          <div class="code labeled">
+            <span class="kind">VS Code — Extensions (Ctrl/Cmd+Shift+X), search &amp; install</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>GitHub Pull Requests and Issues</pre>
+          </div>
+          <p class="step-why">After installing, open the Command Palette
+          (<strong>Ctrl/Cmd+Shift+P</strong>) and run <strong>"GitHub: Sign in"</strong>. For a
+          self-hosted Enterprise server you may also need to set the
+          <code>github-enterprise.uri</code> setting to your <span class="ph">[GH Enterprise URL]</span>.
+          Then open a repo and confirm it appears in the sidebar.</p>
+          <label class="done"><input type="checkbox" data-task="c2-s6"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — extension won't connect</summary>
+            <div class="body">
+              <p><strong>Sign-in only offers github.com, not your Enterprise server?</strong> Set the
+              <code>github-enterprise.uri</code> setting (Settings → search "github enterprise") to
+              your company's <span class="ph">[GH Enterprise URL]</span>, reload VS&nbsp;Code, and sign
+              in again. If it still won't connect, that's an office-hours item.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Prove the whole chain: clone a repo from GitHub Enterprise two ways.</div>
+          <p class="step-why">Why: the real test is downloading a full copy of a repo — once from the
+          terminal, once from the VS&nbsp;Code UI. If both work, your access and authentication are
+          solid and Day&nbsp;5's clone of the kit will be painless.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal — clone via git</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git clone https://[GH Enterprise URL]/[placeholder repo path]</pre>
+          </div>
+          <p class="step-why">Then do the same from the editor: VS&nbsp;Code Command Palette →
+          <strong>"Git: Clone"</strong> → pick a GitHub Enterprise repo → choose a folder. Both should
+          land a copy on your machine.</p>
+          <label class="done"><input type="checkbox" data-task="c2-s7"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 2 when</strong> <code>git --version</code> and
+      <code>code --version</code> both print a number, you can sign in to
+      <span class="ph">[GH Enterprise URL]</span> and see your org, and you've successfully cloned a
+      repo from GitHub Enterprise <em>both</em> from the terminal and from the VS&nbsp;Code UI. This is
+      the big one — if it's green, the rest is easier.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 3 ============ -->
+  <section class="cycle" id="cycle-3">
+    <div class="cycle-head">
+      <div class="cycle-num">3</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 3</div>
+        <h2>Python and a clean sandbox</h2>
+        <span class="time">≈ 90 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>The access-review code you'll build runs on Python. You won't need to master the language —
+      Claude Code writes most of it — but it has to be installed, and it should run in a clean,
+      isolated space so this project's tools never collide with anything else on your machine.</p>
+
+      <div class="whatis">
+        <span class="tag">What is Python?</span>
+        <p>Python is a readable, beginner-friendly programming language and the standard for data work,
+        which is why the course uses it. When you run <code>python something.py</code>, you're asking
+        Python to execute the instructions in that file.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is a virtual environment (venv)?</span>
+        <p>A venv is a private sandbox for one project's packages. Without it, everything you install
+        piles into one shared space and projects start breaking each other. With it, this project's
+        tools live in their own folder. When the venv is <em>active</em>, your prompt usually shows
+        <code>(venv)</code> at the start of the line. <code>pip</code> is the installer that puts a
+        package into that sandbox with <code>pip install &lt;name&gt;</code>.</p>
+      </div>
+    </div>
+
+    <div class="watch">
+      <div class="tag">Watch <span class="dur">≈ 9 min</span></div>
+      <a href="https://www.youtube.com/watch?v=Y21OR1OPC9A" target="_blank" rel="noopener">Python Virtual Environments — Full Tutorial for Beginners</a> — Tech With Tim
+      <p>A short, clear walkthrough of creating, activating, and using a venv. It maps directly onto
+      the steps below.</p>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Install Python 3.11 or newer, then verify it.</div>
+          <p class="step-why">Why: same <code>--version</code> check as git. On the Windows installer,
+          tick <strong>"Add Python to PATH"</strong> — it saves a real headache later.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://www.python.org/downloads</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python --version</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">python --version</span>
+<span class="out">Python 3.12.4</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"command not found" or wrong version?</strong> On Mac, try
+              <code>python3 --version</code> — many Macs use <code>python3</code> for the version you
+              installed. On Windows, if the command opens the Microsoft Store, you skipped "Add to
+              PATH" — re-run the installer and tick that box.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Create a virtual environment and activate it.</div>
+          <p class="step-why">Why: creating the sandbox isn't enough — you have to step inside. Look
+          for <code>(venv)</code> to appear at the front of your prompt.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal — create it</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m venv venv</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal · Mac — activate</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>source venv/bin/activate</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal · Windows — activate</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>venv\Scripts\activate</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Windows blocks the activate script?</strong> If you see "running scripts is
+              disabled," you need to allow local scripts once. Search that message, or ask at office
+              hours for the exact one-line command — it's a known, safe fix.</p>
+              <p><strong>Mac: <code>python -m venv</code> fails?</strong> Try <code>python3 -m venv
+              venv</code> instead.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Install <code>pandas</code> to confirm the sandbox works.</div>
+          <p class="step-why">Why: <code>pandas</code> is the table-handling library you'll lean on
+          from Day&nbsp;2 onward, so installing it now both proves your sandbox works and gives you a
+          head start. It pulls in a few helpers of its own — that's normal.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pip install pandas</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">pip install pandas</span>
+<span class="out">Successfully installed numpy-2.1.1 pandas-2.2.3 python-dateutil-2.9.0 pytz-2024.2 ...</span>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Confirm you can <code>import pandas</code> in a Python session.</div>
+          <p class="step-why">Why: installing and <em>using</em> are different checks. Open Python's
+          interactive prompt (the REPL), import pandas, and — if no error appears — your Python bench
+          is sound. Type <code>exit()</code> to leave.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal — start Python, then type the import</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python
+>>> import pandas
+>>> exit()</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c3-s4"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"ModuleNotFoundError: No module named 'pandas'"?</strong> Your venv probably
+              isn't active, so <code>python</code> is a different interpreter than the one
+              <code>pip</code> installed into. Re-activate the venv (you should see <code>(venv)</code>),
+              then try again. On Mac, make sure the <code>python</code> and <code>pip</code> you use
+              are the same one — inside an active venv they are.</p>
+            </div>
+          </details>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 3 when</strong> <code>python --version</code> prints
+      <strong>3.11 or higher</strong>, <code>pip --version</code> works, your prompt shows
+      <code>(venv)</code>, and <code>import pandas</code> succeeds with no error. Your Python sandbox
+      is clean and isolated.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 4 ============ -->
+  <section class="cycle" id="cycle-4">
+    <div class="cycle-head">
+      <div class="cycle-num">4</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 4</div>
+        <h2>Anthropic account, API key, and Claude Code</h2>
+        <span class="time">≈ 60 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Now the star of the week. <strong>Claude Code</strong> turns Claude into a working coding
+      partner living right in your terminal — it reads your files, writes and edits code, runs
+      commands, and explains what it did, all from plain-English instructions. To use it, it needs a
+      key that proves the requests are yours — and that key must be handled carefully.</p>
+
+      <div class="whatis">
+        <span class="tag">What is an API key?</span>
+        <p>An API key is a long secret string — like a password for programs. It tells Anthropic's
+        servers "these requests belong to this account." Anyone who has your key can spend against your
+        account, so treat it like a password: never shared, never posted, never committed to git.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is a .env file (and .gitignore)?</span>
+        <p>A <code>.env</code> file is a plain-text file that holds secrets like API keys, kept
+        <em>out</em> of your code. The golden rule: a <code>.env</code> must never enter git. You keep
+        it out by listing it in a <code>.gitignore</code> file, which tells git "pretend these files
+        don't exist."</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Create an Anthropic account and generate an API key.</div>
+          <p class="step-why">Why: this is the credential Claude Code uses. Create the account
+          yourself, then open <strong>API Keys</strong> and create one. Copy it the moment it appears —
+          you won't be able to see it again.</p>
+          <div class="code labeled">
+            <span class="kind">Browser — console</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://console.anthropic.com</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Browser — API keys</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://console.anthropic.com/settings/keys</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>Creating accounts and entering passwords is something you do yourself</strong>
+              — never Claude. If the course provides billing or a shared workspace, your instructor
+              will tell you how to join before you generate a key; check at office hours if you're
+              unsure.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Save the key in a <code>.env</code> file — and make sure git ignores it.</div>
+          <p class="step-why">Why: this is the single most important security habit of the week. The
+          key goes in <code>.env</code>; <code>.env</code> goes in <code>.gitignore</code>; neither the
+          key nor the file ever reaches git. Practice it now on a scratch folder so it's a reflex by
+          Day&nbsp;1.</p>
+          <div class="code labeled">
+            <span class="kind">.env (create this file — use your real key)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxxxxxxxxx</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">.gitignore (add this line)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>.env</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>How do I know it's really ignored?</strong> Run <code>git status</code> in
+              that folder. If <code>.env</code> does <em>not</em> appear in the list, git is correctly
+              ignoring it. If it does appear, your <code>.gitignore</code> line is misspelled or in the
+              wrong folder.</p>
+              <p><strong>Never commit a key.</strong> If you ever do by accident, tell your instructor
+              and rotate (regenerate) the key immediately — the old one must be treated as leaked.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Install the Claude Code CLI, then verify it.</div>
+          <p class="step-why">Why: this puts the <code>claude</code> command on your machine. Open the
+          official docs and use the <strong>Native Install</strong> for your operating system — a
+          single command that needs nothing else installed first. Then confirm with
+          <code>--version</code>.</p>
+          <div class="code labeled">
+            <span class="kind">Browser</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>https://code.claude.com/docs/en/overview</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>claude --version</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>"command not found" after installing?</strong> Close the terminal and open a
+              fresh one so it picks up the new command. If the docs offer several install methods, the
+              <strong>Native Install</strong> (a <code>curl</code> or <code>irm</code> one-liner) is
+              the simplest and doesn't require Node.js.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Start Claude Code, sign in, and ask it one question.</div>
+          <p class="step-why">Why: this is the moment it becomes real. Launch <code>claude</code>; the
+          first time, it walks you through signing in — use the Anthropic account you made the key
+          with. Then, in your own words, ask it something simple to feel the back-and-forth — for
+          example, ask it to explain what it can help you do this week, as if you've never written
+          code. Read the answer: you're now working with your coding partner.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>claude</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s4"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck?</summary>
+            <div class="body">
+              <p><strong>It won't sign in, or asks for a key?</strong> Follow the on-screen sign-in
+              prompt with the account you created the key under. If it instead reads a key from your
+              environment, make sure your <code>.env</code> line is exactly
+              <code>ANTHROPIC_API_KEY=…</code> with no spaces around the equals sign, and that you
+              launched <code>claude</code> from the folder that holds it.</p>
+            </div>
+          </details>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 4 when</strong> <code>claude --version</code> prints a number,
+      your key lives in a <code>.env</code> that git ignores, and Claude Code has answered your first
+      prompt. Your coding partner is online.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 5 ============ -->
+  <section class="cycle" id="cycle-5">
+    <div class="cycle-head">
+      <div class="cycle-num">5</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 5</div>
+        <h2>Clone the kit and run the smoke test</h2>
+        <span class="time">≈ 30 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Time to bring it all together. You'll pull the course kit onto your machine, run its one-shot
+      setup script, and confirm the <strong>green light</strong> — the automated checks that prove your
+      whole bench works together. If this passes, you are ready for Day&nbsp;1.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a smoke test / the "green light"?</span>
+        <p>A smoke test is the simplest "does it turn on?" check — it doesn't test everything, it
+        confirms the basics work before you build on top of them. In this kit the smoke test runs with
+        <code>pytest</code>. Green means every tool you set up is talking to the others.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Clone the course kit repository, then move into it.</div>
+          <p class="step-why">Why: this downloads the kit you'll build on all week. Use the repository
+          address your instructor gives you in place of the placeholder below — it lives on your
+          company's GitHub Enterprise, the same one you authenticated to in Cycle&nbsp;2.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git clone https://[course repo URL]
+cd claudecourse</pre>
+          </div>
+          <!-- TODO: course repo URL to be filled by Kevin (e.g., GH Enterprise URL for claudecourse) -->
+          <p class="step-why">Replace <span class="ph">[course repo URL]</span> with the real address.
+          The folder name after <code>cd</code> may differ slightly — use whatever the clone creates.</p>
+          <label class="done"><input type="checkbox" data-task="c5-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Run the kit's bootstrap (setup) script.</div>
+          <p class="step-why">Why: one script does the whole Cycle&nbsp;3 dance for you — it creates
+          the kit's own virtual environment (a <code>.venv</code> folder), installs its packages,
+          creates a <code>.env</code>, and runs the checks. On Windows it will even install any missing
+          tools. Run the line for your system from inside the kit folder.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal · Mac</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>bash scripts/bootstrap.sh</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal · Windows (PowerShell)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>powershell -ExecutionPolicy Bypass -File scripts\bootstrap.ps1</pre>
+          </div>
+          <p class="step-why">The first run creates an empty <code>.env</code> and stops to ask for
+          your key. Open that <code>.env</code>, paste the <code>ANTHROPIC_API_KEY</code> from
+          Cycle&nbsp;4 (same habit — this is the kit's own <code>.env</code>, already git-ignored),
+          then run the script again to finish the checks.</p>
+          <label class="done"><input type="checkbox" data-task="c5-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Run the smoke test yourself and confirm it passes.</div>
+          <p class="step-why">Why: this is your finish line, and <code>pytest</code> is the command
+          you'll run all week to check your work. Step into the kit's venv, then run the free, offline
+          subset.</p>
+          <div class="code labeled">
+            <span class="kind">Terminal · Mac</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>source .venv/bin/activate
+pytest -m "not api"</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">Terminal · Windows (PowerShell)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>.venv\Scripts\activate
+pytest -m "not api"</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">pytest -m "not api"</span>
+<span class="out">.............s..................sssssss.                     [100%]
+32 passed, 11 skipped, 1 deselected in 0.51s</span>
+          </div>
+          <p class="step-why">Expect a line like <strong>33 passed, 11 skipped</strong>. The offline
+          command above deselects the one live-API test, so it reads
+          <code>32 passed, 11 skipped, 1 deselected</code>; the full green light (plain
+          <code>pytest</code>) adds that one live call to Claude and shows
+          <code>33 passed, 11 skipped</code>. The <em>skipped</em> lines are the parts of the system
+          you'll build during the week — on a fresh clone they're meant to skip.</p>
+          <label class="done"><input type="checkbox" data-task="c5-s3"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — common smoke-test issues</summary>
+            <div class="body">
+              <p><strong>"command not found: pytest"?</strong> Your venv isn't active — you should see
+              <code>(.venv)</code> at the front of your prompt. Re-run the activate line above.</p>
+              <p><strong>A "[warn] Node/npm not found" message during bootstrap?</strong> That's fine —
+              Node is only used to install the Claude Code CLI, which you already have from
+              Cycle&nbsp;4. The Python checks don't need it.</p>
+              <p><strong>"permission denied" running the script?</strong> Running it with
+              <code>bash</code> in front (as shown) sidesteps that. If errors remain, have Claude Code
+              read the message with you, or bring it to office hours.</p>
+            </div>
+          </details>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 5 when</strong> the kit is cloned, bootstrap has run, and
+      <code>pytest -m "not api"</code> comes back green — all passes and skips, no failures. That green
+      light is the whole point of pre-work.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 6 ============ -->
+  <section class="cycle" id="cycle-6">
+    <div class="cycle-head">
+      <div class="cycle-num">6</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 6</div>
+        <h2>Readiness check &amp; submit</h2>
+        <span class="time">≈ 15 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Last step: confirm everything is in place, then tell Kevin you're ready. This isn't busywork —
+      it's how he knows, before Day&nbsp;1, who's set up and who needs a quick huddle. Ten minutes now
+      saves a scramble on the first morning.</p>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run the final readiness checklist.</div>
+          <p class="step-why">Why: one last pass over everything above. From inside the kit folder with
+          the kit's venv active, these four checks should all come back clean:</p>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git --version
+code --version
+claude --version
+pytest -m "not api"</pre>
+          </div>
+          <p class="step-why">Plus the things a command can't check: you can sign in to
+          <span class="ph">[GH Enterprise URL]</span>, you cloned a repo from it in
+          Cycle&nbsp;2, and <code>import pandas</code> works. Tick each box below as you confirm it.</p>
+          <label class="done"><input type="checkbox" data-task="c6-git"> git installed &amp; verified</label>
+          <label class="done"><input type="checkbox" data-task="c6-vscode"> VS&nbsp;Code installed &amp; verified</label>
+          <label class="done"><input type="checkbox" data-task="c6-ghe"> GitHub Enterprise access + terminal &amp; VS&nbsp;Code clone working</label>
+          <label class="done"><input type="checkbox" data-task="c6-python"> Python 3.11+, venv, and <code>import pandas</code> working</label>
+          <label class="done"><input type="checkbox" data-task="c6-claude"> Claude Code installed, signed in, first prompt answered</label>
+          <label class="done"><input type="checkbox" data-task="c6-kit"> Kit cloned and smoke test green</label>
+        </li>
+
+        <li>
+          <div class="step-do">Send your readiness confirmation to Kevin.</div>
+          <p class="step-why">Why: so Kevin knows before Day&nbsp;1 who's ready and who needs a huddle.
+          Send a short note through the channel below saying you've finished pre-work — and flag
+          anything that's still shaky so it can be sorted at office hours before class.</p>
+          <div class="callout">
+            <span class="tag">How to submit</span>
+            <p>Submit your readiness confirmation via <span class="ph">[submission channel]</span>.</p>
+          </div>
+          <!-- TODO: submission channel — email? Slack channel? Google Form? (Kevin to decide and fill in) -->
+          <label class="done"><input type="checkbox" data-task="c6-submit"> Readiness confirmation sent to Kevin</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 6 — and with pre-work — when</strong> every box above is ticked
+      and you've sent your confirmation to Kevin. You're ready for Day&nbsp;1.</p>
+    </div>
+  </section>
+
+  <!-- ============ WRAP-UP ============ -->
+  <section>
+    <h2 class="section-title">You're ready — here's what's next</h2>
+
+    <div class="panel wrap-recap">
+      <h3>What you set up</h3>
+      <ul>
+        <li>A full development environment — terminal, VS&nbsp;Code, git, and Python with a clean venv</li>
+        <li>GitHub Enterprise access, authenticated from both the terminal and VS&nbsp;Code</li>
+        <li>Claude Code installed, signed in, and answering prompts</li>
+        <li>The course kit cloned and passing its green light (<code>pytest</code>)</li>
+        <li>A readiness confirmation sent to Kevin</li>
+      </ul>
+    </div>
+
+    <div class="narrative">
+      <p class="tomorrow">On Day&nbsp;1, we start from this foundation and build up: you'll meet the six
+      building blocks of an agentic system, write your first rule in a <code>CLAUDE.md</code>, and
+      point Claude Code at the Meridian kit for real. Because your bench already works, day one is
+      about ideas and building — not installers.</p>
+    </div>
+
+    <div class="callout">
+      <span class="tag">A reminder</span>
+      <p>If any part of this pre-work is still not green, that's exactly what office hours are for —
+      <span class="ph">[office hours schedule]</span>. Come with the error message; most snags are a
+      one-line fix.</p>
+    </div>
+
+    <div class="panel curious">
+      <h3>If you're curious (optional reading)</h3>
+      <ul class="learn">
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building Effective AI Agents</a> — Anthropic on what agents are and the patterns behind them</li>
+        <li><a href="https://code.claude.com/docs/en/overview" target="_blank" rel="noopener">Claude Code overview</a> — the official docs for the coding partner you'll use all week</li>
+        <li><a href="https://code.claude.com/docs/en/best-practices" target="_blank" rel="noopener">Best practices for Claude Code</a> — how experienced users direct the agent well (intent-based development in practice)</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Pre-Work · Complete before Day 1 · Prototype skeleton for review
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-prework-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Copy-to-clipboard buttons ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      var text = pre.innerText;
+      var done = function () {
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var r = document.createRange(); r.selectNode(pre);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        try { document.execCommand("copy"); } catch (e) {}
+        sel.removeAllRanges(); done();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
