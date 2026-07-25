@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Assessment Survey · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (matched to the course day pages) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --ok:       #1c7a52;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 720px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header.site {
+    background: var(--ink);
+    color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .doc {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600; color: #fff;
+  }
+  .site .doc em { color: #c9a227; font-style: normal; }
+
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ---------- Opener ---------- */
+  .opener { margin-top: 40px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif);
+    font-size: 38px; line-height: 1.12; font-weight: 600;
+    margin: 0 0 16px; letter-spacing: -.01em;
+  }
+  .intro {
+    background: var(--info-bg);
+    border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px; margin: 18px 0 0;
+    color: #2c3a4a;
+  }
+  .intro p { margin: 0; }
+  .intro p + p { margin-top: 10px; }
+
+  /* ---------- Instructor note (screen only) ---------- */
+  .note {
+    border: 1px dashed #c9a227;
+    background: #fbfaf5;
+    border-radius: var(--radius);
+    padding: 12px 18px; margin: 22px 0 0;
+    font-size: 14px; color: #7a5c0a;
+  }
+  .note strong { color: #6b4f08; }
+
+  /* ---------- Questions ---------- */
+  .questions { margin-top: 36px; list-style: none; padding: 0; counter-reset: q; }
+  .q {
+    counter-increment: q;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px 22px 64px;
+    margin: 0 0 16px;
+    position: relative;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .q::before {
+    content: counter(q);
+    position: absolute; left: 20px; top: 20px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .q .prompt {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600; line-height: 1.35;
+    margin: 0 0 4px; color: var(--ink);
+  }
+  .q .sub {
+    font-size: 13.5px; color: var(--faint); margin: 0 0 14px;
+  }
+
+  /* radio option list */
+  .opts { margin: 8px 0 0; padding: 0; list-style: none; }
+  .opts li {
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 7px 0; font-size: 16px; color: #33414f;
+  }
+  .radio {
+    flex: 0 0 auto; margin-top: 2px;
+    width: 17px; height: 17px; border-radius: 50%;
+    border: 2px solid var(--brand); background: #fff;
+  }
+  .scalehint {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--faint); margin: 2px 0 8px;
+    text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+  }
+
+  /* short-answer lines */
+  .short { margin: 12px 0 2px; }
+  .short .line {
+    border-bottom: 1px solid #c7cfd8;
+    height: 30px;
+  }
+  .short.small .line { height: 30px; }
+  .short .line + .line { margin-top: 6px; }
+  .short-hint { font-size: 13px; color: var(--faint); margin: 0 0 8px; }
+  .inline-box {
+    display: inline-block; min-width: 120px;
+    border-bottom: 1px solid #c7cfd8; height: 26px; margin-left: 6px;
+    vertical-align: bottom;
+  }
+
+  .kind-tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--brand-dk); background: var(--info-bg);
+    border: 1px solid #cfdcf7; border-radius: 4px;
+    padding: 1px 8px; margin-left: 8px; vertical-align: middle;
+  }
+  .kind-tag.short { color: #8a6d10; background: #fbfaf5; border-color: #ece3c2; }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 32px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---------- Print ---------- */
+  @media print {
+    body { background: #fff; font-size: 12pt; }
+    header.site { background: #fff; color: var(--ink); border-bottom: 2px solid var(--ink); }
+    .site .course { color: var(--muted); }
+    .site .doc { color: var(--ink); }
+    .site .doc em { color: var(--ink); }
+    .note { display: none; }
+    .q { border-color: #999; box-shadow: none; }
+    .q::before { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+    .radio { border-color: var(--ink); }
+    main { padding-bottom: 24px; }
+    .intro { background: #fff; border-left: 2px solid var(--ink); }
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .q { padding: 18px 18px 20px 56px; }
+    .q::before { left: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="doc">Skill Assessment <em>Survey</em></span>
+  </div>
+</header>
+
+<main>
+
+  <section class="opener">
+    <div class="kicker">Cohort readiness · 10 questions · ~5 minutes</div>
+    <h1>Where are you starting from?</h1>
+
+    <div class="intro">
+      <p>This survey helps Kevin understand your starting point so the bootcamp can meet you where you
+      are. There are no wrong answers, and nothing here is a test — an honest picture just lets the
+      week be paced for the people actually in the room.</p>
+      <p><strong>Your answers won't be shared with anyone else on your team.</strong></p>
+    </div>
+
+    <!-- This note is for Kevin while reviewing; it is hidden when the page is printed. -->
+    <div class="note">
+      <strong>Note for Kevin:</strong> this is a static, printable template — not a working form.
+      Review the questions here, then port them into Google&nbsp;Forms / Typeform / whatever you use to
+      actually collect responses.
+      <!-- TODO: choose a real collection tool (Google Forms / Typeform / etc.) and recreate these 10 questions there -->
+    </div>
+  </section>
+
+  <ol class="questions">
+
+    <!-- Q1 -->
+    <li class="q">
+      <p class="prompt">How comfortable are you opening a terminal or command prompt on your computer?</p>
+      <div class="scalehint"><span>Least</span><span>Most</span></div>
+      <ul class="opts">
+        <li><span class="radio"></span> Never done it</li>
+        <li><span class="radio"></span> I've seen one</li>
+        <li><span class="radio"></span> I use it occasionally</li>
+        <li><span class="radio"></span> I use it regularly</li>
+        <li><span class="radio"></span> Daily</li>
+      </ul>
+    </li>
+
+    <!-- Q2 -->
+    <li class="q">
+      <p class="prompt">Have you used git before?</p>
+      <ul class="opts">
+        <li><span class="radio"></span> Never heard of it</li>
+        <li><span class="radio"></span> Heard of it, never used it</li>
+        <li><span class="radio"></span> Used it via a GUI (GitHub Desktop, etc.)</li>
+        <li><span class="radio"></span> Used it via the command line occasionally</li>
+        <li><span class="radio"></span> Use it regularly</li>
+      </ul>
+    </li>
+
+    <!-- Q3 -->
+    <li class="q">
+      <p class="prompt">Have you ever written any code, in any language?</p>
+      <ul class="opts">
+        <li><span class="radio"></span> Never</li>
+        <li><span class="radio"></span> Excel formulas or HTML only</li>
+        <li><span class="radio"></span> Simple scripts</li>
+        <li><span class="radio"></span> Regular development</li>
+        <li><span class="radio"></span> Professional developer</li>
+      </ul>
+    </li>
+
+    <!-- Q4 -->
+    <li class="q">
+      <p class="prompt">Have you used Python specifically?</p>
+      <ul class="opts">
+        <li><span class="radio"></span> Never</li>
+        <li><span class="radio"></span> A little</li>
+        <li><span class="radio"></span> Comfortable</li>
+        <li><span class="radio"></span> Very comfortable</li>
+      </ul>
+    </li>
+
+    <!-- Q5 -->
+    <li class="q">
+      <p class="prompt">Do you know what an API is?</p>
+      <ul class="opts">
+        <li><span class="radio"></span> No</li>
+        <li><span class="radio"></span> Roughly</li>
+        <li><span class="radio"></span> Yes — I've read documentation</li>
+        <li><span class="radio"></span> Yes — I've used or built one</li>
+      </ul>
+    </li>
+
+    <!-- Q6 -->
+    <li class="q">
+      <p class="prompt">Have you used AI tools like ChatGPT, Claude, or Copilot?</p>
+      <ul class="opts">
+        <li><span class="radio"></span> Never</li>
+        <li><span class="radio"></span> Tried a few times</li>
+        <li><span class="radio"></span> Use occasionally</li>
+        <li><span class="radio"></span> Use weekly</li>
+        <li><span class="radio"></span> Use daily for work</li>
+      </ul>
+    </li>
+
+    <!-- Q7 -->
+    <li class="q">
+      <p class="prompt">How many years have you been administering or advising on User Access Reviews?<span class="kind-tag short">Short answer</span></p>
+      <p class="short-hint">A number is fine — e.g. "0", "under 1", "3", "10+".</p>
+      <div class="short small">
+        <div class="line"></div>
+      </div>
+    </li>
+
+    <!-- Q8 -->
+    <li class="q">
+      <p class="prompt">When something on your computer isn't working right, what do you usually do?</p>
+      <ul class="opts">
+        <li><span class="radio"></span> I feel stuck and wait for help</li>
+        <li><span class="radio"></span> I Google it and try things</li>
+        <li><span class="radio"></span> I open a ticket</li>
+        <li><span class="radio"></span> I usually figure it out myself</li>
+      </ul>
+    </li>
+
+    <!-- Q9 -->
+    <li class="q">
+      <p class="prompt">What are you most excited to learn or accomplish in this course?<span class="kind-tag short">Short answer</span></p>
+      <p class="short-hint">1–3 sentences.</p>
+      <div class="short">
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+      </div>
+    </li>
+
+    <!-- Q10 -->
+    <li class="q">
+      <p class="prompt">What worries you most about the course?<span class="kind-tag short">Short answer</span></p>
+      <p class="short-hint">1–3 sentences.</p>
+      <div class="short">
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+      </div>
+    </li>
+
+  </ol>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Skill Assessment Survey · Template for review — port to your form tool of choice
+</footer>
+
+</body>
+</html>
