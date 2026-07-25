@@ -232,6 +232,39 @@
   .daycard .open:hover { background: var(--brand-dk); }
   .daycard .open svg { width: 14px; height: 14px; }
 
+  /* ---------- Before you arrive (pre-work + survey) ---------- */
+  .prework {
+    background: var(--card); border: 1px solid var(--border);
+    border-left: 4px solid var(--brand);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 22px 24px 24px;
+  }
+  .prework .pwlede { margin: 0 0 18px; font-size: 16.5px; color: #33414f; max-width: 46em; }
+  .pwgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .pwcard {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px 20px; background: var(--bg);
+    transition: box-shadow .14s, transform .14s, border-color .14s;
+  }
+  .pwcard:hover { box-shadow: 0 6px 22px rgba(27,39,51,.09); transform: translateY(-2px); border-color: #cdd6e0; }
+  .pwcard .pwtag {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    font-weight: 700; color: var(--brand); margin-bottom: 6px;
+  }
+  .pwcard .pwtag.amber { color: #8a6d10; }
+  .pwcard h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 6px; }
+  .pwcard p { margin: 0 0 16px; font-size: 14.5px; color: #3a4653; }
+  .pwcard .open {
+    margin-top: auto; align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--brand); color: #fff; text-decoration: none;
+    font-size: 14px; font-weight: 600; padding: 9px 16px; border-radius: 6px;
+    transition: background .12s;
+  }
+  .pwcard .open:hover { background: var(--brand-dk); }
+  .pwcard .open svg { width: 14px; height: 14px; }
+
   /* ---------- The World ---------- */
   .worldlede { font-size: 18px; color: #33414f; max-width: 42em; margin: 0 0 24px; }
   .statrow {
@@ -527,6 +560,7 @@
     <span class="course">Claude Certified Architect</span>
     <span class="home">Course <em>Portal</em></span>
     <nav class="top">
+      <a href="#prework">Before You Arrive</a>
       <a href="#arc">The Arc</a>
       <a href="#days">Days</a>
       <a href="#world">The World</a>
@@ -550,6 +584,34 @@
       <p>You understand the building blocks of an agentic system — and can build one yourself
       using <em>intent-based development</em>: you describe what good looks like, and direct
       Claude Code to build it.</p>
+    </div>
+  </section>
+
+  <!-- ================= BEFORE YOU ARRIVE ================= -->
+  <section id="prework">
+    <h2 class="section-title"><span class="n">↳</span>Before you arrive</h2>
+    <div class="prework">
+      <p class="pwlede">Day&nbsp;1 assumes your laptop is already set up. Complete the pre-work in the
+      three weeks before class so the bootcamp is about building, not troubleshooting — and take the
+      quick skill survey so the week can be paced for the people actually in the room.</p>
+      <div class="pwgrid">
+        <div class="pwcard">
+          <div class="pwtag">Do this first · 4–6 hours over 3 weeks</div>
+          <h3>Pre-Work module</h3>
+          <p>Six short cycles: install your dev environment, get GitHub Enterprise access working,
+          set up Claude Code, clone the kit, and run the smoke test green. Fully ready for Day&nbsp;1.</p>
+          <a class="open" href="course/pre-work.html">Open the pre-work
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+        <div class="pwcard">
+          <div class="pwtag amber">~5 minutes · sent separately</div>
+          <h3>Skill assessment survey</h3>
+          <p>Ten quick questions on where you're starting from — terminal, git, Python, APIs, AI
+          tools, and access-review experience. No wrong answers; your responses stay private.</p>
+          <a class="open" href="course/skill-survey.html">View the survey
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
     </div>
   </section>
 
