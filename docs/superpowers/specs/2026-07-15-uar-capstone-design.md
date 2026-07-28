@@ -51,7 +51,7 @@ and subagents are not on that list but are retained because they serve the capst
 |---|---:|---|
 | Agentic Architecture & Orchestration | 27% | Module 3 — orchestrator and specialists |
 | Claude Code Configuration & Workflows | 20% | Module 2 — policies as Skills |
-| Prompt Engineering & Structured Output | 20% | Module 2 + the findings contract |
+| Prompt Engineering & Structured Output | 20% | Module 2 + the findings contract; efficiency (caching, batching) in Module 5 |
 | Tool Design & MCP Integration | 18% | Module 3 — agents call Meridian over MCP |
 | Context Management & Reliability | 15% | Module 1 + Module 5 |
 
@@ -257,10 +257,17 @@ Reviewer queue, "why is this flagged?" chat, approve/revoke, evidence trail. The
 demoable to someone who doesn't code — which is what makes it a proof of concept rather than a
 script.
 
-### Module 5 — Evals · *Reliability, 15%*
+### Module 5 — Evals · *Reliability, 15% + a slice of Prompt Engineering, 20%*
 
-Score against the labeled Q3 key. Catch rate, false-positive rate, and the uncomfortable discovery
-that improving one wrecks the other.
+Learners never hold the answer key — only the grading agent does, and only against a Q4 quarter
+they haven't seen (see the [Module 0 spec](./2026-07-22-module0-setup-kit-design.md)'s kit
+boundary). So Module 5 doesn't teach "score against the key" as originally sketched; it teaches
+building confidence in a system without ever seeing the number it's truly graded on, on two axes —
+**effectiveness** (schema/coverage checks, self-consistency, a learner-authored hand-labeled
+micro-key, an LLM-as-judge rationale rubric) and **efficiency** (cost per review, latency, prompt
+caching, and the Message Batches API against Module 3's several-hundred-call fan-out). Full design,
+including why efficiency now shares this module with effectiveness: the
+[Module 5 evals spec](./2026-07-28-module5-evals-design.md).
 
 ### Module 6 — Generalization & submission
 

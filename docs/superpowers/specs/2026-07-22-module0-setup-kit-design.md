@@ -21,7 +21,7 @@ The learner replaces the `run_review` stub and grows the system across Modules 1
 
 **No ground truth in the kit.** Learners never receive the answer key. They build their system, run it against the shipped Q3 data, and **submit their `findings.json`**. The instructor holds the answer key and evaluates the submitted output against it. This makes the kit simpler (no key to protect *within* the learner's own repo) and makes hard-coding-to-the-key impossible by construction — the learner has no key to code to.
 
-**Downstream implication (flagged, not solved here).** Module 5 (evals), as sketched in the parent spec, had learners "score against the labeled Q3 key." Because learners have no key, Module 5 must be reconceived into something achievable without ground truth (schema/coverage validation, self-consistency checks, or a small learner-hand-labeled eval). That is the Module 5 sub-project's problem; it also means the parent program spec's grading section needs a small reconciliation. Out of scope for Module 0 beyond this note.
+**Downstream implication — resolved.** Module 5 (evals), as originally sketched in the parent spec, had learners "score against the labeled Q3 key." Because learners have no key, Module 5 now teaches effectiveness techniques (schema/coverage validation, self-consistency, a learner-authored hand-labeled micro-key, an LLM-as-judge rationale rubric) alongside efficiency techniques (cost per review, latency, prompt caching, batch processing) — see the [Module 5 evals spec](./2026-07-28-module5-evals-design.md) for the full design. Out of scope for Module 0 beyond this note.
 
 ---
 
