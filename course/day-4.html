@@ -373,7 +373,8 @@
       findings-writer) coordinated by one orchestrator, running end to end against the full Q3 export
       to reproduce your nine-finding <code>findings.json</code>. Then the <strong>enforcement
       layer</strong>: a PreToolUse hook that refuses any write carrying a secret, and a PostToolUse
-      hook that logs every write to an audit trail.</p>
+      hook that logs every write to an audit trail. Finally, your first <strong>eval</strong>: proof the
+      pipeline is stable without an answer key, plus a real cost-per-finding number.</p>
     </div>
 
     <div class="panel">
@@ -385,6 +386,7 @@
         <li>How to give each specialist a narrow scope <em>and</em> a narrow toolset, and wire them in sequence</li>
         <li>How to run the full pipeline and prove it reproduces yesterday's exact answer</li>
         <li>What <em>hooks</em> are — how you <em>guarantee</em> behavior instead of asking for it — and use them as your audit and enforcement layer</li>
+        <li>How to check effectiveness without an answer key (self-consistency) and measure efficiency (cost per finding) — and where prompt caching and the Batch API fit in at production scale</li>
       </ul>
     </div>
 
@@ -1318,6 +1320,164 @@ git commit -m "Add PreToolUse secret-guard + PostToolUse audit hooks"</pre>
     </div>
   </section>
 
+  <!-- ============ CYCLE 6 ============ -->
+  <section class="cycle" id="cycle-6">
+    <div class="cycle-head">
+      <div class="cycle-num">6</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 6</div>
+        <h2>Evals: is it right, and is it cheap?</h2>
+        <span class="time">≈ 60 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>You've proved the pipeline reproduces Q3. That's one axis — <strong>effectiveness</strong>,
+      is it finding the right things. There's a second axis you haven't measured yet:
+      <strong>efficiency</strong> — is it doing that cheaply and quickly enough to actually run every
+      quarter. A system that's right but costs $40 and an hour to review 1,200 employees isn't
+      something a two-person IAM team will keep running. Today you check both, and — this is the
+      part that matters for tomorrow — you check effectiveness with a technique that doesn't depend
+      on already knowing the answer.</p>
+
+      <p><strong>Why not just diff against the known Q3 total again?</strong> Because tomorrow you
+      won't have a known total. Q4 is a quarter your pipeline has never seen, and neither have you —
+      there's no memorized number to check against. <strong>Self-consistency</strong> is the technique
+      that works without one: run the same review twice and confirm it lands on the same accounts, at
+      the same severities, both times. Divergence between two runs of an unchanged prompt means the
+      prompt is underspecified — it found something different, not something new — and that's a
+      defect you can catch today, on Q3, while you still have the known answer to fall back on if the
+      self-consistency check itself looks wrong.</p>
+
+      <div class="whatis">
+        <span class="tag">What is prompt caching, and does Claude Code do it for me?</span>
+        <p>Yes, automatically — Claude Code caches the shared prefix of a request (its own system
+        context, your subagent's definition, the tool list) so a repeated call doesn't re-process
+        content it's already seen. That's a large part of why your second Q3 run isn't as expensive as
+        the token count alone would suggest. It has one requirement: the shared part has to stay
+        <em>byte-identical</em> across calls. Edit a subagent's <code>.md</code> file mid-run, or let
+        something that varies — a timestamp, a run ID — leak into what's supposed to be shared context,
+        and every call after that point pays full price again, with no error to tell you it happened.
+        The lesson travels beyond Claude Code: any production system fanning the same instructions out
+        across many independent items lives or dies on keeping that shared prefix frozen.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What about the Batch API? (Not a task today — a heads-up for scale.)</span>
+        <p>Anthropic's Message Batches API cuts cost roughly in half by processing independent,
+        single-shot requests asynchronously — a fit for exactly the shape of a quarterly review: a few
+        hundred candidate accounts, each analyzed independently, with the answer needed by tomorrow, not
+        this second. It's the wrong tool for the loop you've been running all day, though — that's
+        iterative and interactive, and batch turnaround runs minutes to hours. That split — synchronous
+        for the tight debugging loop, batch for the once-a-quarter full run — is the same reason
+        <code>run_review</code>'s <code>limit</code> parameter exists at all. You won't wire up the
+        Batch API in this course; recognizing where it would go if this ran for a real client every
+        quarter is the point.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Re-run the full Q3 pipeline a second time and diff it against the first.</div>
+          <p class="step-why">Why: this is the technique you'll lean on tomorrow, when there's no known
+          answer to check against. Prove to yourself it works today, while there still is one.</p>
+
+          <p><strong>What you're building.</strong> A second, independent <code>findings.json</code> —
+          same export, same subagent definitions, same prompt, run again from a clean start. Don't
+          overwrite your first run; save this one somewhere you can diff (a copy, a second branch, or
+          just note the account sets by hand).</p>
+
+          <p><strong>How you'll know you got it right.</strong> The same nine accounts, the same three
+          categories, the same severities, both times. That's a stable prompt. Any account that shows up
+          in one run and not the other is the signal a hidden-answer eval is supposed to give you — and
+          you're seeing it here, for free, before Q4 makes it the only signal you have.</p>
+
+          <label class="done"><input type="checkbox" data-task="c6-s1"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — the two runs don't match</summary>
+            <div class="body">
+              <p><strong>An account flips categories or drops out entirely?</strong> That's a specialist
+              whose verdict depends on something that shouldn't matter — ordering, an ambiguous case near
+              a threshold, or a prompt that leaves room for two readings. Look at that one account's
+              dossier and ask what a stricter prompt would have to say to force the same call both
+              times.</p>
+              <p><strong>Everything matches except a citation or a rationale sentence?</strong> That's
+              usually fine — wording varies run to run even when the verdict doesn't. Divergence in the
+              <em>verdict</em> (category, severity, account) is the kind worth chasing; divergence in
+              phrasing alone isn't.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Read your run's cost and duration, and compute cost per finding.</div>
+          <p class="step-why">Why: this is the number that actually gets asked about once this stops
+          being nine findings in a classroom and starts being a real quarterly review.</p>
+
+          <p><strong>What you're building.</strong> One line you can say out loud: what your Q3 review
+          cost, and what each finding cost to produce. Claude Code tracks spend and duration for the
+          current session automatically — after a full run, ask for it:</p>
+          <div class="code labeled">
+            <span class="kind">Claude Code</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>/cost</pre>
+          </div>
+          <div class="terminal">
+<span class="cmd">/cost</span>
+<span class="out">Total cost:              $2.14
+Total duration (API):    4m 12s
+Total duration (wall):   6m 40s</span>
+          </div>
+
+          <p><strong>How you'll know you got it right.</strong> You can state two numbers: total cost
+          for the run, and cost ÷ nine findings. That second number is the one that matters — it's what
+          tells you whether the pipeline is cheap because it's efficient or cheap because it isn't
+          finding much.</p>
+
+          <label class="done"><input type="checkbox" data-task="c6-s2"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Note, briefly, where caching and batching would matter at production scale.</div>
+          <p class="step-why">Why: naming the lever is most of learning it. One or two sentences, in
+          your commit message or a short comment, is enough — this isn't a today-task, it's recognizing
+          where today's numbers stop scaling.</p>
+
+          <p><strong>What you're building.</strong> A short, honest note: at 1,200 employees instead of
+          the handful behind today's nine findings, would your cost-per-finding number hold, or would it
+          need caching and batching to stay affordable? Which of your specialist prompts is the
+          expensive, repeated part that caching would protect?</p>
+
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git add .
+git commit -m "Confirm self-consistency; log cost per finding (\$0.24)"</pre>
+          </div>
+
+          <p><strong>How you'll know you got it right.</strong> You can point at one specific part of
+          your pipeline — a specialist's system prompt, a policy Skill it loads — and say why that's the
+          part caching protects, and why a few hundred independent candidate calls once a quarter is
+          exactly the shape the Batch API is for.</p>
+
+          <label class="done"><input type="checkbox" data-task="c6-s3"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 6 when</strong> a second Q3 run reproduces the same nine
+      findings with no drift, you can state your run's total cost and its cost per finding from
+      <code>/cost</code>, and you've written down where caching and batching would apply if this ran
+      for a real client every quarter. You now have two tools for judging your own system — one for
+      "is it right," one for "is it affordable" — and neither one needed an answer key.</p>
+    </div>
+  </section>
+
   <!-- ============ VERIFICATION ============ -->
   <section class="verify">
     <h2 class="section-title">Prove it landed</h2>
@@ -1372,6 +1532,9 @@ tests/test_hooks.py .......                                   [100%]
         <li><strong>An enforcement layer.</strong> A PostToolUse audit hook writing every change to
         <code>audit/2026-Q3.jsonl</code>, and a PreToolUse guard that denies any write carrying a secret
         — a guarantee, not a request.</li>
+        <li><strong>Your first eval, without an answer key.</strong> A self-consistency check —
+        the same nine findings, twice — and a real cost-per-finding number from <code>/cost</code>,
+        plus a name for where prompt caching and the Batch API would matter at production scale.</li>
       </ul>
       <p style="margin-top:14px">Worth noticing: the two hooks aren't interchangeable, and knowing which
       is which is the real lesson. Only a PreToolUse hook can stop a write before it lands; a PostToolUse
