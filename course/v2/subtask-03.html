@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 3 — Run the kit's green light · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>03</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-02.html"><span class="arr">←</span> Sub-task 2 · Get a bench</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme A · Foundations · Sub-task 3 of 7</div>
+    <h1>Run the kit's green light and read what it tells you</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-02.html">Sub-task 2</a>&nbsp;— you need git and a terminal</span>
+      <span class="chip time"><b>Time:</b>&nbsp;≈ 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;installation + verification</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">Python</span>
+        <span class="term">virtual environment (venv)</span>
+        <span class="term">pytest</span>
+        <span class="term">skipped vs failed</span>
+      </div>
+      <p class="note">The kit's test suite is the green light you'll return to after every change for the rest of the course. Today you learn to read it.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">The course ships with a kit: the Meridian data, some starter code, and — the part that matters — a test suite. That suite is your green light. Every time you change something from here on, it's the thing that tells you whether you broke it.</p>
+      <p>So the goal today isn't just to get the tests passing. It's to run them and be able to explain <em>every line</em> of what comes back — including the eleven tests that don't run at all. Reading that output correctly is a skill, and most people get it wrong the first time in a way that quietly costs them later.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain what a virtual environment is and why this project insists on one</li>
+        <li>Install the kit and run its offline test suite</li>
+        <li>Tell the difference between a <em>skipped</em> test and a <em>failed</em> one — and explain why 11 skips is the correct result today</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A skip is not a failure. Confusing the two will cost you a day.</h3>
+
+      <p>When you run the tests today, you'll get something like <strong>33 passed, 11 skipped,
+      1 deselected</strong> — and no failures. Many people see "11 skipped" and assume something
+      is broken. Nothing is broken. Those eleven tests are checking work you haven't done yet,
+      and they're politely standing down until you have.</p>
+
+      <p>This is a deliberate design in the kit, and it's the single most useful thing about it:
+      as you complete later sub-tasks, skips turn into passes. The suite is a progress bar. But
+      only if you can read it — which means knowing, for each skip, <em>which</em> future piece
+      of work it's waiting on.</p>
+
+      <div class="whatis">
+        <span class="tag">What is Python, and what is a virtual environment?</span>
+        <p><strong>Python</strong> is the programming language this kit is written in. You will
+        not be writing much of it by hand — but you'll read a lot of it, and you need it
+        installed to run anything.</p>
+        <p>A <strong>virtual environment</strong> (venv) is a private box of Python packages
+        that belongs to one project. Without one, every project on your machine shares a single
+        set of libraries, and two projects that need different versions of the same library will
+        break each other. With one, this project's dependencies sit in a <code>.venv</code>
+        folder inside the project and touch nothing else. You <em>activate</em> it to step
+        inside, and everything you install goes in that box.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is pytest?</span>
+        <p>The tool that finds and runs the kit's tests. Each test is a small function that
+        makes one claim about the code and checks it. Run them all and you get a one-line
+        verdict on whether the project is in a good state.</p>
+        <p>Its output uses one character per test: <code>.</code> passed, <code>s</code>
+        skipped, <code>F</code> failed. A line of dots with a few <code>s</code>s in it is a
+        healthy run. A single <code>F</code> is the thing you stop and read.</p>
+      </div>
+
+      <p><strong>What "deselected" means.</strong> One test in the kit makes a real, billable
+      call to Claude. It's tagged so you can exclude it, and <code>-m "not api"</code> is what
+      excludes it — that's the <em>1 deselected</em>. You'll switch it on in sub-task 4. Until
+      then, every check you run is free and offline.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Get the kit and open it</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Clone the course repository.</div>
+          <p class="step-why">Why: <code>git clone</code> copies a repository — with its whole
+          history — onto your machine. Your instructor supplies the URL; paste it in place of
+          the placeholder.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git clone &lt;repository-url&gt;
+cd claudecourse</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s3-clone"> The folder exists and I'm inside it</label>
+        </li>
+        <li>
+          <div class="step-do">Look around before you run anything.</div>
+          <p class="step-why">Why: thirty seconds of orientation now saves a lot of confusion
+          later. <code>ls</code> (macOS) or <code>dir</code> (Windows) lists what's here.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ls</pre>
+          </div>
+          <p class="step-why">Four things to notice: <code>data/</code> holds Meridian's exports,
+          <code>src/</code> holds the kit's code, <code>tests/</code> holds the green light, and
+          <code>CLAUDE.md</code> is a rules file you'll meet properly in sub-task 7.</p>
+          <label class="done"><input type="checkbox" data-task="s3-look"> I can name what those four are for</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Build the box and install the kit into it</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Create the virtual environment.</div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python3 -m venv .venv</pre>
+          </div>
+          <p class="step-why">On Windows use <code>python -m venv .venv</code>. This creates a
+          <code>.venv</code> folder. The leading dot just means most file browsers hide it.
+          Nothing has changed about your machine yet — you've only built an empty box.</p>
+          <label class="done"><input type="checkbox" data-task="s3-venv"> A <code>.venv</code> folder now exists</label>
+        </li>
+        <li>
+          <div class="step-do">Activate it.</div>
+          <p class="step-why">Why: this is the step people forget, and forgetting it is the
+          cause of roughly half of all "it doesn't work" moments in this course.</p>
+          <div class="code labeled">
+            <span class="kind">terminal · macos</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>source .venv/bin/activate</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">powershell · windows</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>.venv\Scripts\Activate.ps1</pre>
+          </div>
+          <p class="step-why">Your prompt should now start with <code>(.venv)</code>. That
+          prefix is the whole point — it's how you know you're inside the box. <strong>It
+          disappears every time you close the terminal</strong>, so expect to run this line at
+          the start of every working session.</p>
+          <label class="done"><input type="checkbox" data-task="s3-activate"> My prompt starts with <code>(.venv)</code></label>
+        </li>
+        <li>
+          <div class="step-do">Install the kit.</div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m pip install -e ".[dev]"</pre>
+          </div>
+          <p class="step-why">This reads the project's dependency list and installs it into your
+          venv. The <code>-e</code> means "editable" — the installed kit points at these files
+          rather than copying them, so your edits take effect immediately. The
+          <code>[dev]</code> adds pytest. Expect a wall of scrolling text ending in
+          <em>Successfully installed</em>.</p>
+          <label class="done"><input type="checkbox" data-task="s3-install"> Install finished without an error</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Windows: "running scripts is disabled on this system".</strong> PowerShell
+          blocks scripts by default. Run
+          <code>Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</code>,
+          answer <code>Y</code>, then activate again. This affects only your own user account.</p>
+          <p><strong>There's a shortcut, by the way.</strong> The kit ships a script that does
+          all of Task 2 in one go: <code>bash scripts/bootstrap.sh</code> on macOS, or
+          <code>powershell -ExecutionPolicy Bypass -File scripts\bootstrap.ps1</code> on
+          Windows. Use it if you get stuck — but read the steps above first, because when
+          something breaks later you'll need to know what it did.</p>
+          <p><strong>"pip: command not found".</strong> Use <code>python -m pip</code> rather
+          than bare <code>pip</code> — that's why the command above is written that way. If
+          <code>python</code> isn't found either, try <code>python3</code>.</p>
+          <p><strong>I closed my terminal and everything broke.</strong> You left the box.
+          <code>cd</code> back to the project folder and activate again. This will happen more
+          than once; it's normal.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Run the green light, then make it explain itself</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run the offline test suite.</div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"</pre>
+          </div>
+          <p class="step-why">The <code>-m "not api"</code> excludes the one test that costs
+          money. Expect roughly this:</p>
+          <div class="terminal">
+            <div class="cmd">pytest -m "not api"</div>
+            <div class="out">.............s...................sssssss.                        [100%]
+
+33 passed, 11 skipped, 1 deselected in 0.70s</div>
+          </div>
+          <p class="step-why">Your numbers should match. What matters is <strong>zero
+          failures</strong>.</p>
+          <label class="done"><input type="checkbox" data-task="s3-pytest"> 33 passed, 11 skipped, 1 deselected — no failures</label>
+        </li>
+        <li>
+          <div class="step-do">Now ask pytest <em>why</em> it skipped those eleven.</div>
+          <p class="step-why">Why: this is the actual lesson. The <code>-rs</code> flag means
+          "report the reason for each skip". Well-written tests explain themselves, and these do.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api" -rs</pre>
+          </div>
+          <p class="step-why">You'll get a block like this:</p>
+          <div class="terminal">
+            <div class="out">SKIPPED [1] tests/test_ledger.py:38: No Day 2 artifacts found
+  at the repository root...
+SKIPPED [1] tests/test_skills.py:38: No .claude/skills/ directory
+  found...
+SKIPPED [1] tests/test_pipeline.py:31: No .claude/agents/ directory
+  found...
+SKIPPED [1] tests/test_hooks.py:163: No hooks configured in
+  .claude/settings.json yet...
+SKIPPED [7] tests/test_transfer.py: findings.2026-Q4.json not
+  produced yet...</div>
+          </div>
+          <p class="step-why">Read every line. Each one names a thing you haven't built yet —
+          the ledger, the skills, the subagent pipeline, the hooks, the second-quarter run. Those
+          are the six building blocks from sub-task 1, waiting for you.</p>
+          <label class="done"><input type="checkbox" data-task="s3-skips"> I read all the skip reasons</label>
+        </li>
+        <li>
+          <div class="step-do">Write one line in your notes: what has to become true for the
+          skips to become passes?</div>
+          <p class="step-why">Why: this reframes the whole course as a single measurable goal.
+          You now have an objective definition of "finished" that doesn't depend on anyone's
+          opinion — including mine.</p>
+          <label class="done"><input type="checkbox" data-task="s3-note"> Noted</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>"pytest: command not found".</strong> Either the venv isn't active (check
+          for <code>(.venv)</code> in your prompt) or the install didn't finish. Reactivate,
+          reinstall, retry.</p>
+          <p><strong>I get failures, not skips.</strong> That's worth stopping for. Read the
+          first failure only — later ones are often knock-on effects. The most common cause is
+          running from the wrong folder: you must be in the repository root, the folder
+          containing <code>pyproject.toml</code>.</p>
+          <p><strong>My numbers are slightly different.</strong> If you have zero failures and
+          around eleven skips, you're fine — the kit evolves. If <em>passed</em> is much lower
+          than 33, something didn't install.</p>
+          <p><strong>The skip messages mention "Day 2", "Day 4" — but this course has
+          sub-tasks.</strong> Correct, and mildly confusing. The kit's test messages use the
+          course's earlier day-based names. Map them by building block: ledger, skills,
+          subagents, hooks, transfer.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><code>pytest -m "not api"</code> reports <strong>33 passed, 11 skipped, 1 deselected</strong>
+      with no failures — and you can answer these three without looking:</p>
+      <ul>
+        <li>Why is a skip not a failure here?</li>
+        <li>What is the 1 deselected test, and why is it excluded?</li>
+        <li>Name two things that must exist before some of those skips become passes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://docs.python.org/3/library/venv.html">Python venv documentation</a>
+        — the official explanation of the box you just built.</li>
+        <li><a href="https://docs.pytest.org/">pytest documentation</a> — the "How to invoke
+        pytest" page covers the flags you'll actually use.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-02.html"><span class="arr">←</span> Sub-task 2</a>
+    <a class="navbtn next" href="subtask-04.html">Sub-task 4 · Store a secret, then talk to Claude Code <span class="arr">→</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Theme A · Sub-task 3 of 7
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask03-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask03-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
