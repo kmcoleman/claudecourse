@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sub-task 7 — Write Rules that change how Claude behaves · Claude Certified Architect</title>
+<title>Sub-task 8 &mdash; Load the raw data and prove it has three planted messes &middot; Claude Certified Architect</title>
 <style>
   /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
   :root {
@@ -350,7 +350,7 @@
 <header class="site">
   <div class="site-inner">
     <span class="course">Claude Certified Architect</span>
-    <span class="where">Sub-task <em>07</em></span>
+    <span class="where">Sub-task <em>08</em></span>
     <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
   </div>
 </header>
@@ -358,269 +358,316 @@
 <main>
 
   <div class="navrow top">
-    <a class="navbtn" href="subtask-06.html"><span class="arr">←</span> Sub-task 6 · Break it three ways</a>
+    <a class="navbtn" href="subtask-07.html"><span class="arr">&larr;</span> Sub-task 7 &middot; Write Rules that change behaviour</a>
   </div>
 
   <section class="opener">
-    <div class="kicker">Theme A · Foundations · Sub-task 7 of 7</div>
-    <h1>Write Rules that visibly change how Claude behaves</h1>
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 1 of 5</div>
+    <h1>Load the raw data and prove it has three planted messes</h1>
 
     <div class="metastrip">
-      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-06.html">Sub-task 6</a>&nbsp;— you need the failure modes card</span>
-      <span class="chip time"><b>Time:</b>&nbsp;≈ 45 min</span>
-      <span class="chip"><b>Type:</b>&nbsp;building block #1</span>
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-07.html">Sub-task 7</a>&nbsp;&mdash; your rules are in <code>CLAUDE.md</code>, and the bench is green</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; foundations</span>
     </div>
 
     <div class="firstappear">
       <span class="tag">First appearance</span>
       <div class="terms">
-        <span class="term">Rules</span>
-        <span class="term">CLAUDE.md</span>
+        <span class="term">pandas</span>
+        <span class="term">DataFrame</span>
+        <span class="term">seed lock</span>
       </div>
-      <p class="note">The first of the six building blocks. After this sub-task, Theme A is complete.</p>
+      <p class="note">Theme A was about the tool. Theme B is about the data underneath it. Nothing here involves an agent &mdash; that's the point.</p>
     </div>
 
     <div class="narrative">
-      <p class="lede">Everything so far has been preparation. This is the first of the six building blocks you mapped in sub-task 1 — and the simplest: a file of standing instructions that Claude reads at the start of every session.</p>
-      <p>The reason it goes first is that it's the cheapest possible demonstration of the course's real subject. You'll take a prompt that produced behaviour you didn't want, write down a rule, and run the same prompt again. Same question, different answer — and you changed nothing but a text file.</p>
+      <p class="lede">Before you can review Meridian's access, you have to be able to read
+      Meridian's exports. That sounds trivial. It is not, and the ten minutes you spend proving
+      it is the cheapest ten minutes in this course.</p>
+      <p>Both files here are real-shaped: the sort of thing a client actually sends when you ask
+      for &quot;the HR roster and the entitlements dump&quot;. They came out of two different
+      systems, maintained by two different teams, with two different ideas about how to write a
+      date. Three specific messes are planted in them. Your job in this sub-task is not to fix
+      any of them &mdash; it's to <em>measure</em> all three, so that later, when a number looks
+      wrong, you know whether the data or your code is lying.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll understand and do</h3>
       <ul class="objectives">
-        <li>Explain what <code>CLAUDE.md</code> is and when a rule belongs in it</li>
-        <li>Write project rules that are specific enough to actually change behaviour</li>
-        <li>Demonstrate the change with a before-and-after pair of transcripts</li>
+        <li>Load a CSV into a <code>DataFrame</code> and report its shape without printing it</li>
+        <li>Measure the three data-quality defects in the Q3 export, exactly</li>
+        <li>Explain why the export is <em>seed-locked</em>, and what that lets you assert</li>
       </ul>
     </div>
   </section>
 
-
   <section>
     <h2 class="section-title">Concept</h2>
-
     <div class="concept">
       <div class="label">The one idea</div>
-      <h3>A rule is a correction you only have to make once.</h3>
+      <h3>Every number you report later is bounded by the data you didn't look at.</h3>
 
-      <p>You've now had several sessions with Claude Code. You've probably repeated yourself:
-      <em>don't change that file</em>, <em>show me the count</em>, <em>don't paste the data in</em>.
-      Every one of those repetitions is a rule you haven't written down yet.</p>
+      <p>A user access review ends with a sentence like &quot;we found 14 accounts that should
+      be revoked.&quot; That sentence is only as good as the join underneath it. If 12% of
+      accounts never matched a person, your 14 is really &quot;14, plus whatever is hiding in
+      the 12% I silently dropped.&quot;</p>
 
-      <p><strong>Rules</strong> — building block one — live in a file called
-      <code>CLAUDE.md</code> at the root of your project. Claude reads it at the start of every
-      session, so anything in it applies to every task without you asking. This repository
-      already has one; you'll read it, then extend it.</p>
+      <p>Auditors do not accept that, and they are right not to. So the discipline is: measure
+      the defects first, in the open, with numbers. Then every later claim can be stated with its
+      own error bars attached.</p>
 
       <div class="whatis">
-        <span class="tag">What is <code>CLAUDE.md</code>?</span>
-        <p>A plain markdown file of persistent project instructions. No special syntax — headers
-        and bullets. It's shared through git, so a rule you write applies to your whole team.</p>
-        <p>Rule of thumb for what goes in: <em>anything you've had to say twice.</em> Build
-        commands, conventions, things that must never be touched, how to check work is correct.
-        Keep it short — under about 200 lines. Long files get followed less reliably, not more.</p>
+        <span class="tag">What is pandas, and what is a DataFrame?</span>
+        <p><strong>pandas</strong> is the standard Python library for tabular data.
+        A <strong>DataFrame</strong> is its table type &mdash; rows, named columns, and a large
+        set of operations that work on whole columns at once instead of one row at a time.</p>
+        <p>You will use perhaps eight of its features in this whole theme:
+        <code>read_csv</code>, <code>.shape</code>, <code>.columns</code>,
+        <code>.nunique()</code>, <code>.value_counts()</code>, <code>.duplicated()</code>,
+        <code>.merge()</code>, and <code>.to_csv()</code>. You do not need to learn pandas.
+        You need to be able to read what Claude writes with it and tell whether it's right.</p>
       </div>
 
-      <p><strong>The honest limitation, stated up front.</strong> <code>CLAUDE.md</code> is
-      context, not enforcement. Claude reads your rules and tries to follow them, but nothing
-      <em>blocks</em> a violation. Specific, concrete rules are followed far more reliably than
-      vague ones — "don't paste more than 50 rows of CSV into your reply" beats "be careful with
-      data" — but a rule is guidance.</p>
+      <p><strong>The seed lock.</strong> The export in <code>data/2026-Q3/</code> was generated
+      from a fixed random seed. That means every number on this page is <em>exact</em>, not
+      approximate, and it will be exact on your machine too. If your count differs by one, one of
+      us is wrong &mdash; and the whole point of a seed lock is that you get to find out which.</p>
 
-      <p>When something must be impossible rather than discouraged, you need a different block:
-      <strong>Hooks</strong>, number five on your map, which run as actual code and can refuse.
-      Rules are the cheap 80%; hooks are the guarantee. Knowing which you need is a large part of
-      designing these systems well.</p>
+      <div class="whatis">
+        <span class="tag">Why this sub-task bans agents</span>
+        <p>You could ask Claude &quot;what's wrong with this data?&quot; and get a plausible
+        essay. You would have no way to check it. Counting rows is not a judgment call, and
+        anything that isn't a judgment call belongs in code &mdash; a principle you'll name
+        explicitly in sub-task 11.</p>
+      </div>
     </div>
   </section>
 
   <section>
     <h2 class="section-title">Do this</h2>
-
     <div class="task">
       <div class="label">Task 1</div>
-      <h3>Capture the "before"</h3>
+      <h3>Get the two files into memory and report their shape</h3>
       <ol class="steps">
         <li>
-          <div class="step-do">Read the rules that already exist.</div>
-          <p class="step-why">Why: this repository ships a <code>CLAUDE.md</code>. Open it in VS
-          Code and read it — it names a frozen function signature, says reconciliation is done in
-          code while judgment is done by agents, and points at the test suite as the green light.
-          Every one of those is a correction someone got tired of repeating.</p>
-          <label class="done"><input type="checkbox" data-task="s7-read"> I've read the existing <code>CLAUDE.md</code></label>
+          <div class="step-do">Confirm pandas is available in your virtual environment.</div>
+          <p class="step-why">Why: it's a dependency of the kit, so it should already be there
+          from sub-task 2. Check rather than assume.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -c "import pandas; print(pandas.__version__)"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s8-pandas"> pandas imports</label>
         </li>
         <li>
-          <div class="step-do">Run a prompt that invites the behaviour you don't want — and save
-          what you get.</div>
-          <p class="step-why">Why: you need a documented "before". Start a fresh session
-          (<code>/clear</code>) and ask:</p>
-          <div class="code prompt labeled">
-            <span class="kind">prompt · before</span>
+          <div class="step-do">Direct Claude to write <code>explore.py</code> &mdash; a script that
+          loads both files and reports their shape.</div>
+          <p class="step-why">Why: a script, not a chat answer. You want to be able to re-run this
+          after every change you make in this theme, and you want the numbers on screen rather
+          than in a transcript you'll lose.</p>
+          <p class="step-why">State the intent yourself. What it has to do: read
+          <code>data/2026-Q3/hr_roster.csv</code> and
+          <code>data/2026-Q3/entitlements.csv</code> with pandas, and print row and column counts
+          for each, the column names, and a handful of distinct-value counts. What it must
+          <em>not</em> do: print the tables. Your <code>CLAUDE.md</code> rule from sub-task 7
+          already says this &mdash; watch whether it's honoured.</p>
+          <label class="done"><input type="checkbox" data-task="s8-script"> <code>explore.py</code> exists and runs</label>
+        </li>
+        <li>
+          <div class="step-do">Check the shape against these numbers.</div>
+          <p class="step-why">Why: these are exact. The export is seed-locked.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Show me the entitlements data for Q3 and tell me which accounts look risky.</pre>
+            <pre>hr_roster.csv       1190 rows x 9 columns
+entitlements.csv   15188 rows x 7 columns
+
+entitlements: 1200 distinct account_id
+              1188 distinct account_name
+                22 distinct app
+                31 distinct role
+
+hr_roster:    1190 distinct employee_id
+              1176 active / 10 terminated / 4 on_leave
+              1073 FTE / 117 Contractor</pre>
           </div>
-          <p class="step-why">That file has <strong>15,188 rows</strong> across 22 applications.
-          The prompt quietly invites two bad habits: dumping bulk data into the conversation, and
-          calling accounts "risky" against no stated policy. Watch how much data comes back, and
-          whether it says what "risky" means.</p>
-          <p class="step-why">Copy the reply into your notes as <strong>BEFORE</strong>.</p>
-          <label class="done"><input type="checkbox" data-task="s7-before"> BEFORE transcript saved</label>
+          <p class="step-why">Two of those lines should already bother you.
+          <strong>1,200 accounts but only 1,188 distinct account names</strong> &mdash; so some
+          name owns more than one account. And <strong>1,190 people but 1,200 accounts</strong>
+          &mdash; there are more accounts than humans. Both are sub-task 9's problem. Note them
+          and move on.</p>
+          <label class="done"><input type="checkbox" data-task="s8-shape"> My shapes match exactly</label>
         </li>
       </ol>
 
       <details class="stuck">
         <summary>Stuck?</summary>
         <div class="body">
-          <p><strong>It behaved well — it didn't dump anything.</strong> Quite likely; the
-          existing <code>CLAUDE.md</code> is already doing work, and that's a finding in itself.
-          Note precisely what it <em>did</em> do. You can still improve it: did it define
-          "risky"? Did it cite a policy? Did it show its evidence? Aim your new rules at whatever
-          it left vague.</p>
-          <p><strong>It dumped hundreds of rows into my terminal.</strong> Perfect — you have a
-          vivid BEFORE. That's slow, expensive, and in a real engagement it's client data
-          sprayed into a transcript.</p>
+          <p><strong>ModuleNotFoundError: pandas.</strong> The venv isn't active, or the editable
+          install from sub-task 2 didn't finish. Reactivate it &mdash; you should see the
+          environment name in your shell prompt &mdash; and reinstall.</p>
+          <p><strong>FileNotFoundError.</strong> The paths above are relative to the repository
+          root, the folder that contains <code>pyproject.toml</code>. Run the script from there,
+          or have it resolve paths relative to its own location.</p>
+          <p><strong>Claude printed the whole table anyway.</strong> Worth pausing on. You wrote
+          a rule against exactly this in sub-task 7. Did it get followed? Rules are guidance, not
+          enforcement &mdash; this is that lesson arriving with a concrete cost attached.</p>
+          <p><strong>My numbers are close but not equal.</strong> Then something is wrong and it's
+          worth finding. The most common cause is reading <code>data/2026-Q4/</code>, which also
+          ships in this repo for a much later sub-task.</p>
         </div>
       </details>
     </div>
 
     <div class="task">
       <div class="label">Task 2</div>
-      <h3>Write the rules</h3>
+      <h3>Mess one &mdash; two date formats in a single column</h3>
       <ol class="steps">
         <li>
-          <div class="step-do">Add a rules section to <code>CLAUDE.md</code>.</div>
-          <p class="step-why">Why: three rules, each aimed at something real you've seen. Open
-          <code>CLAUDE.md</code> in VS Code and append:</p>
+          <div class="step-do">Measure how many <code>granted_date</code> values are ISO
+          (<code>YYYY-MM-DD</code>) and how many are US (<code>MM/DD/YYYY</code>).</div>
+          <p class="step-why">Why: this column is roughly half and half, which is the worst
+          possible case. A column that's 100% wrong gets noticed immediately. A column that's 50%
+          wrong sorts, compares, and aggregates without ever raising an error &mdash; it just
+          gives you the wrong answer quietly.</p>
+          <p class="step-why">Have your script classify each value by pattern and count both
+          buckets. Don't parse yet; just classify.</p>
           <div class="code labeled">
-            <span class="kind">claude.md</span>
+            <span class="kind">expected output</span>
             <button class="copy" type="button">Copy</button>
-            <pre>## My working rules
+            <pre>granted_date formats
+  ISO  (YYYY-MM-DD)   7538
+  US   (MM/DD/YYYY)   7650
+  other                  0
+  total              15188
 
-- **The contract is frozen.** Do not change the signature of
-  `run_review(export_dir, limit)` in
-  `src/meridian_capstone/contract/run_review.py`. If a task seems to
-  need a different signature, stop and tell me instead.
-- **Never paste bulk data into a reply.** Read files with tools and
-  report aggregates — counts, distinct values, a handful of example
-  rows. Never more than 20 rows of any CSV in your response.
-- **Tests are the green light.** After changing code, run
-  `pytest -m "not api"` and report the exact pass/skip/fail counts.
-  Do not describe work as done without that output.
-- **Cite evidence for judgments.** Any claim that an account or person
-  is risky must name the policy or rule it violates and the file the
-  evidence came from. If no policy covers it, say so.</pre>
+hire_date formats
+  ISO  (YYYY-MM-DD)   1190
+  US   (MM/DD/YYYY)      0</pre>
           </div>
-          <p class="step-why">Notice the shape: each is concrete enough to check. "Never more
-          than 20 rows" can be violated observably; "be careful with data" cannot.</p>
-          <label class="done"><input type="checkbox" data-task="s7-write"> Rules added and saved</label>
+          <p class="step-why">The contrast is the finding. <code>hire_date</code> in the HR export
+          is perfectly clean; <code>granted_date</code> in the entitlements export is not. The
+          mess is not &quot;Meridian&quot; &mdash; it's <em>one system at Meridian</em>. In a real
+          engagement that sentence is what you put in the email.</p>
+          <label class="done"><input type="checkbox" data-task="s8-dates"> 7538 / 7650 / 0 confirmed</label>
         </li>
         <li>
-          <div class="step-do">Add one rule of your own, aimed at your sub-task 1 headache.</div>
-          <p class="step-why">Why: this is where the course stops being about Meridian. What
-          would you always want an assistant working on <em>your</em> problem to know or never
-          do? A system it must never write to, a stakeholder whose sign-off is required, a
-          definition your organisation uses differently from everyone else.</p>
-          <label class="done"><input type="checkbox" data-task="s7-own"> My own rule added</label>
+          <div class="step-do">Write down, in one line, why <code>04/07/2025</code> is dangerous.</div>
+          <p class="step-why">Why: that value appears in row 2 of the file. It is
+          <strong>April 7th</strong>, because this export is US-formatted. Read as
+          day-first it becomes <strong>July 4th</strong> &mdash; a three-month error, in the
+          direction that decides whether a grant predates someone's hire date. You will make this
+          exact mistake in sub-task 10 if you don't decide the convention now.</p>
+          <label class="done"><input type="checkbox" data-task="s8-ambig"> Convention noted: <code>MM/DD/YYYY</code></label>
         </li>
       </ol>
     </div>
 
     <div class="task">
       <div class="label">Task 3</div>
-      <h3>Capture the "after" and mark the difference</h3>
+      <h3>Mess two &mdash; one department, many spellings</h3>
       <ol class="steps">
         <li>
-          <div class="step-do">Start a completely new session and run the identical prompt.</div>
-          <p class="step-why">Why: <code>CLAUDE.md</code> is read at session start, so a running
-          session won't have picked up your edit. Exit fully (<code>/exit</code>) and start
-          <code>claude</code> again — don't just <code>/clear</code>.</p>
-          <div class="code prompt labeled">
-            <span class="kind">prompt · after (identical)</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Show me the entitlements data for Q3 and tell me which accounts look risky.</pre>
-          </div>
-          <p class="step-why">Same words. Different behaviour: aggregates instead of dumps, and
-          either cited reasoning or an honest statement that no policy covers it yet.</p>
-          <label class="done"><input type="checkbox" data-task="s7-after"> AFTER transcript saved</label>
-        </li>
-        <li>
-          <div class="step-do">Mark the difference explicitly.</div>
-          <p class="step-why">Why: "it seemed better" isn't a result. Name which rule caused
-          which change — that's what makes this a demonstration rather than an impression.</p>
-          <div class="worksheet" id="ws-rules">
-            <div class="label">Before / after</div>
-            <p class="hint">Be specific. Quote both transcripts where you can.</p>
-            <div class="field">
-              <label>BEFORE — what did it do that I didn't want?</label>
-              <textarea data-ws="r-before" rows="3" placeholder="How much data came back? Did it define 'risky'? Did it cite anything?"></textarea>
-            </div>
-            <div class="field">
-              <label>AFTER — what changed?</label>
-              <textarea data-ws="r-after" rows="3" placeholder="Same prompt, what's different in the reply…"></textarea>
-            </div>
-            <div class="field">
-              <label>Which rule caused which change?</label>
-              <textarea data-ws="r-map" rows="3" placeholder="Rule 2 → no bulk dump. Rule 4 → it said no policy covers this yet…"></textarea>
-            </div>
-            <div class="field">
-              <label>What did NOT change — and would a Hook have been needed?</label>
-              <textarea data-ws="r-gap" rows="3" placeholder="Rules are guidance, not enforcement. What slipped through anyway?"></textarea>
-            </div>
-            <div class="wsbar">
-              <button class="wsbtn" type="button" data-copy-ws="ws-rules">Copy my note</button>
-              <span class="wssaved" data-saved-for="ws-rules">Saved in this browser</span>
-            </div>
-          </div>
-          <label class="done"><input type="checkbox" data-task="s7-diff"> Difference marked, including the last box</label>
-        </li>
-        <li>
-          <div class="step-do">Confirm you didn't break anything, then commit.</div>
+          <div class="step-do">Count the distinct raw values in HR's <code>department</code>
+          column, then count them again after trimming whitespace and lowercasing.</div>
+          <p class="step-why">Why: this is the cheapest possible demonstration that
+          &quot;distinct&quot; is a claim about your comparison function, not about the world.</p>
           <div class="code labeled">
-            <span class="kind">terminal</span>
+            <span class="kind">expected output</span>
             <button class="copy" type="button">Copy</button>
-            <pre>pytest -m "not api"
-git add CLAUDE.md
-git commit -m "Add my working rules to CLAUDE.md"</pre>
+            <pre>department
+  raw distinct values             32
+  after strip + lowercase         12</pre>
           </div>
-          <p class="step-why">Still 33 passed, 11 skipped, 1 deselected — editing rules doesn't
-          touch code. But running the check anyway is the habit, and you just wrote a rule
-          demanding exactly that.</p>
-          <label class="done"><input type="checkbox" data-task="s7-commit"> Tests green and rules committed</label>
+          <p class="step-why">Twelve real departments, wearing thirty-two costumes. Operations
+          alone appears as <code>Operations</code>, <code>operations</code>,
+          <code>OPERATIONS</code>, and <code>&quot; Operations &quot;</code> with padding
+          spaces.</p>
+          <label class="done"><input type="checkbox" data-task="s8-dept"> 32 &rarr; 12 confirmed</label>
+        </li>
+        <li>
+          <div class="step-do">Print the twelve canonical departments and keep the list.</div>
+          <p class="step-why">Why: you'll need it in sub-task 12, where a policy exemption
+          applies only to people in <em>Finance &amp; Accounting</em>. An exact string comparison
+          against a column with 32 spellings is a bug waiting for the right row to land on.</p>
+          <label class="done"><input type="checkbox" data-task="s8-canon"> Twelve canonical names listed</label>
         </li>
       </ol>
 
       <details class="stuck">
         <summary>Stuck?</summary>
         <div class="body">
-          <p><strong>Nothing changed between before and after.</strong> Check the file is at the
-          repository root and named exactly <code>CLAUDE.md</code>. Inside a session, run
-          <code>/context</code> and look for it under <strong>Memory files</strong> — if it isn't
-          listed, Claude never saw it. And confirm you fully restarted rather than
-          <code>/clear</code>ing.</p>
-          <p><strong>It followed some rules and ignored others.</strong> That's the honest
-          behaviour of a guidance mechanism, and it's worth writing in the last box. Look at the
-          ignored one — is it vaguer than the others? Vague rules lose. If it must be guaranteed,
-          you're looking at a job for Hooks.</p>
-          <p><strong>My rules contradict the existing ones.</strong> Resolve it rather than
-          leaving both. Contradictory rules get resolved arbitrarily, which is the worst of all
-          worlds.</p>
+          <p><strong>I get 31, or 33.</strong> Check whether you're trimming before counting the
+          raw values &mdash; you shouldn't be. The raw count includes the padded variants like
+          <code>&quot; Engineering &quot;</code>; that's the whole point of the number.</p>
+          <p><strong>Should I fix these now?</strong> No. Measure in this sub-task, normalize in
+          sub-task 10. Separating the two is what lets you show a before and an after.</p>
         </div>
       </details>
     </div>
 
+    <div class="task">
+      <div class="label">Task 4</div>
+      <h3>Mess three &mdash; rows that are byte-for-byte identical</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Count entitlement rows that duplicate an earlier row exactly, across
+          all seven columns.</div>
+          <p class="step-why">Why: exact duplicates are the easy half of a problem you'll meet
+          properly in sub-task 10. Getting the easy number now makes the hard number legible
+          later.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>entitlements exact duplicate rows: 10
+                  unique rows: 15178</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s8-dupes"> Exactly 10 duplicate rows found</label>
+        </li>
+        <li>
+          <div class="step-do">Ask yourself the question that matters, and don't answer it yet.</div>
+          <p class="step-why">Why: ten looks like a small, tidy problem. Hold on to that
+          impression. In sub-task 10 you'll normalize the dates and count again, and the number
+          will change in a way that reframes what &quot;duplicate&quot; means. Guess now, in your
+          notes, what it will change to. Being wrong is more instructive than being right.</p>
+          <label class="done"><input type="checkbox" data-task="s8-guess"> My guess is written down</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+git add explore.py
+git commit -m "Add explore.py: measure the three defects in the Q3 export"</pre>
+          </div>
+          <p class="step-why">Still <strong>33 passed, 11 skipped, 1 deselected</strong>. You
+          haven't produced any artifact the tests are waiting for &mdash; that starts in
+          sub-task 9.</p>
+          <label class="done"><input type="checkbox" data-task="s8-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
     <div class="outcome">
       <div class="label">You're done when</div>
-      <p>You have two transcripts of the <em>same prompt</em> — before and after your rules — with
-      the differences marked and attributed to specific rules. Plus:</p>
+      <p><code>explore.py</code> runs and prints numbers that match these exactly:</p>
       <ul>
-        <li><code>CLAUDE.md</code> contains your rules, including one aimed at your own headache</li>
-        <li><code>pytest -m "not api"</code> is still green</li>
-        <li>Your rules are committed</li>
+        <li><code>hr_roster.csv</code> <strong>1190 &times; 9</strong>;
+            <code>entitlements.csv</code> <strong>15188 &times; 7</strong></li>
+        <li><strong>1200</strong> distinct <code>account_id</code> but only
+            <strong>1188</strong> distinct <code>account_name</code></li>
+        <li><code>granted_date</code>: <strong>7538</strong> ISO + <strong>7650</strong> US =
+            15188, with <strong>0</strong> unclassified</li>
+        <li><code>department</code>: <strong>32</strong> raw spellings &rarr;
+            <strong>12</strong> real departments</li>
+        <li><strong>10</strong> exact duplicate rows</li>
       </ul>
-      <p style="margin-top:14px"><strong>Theme A is complete, and building block one is
-      standing.</strong> Go back to your sub-task 1 note and reread your guess about Rules. Was
-      it right? Mark it either way — that mark is the first evidence that this course is moving
-      your own problem and not just Meridian's.</p>
+      <p style="margin-top:14px">You now know three things that are wrong with this data, with
+      exact counts for each. Every claim you make for the rest of the course inherits those
+      numbers &mdash; which is precisely why you measured them before touching anything.</p>
     </div>
   </section>
 
@@ -628,31 +675,29 @@ git commit -m "Add my working rules to CLAUDE.md"</pre>
     <h2 class="section-title">If you're curious</h2>
     <div class="panel curious">
       <ul class="learn">
-        <li><a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>
-        — the full reference for <code>CLAUDE.md</code>, including how to split rules into
-        <code>.claude/rules/</code> once one file gets long.</li>
-        <li><a href="https://code.claude.com/docs/en/hooks-guide">Hooks guide</a> — read only if
-        the "rules aren't enforcement" point is nagging at you. This is building block five, and
-        it's coming.</li>
+        <li><a href="https://pandas.pydata.org/docs/user_guide/10min.html">10 minutes to pandas</a>
+        &mdash; the official quick tour. Skim it; you need recognition, not fluency.</li>
+        <li><a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> &mdash; why
+        <code>YYYY-MM-DD</code> is the only date format that sorts correctly as text, and why
+        every system that doesn't use it eventually causes an incident.</li>
       </ul>
     </div>
   </section>
 
-
   <div class="navrow bottom">
-    <a class="navbtn" href="subtask-06.html"><span class="arr">←</span> Sub-task 6</a>
-    <a class="navbtn next" href="subtask-08.html">Theme A complete ✓ · Sub-task 8 <span class="arr">→</span></a>
+    <a class="navbtn" href="subtask-07.html"><span class="arr">&larr;</span> Sub-task 7</a>
+    <a class="navbtn next" href="subtask-09.html">Sub-task 9 &middot; Match accounts to people <span class="arr">&rarr;</span></a>
   </div>
 
 </main>
 
 <footer class="end">
-  Claude Certified Architect · Theme A · Sub-task 7 of 7
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 1 of 5
 </footer>
 
 <script>
   // ---- Progress tracking (localStorage, keyed by data-task) ----
-  var STORE = "cca-v2-subtask07-progress";
+  var STORE = "cca-v2-subtask08-progress";
   var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
 
   function loadState() {
@@ -687,7 +732,7 @@ git commit -m "Add my working rules to CLAUDE.md"</pre>
   refreshCounter();
 
   // ---- Worksheet persistence (textareas keyed by data-ws) ----
-  var WS_STORE = "cca-v2-subtask07-worksheet";
+  var WS_STORE = "cca-v2-subtask08-worksheet";
   function loadWs() {
     try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
     catch (e) { return {}; }

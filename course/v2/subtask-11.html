@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sub-task 7 — Write Rules that change how Claude behaves · Claude Certified Architect</title>
+<title>Sub-task 11 &mdash; Triage 15,000 grants to a candidate list with zero model calls &middot; Claude Certified Architect</title>
 <style>
   /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
   :root {
@@ -350,7 +350,7 @@
 <header class="site">
   <div class="site-inner">
     <span class="course">Claude Certified Architect</span>
-    <span class="where">Sub-task <em>07</em></span>
+    <span class="where">Sub-task <em>11</em></span>
     <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
   </div>
 </header>
@@ -358,269 +358,344 @@
 <main>
 
   <div class="navrow top">
-    <a class="navbtn" href="subtask-06.html"><span class="arr">←</span> Sub-task 6 · Break it three ways</a>
+    <a class="navbtn" href="subtask-10.html"><span class="arr">&larr;</span> Sub-task 10 &middot; Normalize and re-count duplicates</a>
   </div>
 
   <section class="opener">
-    <div class="kicker">Theme A · Foundations · Sub-task 7 of 7</div>
-    <h1>Write Rules that visibly change how Claude behaves</h1>
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 4 of 5</div>
+    <h1>Triage 15,000 grants down to a candidate list with zero model calls</h1>
 
     <div class="metastrip">
-      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-06.html">Sub-task 6</a>&nbsp;— you need the failure modes card</span>
-      <span class="chip time"><b>Time:</b>&nbsp;≈ 45 min</span>
-      <span class="chip"><b>Type:</b>&nbsp;building block #1</span>
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-10.html">Sub-task 10</a>&nbsp;&mdash; you need normalized dates and departments, and <code>identities.csv</code></span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; the design principle</span>
     </div>
 
     <div class="firstappear">
       <span class="tag">First appearance</span>
       <div class="terms">
-        <span class="term">Rules</span>
-        <span class="term">CLAUDE.md</span>
+        <span class="term">the Ledger</span>
+        <span class="term">mechanical triage</span>
+        <span class="term">context economics</span>
       </div>
-      <p class="note">The first of the six building blocks. After this sub-task, Theme A is complete.</p>
+      <p class="note">The longest sub-task in Theme B, and the one carrying the idea the rest of the course is built on.</p>
     </div>
 
     <div class="narrative">
-      <p class="lede">Everything so far has been preparation. This is the first of the six building blocks you mapped in sub-task 1 — and the simplest: a file of standing instructions that Claude reads at the start of every session.</p>
-      <p>The reason it goes first is that it's the cheapest possible demonstration of the course's real subject. You'll take a prompt that produced behaviour you didn't want, write down a rule, and run the same prompt again. Same question, different answer — and you changed nothing but a text file.</p>
+      <p class="lede">You are about to build the artifact everything else in this course
+      reads from, and then throw away 87% of it before any agent ever sees it. Both halves matter,
+      and the second half is the one worth remembering.</p>
+      <p>Everything you've done in Theme B has been code. No agent, no judgment, no prompt. That
+      was not an accident of ordering &mdash; it's the design principle, and this sub-task is
+      where you name it.</p>
     </div>
 
     <div class="panel">
       <h3>What you'll understand and do</h3>
       <ul class="objectives">
-        <li>Explain what <code>CLAUDE.md</code> is and when a rule belongs in it</li>
-        <li>Write project rules that are specific enough to actually change behaviour</li>
-        <li>Demonstrate the change with a before-and-after pair of transcripts</li>
+        <li>Build the Ledger &mdash; one de-duplicated, identity-attached row per grant</li>
+        <li>State the context-economics principle and apply it as a triage rule</li>
+        <li>Defend a candidate count with the claim that everything else is provably clean</li>
       </ul>
     </div>
   </section>
 
-
   <section>
     <h2 class="section-title">Concept</h2>
-
     <div class="concept">
       <div class="label">The one idea</div>
-      <h3>A rule is a correction you only have to make once.</h3>
+      <h3>Context is expensive. Move bulk to code; move judgment to the model.</h3>
 
-      <p>You've now had several sessions with Claude Code. You've probably repeated yourself:
-      <em>don't change that file</em>, <em>show me the count</em>, <em>don't paste the data in</em>.
-      Every one of those repetitions is a rule you haven't written down yet.</p>
-
-      <p><strong>Rules</strong> — building block one — live in a file called
-      <code>CLAUDE.md</code> at the root of your project. Claude reads it at the start of every
-      session, so anything in it applies to every task without you asking. This repository
-      already has one; you'll read it, then extend it.</p>
+      <p>This is the design principle of the whole course, and it's worth stating in a form you
+      could use on a system that has nothing to do with access reviews:</p>
 
       <div class="whatis">
-        <span class="tag">What is <code>CLAUDE.md</code>?</span>
-        <p>A plain markdown file of persistent project instructions. No special syntax — headers
-        and bullets. It's shared through git, so a rule you write applies to your whole team.</p>
-        <p>Rule of thumb for what goes in: <em>anything you've had to say twice.</em> Build
-        commands, conventions, things that must never be touched, how to check work is correct.
-        Keep it short — under about 200 lines. Long files get followed less reliably, not more.</p>
+        <span class="tag">Context economics</span>
+        <p>A model's context window is the scarcest resource in any agentic system &mdash; scarce
+        in tokens, in money, in latency, and above all in <em>attention</em>. Every row you put
+        in front of a model competes with every other row for the model's care.</p>
+        <p>So the design question for every step is not &quot;can the model do this?&quot; It is:
+        <strong>does this step require judgment?</strong> If it doesn't, it belongs in code
+        &mdash; where it is cheaper, faster, deterministic, and testable. If it does, it belongs
+        with the model &mdash; and the model should arrive at it with the irrelevant 87% already
+        gone.</p>
       </div>
 
-      <p><strong>The honest limitation, stated up front.</strong> <code>CLAUDE.md</code> is
-      context, not enforcement. Claude reads your rules and tries to follow them, but nothing
-      <em>blocks</em> a violation. Specific, concrete rules are followed far more reliably than
-      vague ones — "don't paste more than 50 rows of CSV into your reply" beats "be careful with
-      data" — but a rule is guidance.</p>
+      <p>Put concrete numbers on it. <code>entitlements.csv</code> is
+      <strong>1.16&nbsp;MB</strong>, on the order of <strong>320,000 tokens</strong>. You could
+      feed the whole thing to a model. It would be slow, it would cost real money every run, and
+      &mdash; the part people miss &mdash; it would be <em>worse</em>, because the twelve
+      genuinely difficult accounts would be buried under fifteen thousand rows of Zoom
+      memberships that no reviewer would look at twice.</p>
 
-      <p>When something must be impossible rather than discouraged, you need a different block:
-      <strong>Hooks</strong>, number five on your map, which run as actual code and can refuse.
-      Rules are the cheap 80%; hooks are the guarantee. Knowing which you need is a large part of
-      designing these systems well.</p>
+      <p><strong>The test for which side a decision belongs on</strong> is whether two competent
+      reviewers with the same data would give the same answer:</p>
+
+      <div class="blocks">
+        <div class="row">
+          <div class="n">&#8801;</div>
+          <div>
+            <div class="b-name">Code &mdash; determined by the data</div>
+            <p class="b-desc">Is this employee terminated? Was this grant dated before their
+            hire date? Does this account hold two roles the SoD matrix names as conflicting?
+            Is this role on the application's privileged list?</p>
+            <p class="b-when">Same answer every time. No model needed, and a model would only add
+            variance.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">?</div>
+          <div>
+            <div class="b-name">Judgment &mdash; requires reading, weighing, deciding</div>
+            <p class="b-desc">Is this contractor's access still <em>justified</em> given the
+            ticket they filed? Does the compensating control in the policy actually cover this
+            case? Is this orphan a leaver nobody offboarded, or a rename nobody recorded?</p>
+            <p class="b-when">Reasonable reviewers can disagree. This is what the model is
+            for.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>Mechanical triage is how you get from one to the other: a set of deterministic rules,
+      each cheap and each testable, that partition the ledger into <em>needs a human-or-model
+      look</em> and <em>provably clean</em>. The second pile is the valuable one, because you can
+      say something precise about it: not &quot;we didn't check those&quot;, but &quot;we checked
+      every one of those with a rule, and here is the rule.&quot;</p>
+
+      <div class="whatis">
+        <span class="tag">Why this generalizes</span>
+        <p>Log triage, document review, alert handling, code review, claims processing &mdash;
+        the shape is identical every time. Deterministic filter, then judgment on the residue.
+        When you take this back to your own problem, the first question is always: what fraction
+        of my volume can a rule dispose of, and what exactly is the rule?</p>
+      </div>
     </div>
   </section>
 
   <section>
     <h2 class="section-title">Do this</h2>
-
     <div class="task">
       <div class="label">Task 1</div>
-      <h3>Capture the "before"</h3>
+      <h3>Build the Ledger</h3>
       <ol class="steps">
         <li>
-          <div class="step-do">Read the rules that already exist.</div>
-          <p class="step-why">Why: this repository ships a <code>CLAUDE.md</code>. Open it in VS
-          Code and read it — it names a frozen function signature, says reconciliation is done in
-          code while judgment is done by agents, and points at the test suite as the green light.
-          Every one of those is a correction someone got tired of repeating.</p>
-          <label class="done"><input type="checkbox" data-task="s7-read"> I've read the existing <code>CLAUDE.md</code></label>
+          <div class="step-do">Join the normalized entitlements to <code>identities.csv</code>
+          and write <code>ledger.csv</code> at the repository root.</div>
+          <p class="step-why">Why: the <strong>Ledger</strong> is the one table the rest of the
+          course reads. One row per distinct grant &mdash; per
+          <code>(account_id, app, role)</code> &mdash; with ISO dates, the resolved
+          <code>employee_id</code> where there is one, and the match status where there isn't.</p>
+          <p class="step-why">Two things it must not do. It must not drop unmatched accounts:
+          an orphan with production access is the finding, and a left join that quietly discards
+          it produces a clean-looking report that is wrong. And it must not fan out: joining
+          1,200 accounts on name against 1,190 people can produce <em>more</em> than 1,200 rows
+          if a name matches twice. Check your row count after the join, every time.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ledger.csv
+  rows                              15158
+  distinct (account_id, app, role)  15158     <- must be equal
+  distinct account_id                1200     <- nothing dropped
+  granted_date non-ISO values            0</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s11-ledger"> <code>ledger.csv</code> written, 15158 rows</label>
         </li>
         <li>
-          <div class="step-do">Run a prompt that invites the behaviour you don't want — and save
-          what you get.</div>
-          <p class="step-why">Why: you need a documented "before". Start a fresh session
-          (<code>/clear</code>) and ask:</p>
-          <div class="code prompt labeled">
-            <span class="kind">prompt · before</span>
+          <div class="step-do">Run the tests. The ledger tests should now pass.</div>
+          <p class="step-why">Why: the failure messages are written to diagnose you.
+          <strong>15,188</strong> means nothing was de-duplicated. <strong>15,178</strong> means
+          you de-duplicated before normalizing and twenty format-twins survived &mdash; go back
+          to sub-task 10. Anything else means the join changed your row count.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>Show me the entitlements data for Q3 and tell me which accounts look risky.</pre>
+            <pre>pytest -m "not api"
+# 4 failed, 42 passed, 10 skipped, 1 deselected</pre>
           </div>
-          <p class="step-why">That file has <strong>15,188 rows</strong> across 22 applications.
-          The prompt quietly invites two bad habits: dumping bulk data into the conversation, and
-          calling accounts "risky" against no stated policy. Watch how much data comes back, and
-          whether it says what "risky" means.</p>
-          <p class="step-why">Copy the reply into your notes as <strong>BEFORE</strong>.</p>
-          <label class="done"><input type="checkbox" data-task="s7-before"> BEFORE transcript saved</label>
+          <p class="step-why">Four failures left, all in the findings group. Those are
+          sub-task 12.</p>
+          <label class="done"><input type="checkbox" data-task="s11-tests"> Only the four findings tests still fail</label>
         </li>
       </ol>
 
       <details class="stuck">
         <summary>Stuck?</summary>
         <div class="body">
-          <p><strong>It behaved well — it didn't dump anything.</strong> Quite likely; the
-          existing <code>CLAUDE.md</code> is already doing work, and that's a finding in itself.
-          Note precisely what it <em>did</em> do. You can still improve it: did it define
-          "risky"? Did it cite a policy? Did it show its evidence? Aim your new rules at whatever
-          it left vague.</p>
-          <p><strong>It dumped hundreds of rows into my terminal.</strong> Perfect — you have a
-          vivid BEFORE. That's slow, expensive, and in a real engagement it's client data
-          sprayed into a transcript.</p>
+          <p><strong>My ledger has more than 15,158 rows and I did de-duplicate.</strong>
+          The join fanned out. Join on <code>account_id</code> against a table with exactly one
+          row per account &mdash; which is what <code>identities.csv</code> is for. Never join
+          entitlements to HR on name directly.</p>
+          <p><strong>My ledger has fewer than 15,158 rows.</strong> An inner join dropped the
+          unmatched accounts. Those 1,544 grants on 122 unresolved accounts are among the most
+          interesting rows in the file.</p>
+          <p><strong>Which columns should the ledger have?</strong> Your call, but at minimum
+          enough to answer a finding without re-reading the source: account, name, resolved
+          person, match status, app, role, normalized grant date, granted-by, last login.</p>
         </div>
       </details>
     </div>
 
     <div class="task">
       <div class="label">Task 2</div>
-      <h3>Write the rules</h3>
+      <h3>Write the mechanical triage rules</h3>
       <ol class="steps">
         <li>
-          <div class="step-do">Add a rules section to <code>CLAUDE.md</code>.</div>
-          <p class="step-why">Why: three rules, each aimed at something real you've seen. Open
-          <code>CLAUDE.md</code> in VS Code and append:</p>
+          <div class="step-do">Implement each rule as a deterministic filter over the ledger, and
+          count what it catches.</div>
+          <p class="step-why">Why: one rule at a time, each independently countable. A rule you
+          can't count is a rule you can't defend. These counts assume the baseline
+          exact-match identity table from sub-task 9; if you widened the matcher, your orphan and
+          ambiguous rows will be lower.</p>
           <div class="code labeled">
-            <span class="kind">claude.md</span>
+            <span class="kind">expected output &mdash; baseline matcher</span>
             <button class="copy" type="button">Copy</button>
-            <pre>## My working rules
-
-- **The contract is frozen.** Do not change the signature of
-  `run_review(export_dir, limit)` in
-  `src/meridian_capstone/contract/run_review.py`. If a task seems to
-  need a different signature, stop and tell me instead.
-- **Never paste bulk data into a reply.** Read files with tools and
-  report aggregates — counts, distinct values, a handful of example
-  rows. Never more than 20 rows of any CSV in your response.
-- **Tests are the green light.** After changing code, run
-  `pytest -m "not api"` and report the exact pass/skip/fail counts.
-  Do not describe work as done without that output.
-- **Cite evidence for judgments.** Any claim that an account or person
-  is risky must name the policy or rule it violates and the file the
-  evidence came from. If no policy covers it, say so.</pre>
+            <pre>rule                     grants   accounts   source of truth
+-------------------------------------------------------------------
+terminated employee         134         10   hr_roster.status
+orphan account             1544        122   identities.csv match_status
+ambiguous identity          221         18   identities.csv match_status
+granted before hire           2          2   granted_date < hire_date
+privileged role             105        105   applications.json
+sod conflict                 10          5   sod_matrix.json
+privileged, no ticket        23         23   access_tickets.json (85 tickets)
+dormant 90+ days           1283        771   last_login
+contractor on crown app     219        105   employment_type + app tier</pre>
           </div>
-          <p class="step-why">Notice the shape: each is concrete enough to check. "Never more
-          than 20 rows" can be violated observably; "be careful with data" cannot.</p>
-          <label class="done"><input type="checkbox" data-task="s7-write"> Rules added and saved</label>
+          <label class="done"><input type="checkbox" data-task="s11-rules"> My rule counts match</label>
         </li>
         <li>
-          <div class="step-do">Add one rule of your own, aimed at your sub-task 1 headache.</div>
-          <p class="step-why">Why: this is where the course stops being about Meridian. What
-          would you always want an assistant working on <em>your</em> problem to know or never
-          do? A system it must never write to, a stakeholder whose sign-off is required, a
-          definition your organisation uses differently from everyone else.</p>
-          <label class="done"><input type="checkbox" data-task="s7-own"> My own rule added</label>
-        </li>
-      </ol>
-    </div>
-
-    <div class="task">
-      <div class="label">Task 3</div>
-      <h3>Capture the "after" and mark the difference</h3>
-      <ol class="steps">
-        <li>
-          <div class="step-do">Start a completely new session and run the identical prompt.</div>
-          <p class="step-why">Why: <code>CLAUDE.md</code> is read at session start, so a running
-          session won't have picked up your edit. Exit fully (<code>/exit</code>) and start
-          <code>claude</code> again — don't just <code>/clear</code>.</p>
-          <div class="code prompt labeled">
-            <span class="kind">prompt · after (identical)</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>Show me the entitlements data for Q3 and tell me which accounts look risky.</pre>
-          </div>
-          <p class="step-why">Same words. Different behaviour: aggregates instead of dumps, and
-          either cited reasoning or an honest statement that no policy covers it yet.</p>
-          <label class="done"><input type="checkbox" data-task="s7-after"> AFTER transcript saved</label>
-        </li>
-        <li>
-          <div class="step-do">Mark the difference explicitly.</div>
-          <p class="step-why">Why: "it seemed better" isn't a result. Name which rule caused
-          which change — that's what makes this a demonstration rather than an impression.</p>
-          <div class="worksheet" id="ws-rules">
-            <div class="label">Before / after</div>
-            <p class="hint">Be specific. Quote both transcripts where you can.</p>
-            <div class="field">
-              <label>BEFORE — what did it do that I didn't want?</label>
-              <textarea data-ws="r-before" rows="3" placeholder="How much data came back? Did it define 'risky'? Did it cite anything?"></textarea>
-            </div>
-            <div class="field">
-              <label>AFTER — what changed?</label>
-              <textarea data-ws="r-after" rows="3" placeholder="Same prompt, what's different in the reply…"></textarea>
-            </div>
-            <div class="field">
-              <label>Which rule caused which change?</label>
-              <textarea data-ws="r-map" rows="3" placeholder="Rule 2 → no bulk dump. Rule 4 → it said no policy covers this yet…"></textarea>
-            </div>
-            <div class="field">
-              <label>What did NOT change — and would a Hook have been needed?</label>
-              <textarea data-ws="r-gap" rows="3" placeholder="Rules are guidance, not enforcement. What slipped through anyway?"></textarea>
-            </div>
-            <div class="wsbar">
-              <button class="wsbtn" type="button" data-copy-ws="ws-rules">Copy my note</button>
-              <span class="wssaved" data-saved-for="ws-rules">Saved in this browser</span>
-            </div>
-          </div>
-          <label class="done"><input type="checkbox" data-task="s7-diff"> Difference marked, including the last box</label>
-        </li>
-        <li>
-          <div class="step-do">Confirm you didn't break anything, then commit.</div>
-          <div class="code labeled">
-            <span class="kind">terminal</span>
-            <button class="copy" type="button">Copy</button>
-            <pre>pytest -m "not api"
-git add CLAUDE.md
-git commit -m "Add my working rules to CLAUDE.md"</pre>
-          </div>
-          <p class="step-why">Still 33 passed, 11 skipped, 1 deselected — editing rules doesn't
-          touch code. But running the check anyway is the habit, and you just wrote a rule
-          demanding exactly that.</p>
-          <label class="done"><input type="checkbox" data-task="s7-commit"> Tests green and rules committed</label>
+          <div class="step-do">Notice which rules are cheap and which are lethal.</div>
+          <p class="step-why">Why: <strong>granted before hire</strong> catches 2 rows out of
+          15,158 &mdash; and each one is an account that existed before its owner did. Two rows,
+          essentially free to compute, and among the most serious things in the file. Meanwhile
+          <strong>dormant 90+ days</strong> catches 1,283 rows and most of them are somebody who
+          hasn't opened Zoom since June.</p>
+          <p class="step-why">Rule volume is uncorrelated with rule value. This is why you count
+          each rule separately instead of jumping straight to a combined filter &mdash; a rule
+          you can't see the size of is one you can't reason about.</p>
+          <label class="done"><input type="checkbox" data-task="s11-value"> I can name my highest-value and lowest-value rule</label>
         </li>
       </ol>
 
       <details class="stuck">
         <summary>Stuck?</summary>
         <div class="body">
-          <p><strong>Nothing changed between before and after.</strong> Check the file is at the
-          repository root and named exactly <code>CLAUDE.md</code>. Inside a session, run
-          <code>/context</code> and look for it under <strong>Memory files</strong> — if it isn't
-          listed, Claude never saw it. And confirm you fully restarted rather than
-          <code>/clear</code>ing.</p>
-          <p><strong>It followed some rules and ignored others.</strong> That's the honest
-          behaviour of a guidance mechanism, and it's worth writing in the last box. Look at the
-          ignored one — is it vaguer than the others? Vague rules lose. If it must be guaranteed,
-          you're looking at a job for Hooks.</p>
-          <p><strong>My rules contradict the existing ones.</strong> Resolve it rather than
-          leaving both. Contradictory rules get resolved arbitrarily, which is the worst of all
-          worlds.</p>
+          <p><strong>My privileged count isn't 105.</strong> Privileged roles are named per
+          application in <code>applications.json</code> under <code>privileged_roles</code>.
+          It's not a global list of role names &mdash; <code>Admin</code> is privileged in one
+          app and not defined in another.</p>
+          <p><strong>My terminated count is higher.</strong> Ten employees have
+          <code>status == "terminated"</code>. If you're using a non-empty <code>term_date</code>
+          instead you'll pick up 13 people, three of whom have a future-dated departure and are
+          still employed today. Those are different questions; know which you asked.</p>
+          <p><strong>My dormant count differs.</strong> The window's start point is a choice.
+          The number above uses 90 days before <strong>2026-09-30</strong>, the export date, and
+          counts a blank <code>last_login</code> as dormant. Both of those are decisions; state
+          yours.</p>
         </div>
       </details>
     </div>
 
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Produce the candidate set and defend the remainder</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Union the high-signal rules into one candidate set.</div>
+          <p class="step-why">Why: a grant is a candidate if <em>any</em> high-signal rule fires
+          on it. Which rules count as high-signal is your decision &mdash; the reference numbers
+          below take terminated, orphan, ambiguous, granted-before-hire, SoD, privileged-and-dormant,
+          and privileged-without-a-ticket, and deliberately leave out bare dormancy and bare
+          contractor status, which are too broad to be worth a model's attention on their own.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ledger                     15158 grants   1200 accounts
+candidates                  1919 grants    166 accounts
+provably clean             13239 grants                  87.3%
+
+model calls made so far: 0</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s11-cand"> Candidate set produced with 0 model calls</label>
+        </li>
+        <li>
+          <div class="step-do">Re-run the triage with your widened matcher from sub-task 9, and
+          watch the number fall.</div>
+          <p class="step-why">Why: this is the payoff for the work you did in sub-task 9, and it
+          is the most quietly important number in Theme B.</p>
+          <div class="code labeled">
+            <span class="kind">expected output &mdash; widened matcher</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>baseline matcher   (1055 resolved)    1919 candidate grants    166 accounts
+widened matcher    (1118 resolved)    1125 candidate grants    104 accounts</pre>
+          </div>
+          <p class="step-why">Sixty-three better identity matches removed <strong>794
+          candidate grants</strong> &mdash; 41% of the judgment workload &mdash; because an
+          account you can attribute to a real, currently-employed person stops being suspicious.
+          Better reconciliation is not tidiness. It is directly less work for the expensive part
+          of the system, and it is why reconciliation comes before agents rather than after.</p>
+          <label class="done"><input type="checkbox" data-task="s11-payoff"> I ran both and saw the drop</label>
+        </li>
+        <li>
+          <div class="step-do">Write the sentence that defends the 87%.</div>
+          <p class="step-why">Why: this is the sentence a client or an auditor will challenge,
+          and it has to be a claim about rules rather than a claim about effort. Not &quot;we
+          reviewed a sample.&quot; Something closer to: <em>every grant in the ledger was
+          evaluated against nine deterministic rules; 1,919 matched at least one and went to
+          review; the remaining 13,239 matched none, and the rules are listed in appendix
+          A.</em></p>
+          <p class="step-why">That claim is falsifiable, reproducible, and re-runnable next
+          quarter. It is also the honest version &mdash; it says exactly what was checked, which
+          means it also says exactly what wasn't.</p>
+          <label class="done"><input type="checkbox" data-task="s11-defend"> My defence sentence is written down</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <p class="step-why"><code>ledger.csv</code> is gitignored as a learner artifact &mdash;
+          commit the code that builds it.</p>
+          <label class="done"><input type="checkbox" data-task="s11-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My candidate count isn't 1,919.</strong> Expected, if you chose a different
+          set of high-signal rules &mdash; and that's a legitimate design decision rather than an
+          error. What matters is that you can name every rule in your union and count each one.
+          If you want to reproduce 1,919 exactly, use the seven rules listed above with the
+          baseline matcher.</p>
+          <p><strong>Isn't 1,919 still too many to hand a model?</strong> Yes, and noticing that
+          is the right instinct. Two things fix it, and you'll meet both later: triaging at the
+          account level rather than the grant level (166 accounts, not 1,919 rows), and splitting
+          the work across narrow subagents instead of one generalist. Note the concern now.</p>
+          <p><strong>Should I just let a model decide which rules to use?</strong> Ask what you'd
+          do when it picks differently on the next run. Rule <em>selection</em> is a judgment call
+          and you've just made it; rule <em>application</em> is mechanical and belongs in code.
+          Keeping those separate is the whole principle.</p>
+        </div>
+      </details>
+    </div>
     <div class="outcome">
       <div class="label">You're done when</div>
-      <p>You have two transcripts of the <em>same prompt</em> — before and after your rules — with
-      the differences marked and attributed to specific rules. Plus:</p>
+      <p><code>ledger.csv</code> exists with <strong>15,158 rows</strong> &mdash; and the ledger
+      tests in <code>test_ledger.py</code> pass. Plus:</p>
       <ul>
-        <li><code>CLAUDE.md</code> contains your rules, including one aimed at your own headache</li>
-        <li><code>pytest -m "not api"</code> is still green</li>
-        <li>Your rules are committed</li>
+        <li>Distinct <code>(account_id, app, role)</code> equals the row count, and all
+            <strong>1,200</strong> accounts survive</li>
+        <li>Every <code>granted_date</code> is ISO</li>
+        <li>Each triage rule is implemented separately and counted separately</li>
+        <li>A candidate set &mdash; <strong>1,919</strong> grants on <strong>166</strong>
+            accounts at baseline &mdash; produced with <strong>zero</strong> model calls</li>
+        <li>You ran it with the widened matcher too, and saw candidates fall to
+            <strong>1,125</strong></li>
+        <li>You can say the defence sentence out loud without hedging</li>
       </ul>
-      <p style="margin-top:14px"><strong>Theme A is complete, and building block one is
-      standing.</strong> Go back to your sub-task 1 note and reread your guess about Rules. Was
-      it right? Mark it either way — that mark is the first evidence that this course is moving
-      your own problem and not just Meridian's.</p>
+      <p style="margin-top:14px"><strong>The principle, in the form worth keeping:</strong>
+      context is expensive, so move bulk to code and move judgment to the model. Everything
+      remaining in this course is the judgment half &mdash; and it only works because you just
+      made it 87% smaller.</p>
     </div>
   </section>
 
@@ -628,31 +703,31 @@ git commit -m "Add my working rules to CLAUDE.md"</pre>
     <h2 class="section-title">If you're curious</h2>
     <div class="panel curious">
       <ul class="learn">
-        <li><a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>
-        — the full reference for <code>CLAUDE.md</code>, including how to split rules into
-        <code>.claude/rules/</code> once one file gets long.</li>
-        <li><a href="https://code.claude.com/docs/en/hooks-guide">Hooks guide</a> — read only if
-        the "rules aren't enforcement" point is nagging at you. This is building block five, and
-        it's coming.</li>
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building effective agents</a>
+        &mdash; you bookmarked this in sub-task 1. Now is the moment to read it properly. The
+        argument that most problems want a deterministic workflow rather than an agent is the
+        same argument you just implemented.</li>
+        <li>Open <code>data/2026-Q3/applications.json</code> and read the
+        <code>tier</code> and <code>privileged_roles</code> fields for all 22 apps. Which
+        applications would you have guessed were crown-tier before reading?</li>
       </ul>
     </div>
   </section>
 
-
   <div class="navrow bottom">
-    <a class="navbtn" href="subtask-06.html"><span class="arr">←</span> Sub-task 6</a>
-    <a class="navbtn next" href="subtask-08.html">Theme A complete ✓ · Sub-task 8 <span class="arr">→</span></a>
+    <a class="navbtn" href="subtask-10.html"><span class="arr">&larr;</span> Sub-task 10</a>
+    <a class="navbtn next" href="subtask-12.html">Sub-task 12 &middot; Emit a schema-valid finding <span class="arr">&rarr;</span></a>
   </div>
 
 </main>
 
 <footer class="end">
-  Claude Certified Architect · Theme A · Sub-task 7 of 7
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 4 of 5
 </footer>
 
 <script>
   // ---- Progress tracking (localStorage, keyed by data-task) ----
-  var STORE = "cca-v2-subtask07-progress";
+  var STORE = "cca-v2-subtask11-progress";
   var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
 
   function loadState() {
@@ -687,7 +762,7 @@ git commit -m "Add my working rules to CLAUDE.md"</pre>
   refreshCounter();
 
   // ---- Worksheet persistence (textareas keyed by data-ws) ----
-  var WS_STORE = "cca-v2-subtask07-worksheet";
+  var WS_STORE = "cca-v2-subtask11-worksheet";
   function loadWs() {
     try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
     catch (e) { return {}; }

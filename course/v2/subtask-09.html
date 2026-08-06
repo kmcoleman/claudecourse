@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 9 &mdash; Match accounts to people and report your own match rate &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>09</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-08.html"><span class="arr">&larr;</span> Sub-task 8 &middot; Prove the data has three messes</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 2 of 5</div>
+    <h1>Match accounts to people and report your own match rate</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-08.html">Sub-task 8</a>&nbsp;&mdash; you need the measured shapes and the 1200-vs-1188 anomaly</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 75 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; the hard join</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">identity reconciliation</span>
+        <span class="term">orphan account</span>
+      </div>
+      <p class="note">This is the single hardest step in a real user access review, and the one clients most often assume is easy.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">The entitlements export identifies people by
+      <code>account_name</code>. The HR roster identifies them by <code>employee_id</code>. There
+      is no column in common. Building the bridge between them is called identity
+      reconciliation, and everything downstream is worthless without it.</p>
+      <p>You cannot review access for a person you cannot identify. That sounds obvious, and it
+      is exactly the step that gets waved through in practice &mdash; someone joins on name,
+      gets a number, and nobody asks what happened to the rows that didn't join. This sub-task
+      is about being the person who asks.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain why these two exports share no key, and what that forces you to do</li>
+        <li>Direct Claude to build a name matcher, and inspect the pile it fails on</li>
+        <li>State your match rate as a number, and defend the accounts you left unmatched</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>The rows that don't join are the interesting ones.</h3>
+
+      <p>Here is what you're joining. From <code>entitlements.csv</code>:</p>
+
+      <div class="code labeled">
+        <span class="kind">entitlements.csv</span>
+        <button class="copy" type="button">Copy</button>
+        <pre>account_id,account_name,app,role,granted_date,...
+A000832,brett.fleming,Active Directory,Standard,2026-03-06,...</pre>
+      </div>
+
+      <p>And from <code>hr_roster.csv</code>:</p>
+
+      <div class="code labeled">
+        <span class="kind">hr_roster.csv</span>
+        <button class="copy" type="button">Copy</button>
+        <pre>employee_id,full_name,email,department,title,hire_date,...
+E00086,Jenna Fleming,jenna.fleming@meridian-energy.com,Engineering,...</pre>
+      </div>
+
+      <p><code>A000832</code> and <code>E00086</code> have nothing to do with each other. The only
+      bridge is a human name, written one way in one system and another way in the other. So the
+      join key has to be <em>derived</em>, and a derived key is a key that can be wrong.</p>
+
+      <div class="whatis">
+        <span class="tag">A shortcut that does not exist &mdash; check for yourself</span>
+        <p>An earlier build of this export had a generator bug: the digits in
+        <code>account_id</code> happened to line up with the digits in <code>employee_id</code>,
+        so <code>A000251</code> belonged to <code>E00251</code>. A student who noticed could skip
+        this entire sub-task.</p>
+        <p>That bug is fixed. In the export you have, <strong>0 of the 1,073 name-matched
+        accounts</strong> also match on digits. Verify that yourself before you trust me &mdash;
+        it takes one line, and &quot;check whether the convenient thing is true&quot; is the habit
+        this course is actually teaching.</p>
+      </div>
+
+      <p><strong>Three ways a name fails to join</strong>, and they need three different answers:</p>
+
+      <div class="blocks">
+        <div class="row">
+          <div class="n">1</div>
+          <div>
+            <div class="b-name">Format variants &mdash; recoverable</div>
+            <p class="b-desc"><code>cmckee</code>, <code>taylorc</code>, <code>natalieg</code>.
+            A real person with an account named in an older convention.</p>
+            <p class="b-when">Answer: widen the matcher, carefully.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">2</div>
+          <div>
+            <div class="b-name">Collisions &mdash; ambiguous, must not be guessed</div>
+            <p class="b-desc">Two different employees share a name slug. Joining on name would
+            attach one person's access to the other's record.</p>
+            <p class="b-when">Answer: resolve to nobody, and mark why.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">3</div>
+          <div>
+            <div class="b-name">Orphans &mdash; genuinely nobody</div>
+            <p class="b-desc">An account with no human behind it at all. In an access review
+            this is not a data problem, it <em>is</em> a finding.</p>
+            <p class="b-when">Answer: keep it, flag it, never drop it.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>The failure mode to avoid is collapsing all three into &quot;didn't match, ignore.&quot;
+      That single decision is how a real review misses the account belonging to nobody that still
+      has production access.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Build the baseline matcher and get your first number</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">First, disprove the shortcut.</div>
+          <p class="step-why">Why: because I told you it doesn't work, and that isn't evidence.
+          Compare the numeric part of <code>account_id</code> with the numeric part of the
+          <code>employee_id</code> you'd get from matching on name. Count how many agree.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>accounts whose A-number digits equal their person's E-number digits: 0 / 1073</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s9-shortcut"> Shortcut disproved: 0 of 1073</label>
+        </li>
+        <li>
+          <div class="step-do">Direct Claude to build an exact <code>firstname.lastname</code>
+          matcher, and to classify every account rather than only the ones that work.</div>
+          <p class="step-why">Why: the classification is the deliverable. State the intent
+          yourself &mdash; but the output has to distinguish four outcomes, not two:
+          <strong>matched</strong> (exactly one person), <strong>ambiguous</strong> (more than
+          one person fits), <strong>service</strong> (listed in
+          <code>data/2026-Q3/service_accounts.json</code>), <strong>unmatched</strong> (nobody
+          fits). All 1,200 accounts must land in exactly one bucket.</p>
+          <p class="step-why">The HR side has a usable slug already: the local part of the email
+          address, before the <code>@</code>. Deriving it from <code>full_name</code> works too
+          and is a good check on both.</p>
+          <label class="done"><input type="checkbox" data-task="s9-matcher"> Matcher classifies all 1200</label>
+        </li>
+        <li>
+          <div class="step-do">Check the baseline against these numbers.</div>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>exact firstname.lastname matching
+  matched      1055
+  ambiguous      18
+  service         5
+  unmatched     122
+  ------------------
+  total        1200      match rate 87.9%</pre>
+          </div>
+          <p class="step-why">If you get <strong>1073 matched</strong> and no ambiguous bucket,
+          your matcher is silently picking a winner when two people fit. That's not a rounding
+          error &mdash; it's 18 accounts attributed to the wrong human. Task 3 is about exactly
+          this.</p>
+          <label class="done"><input type="checkbox" data-task="s9-baseline"> 1055 / 18 / 5 / 122 confirmed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>I get 1073 matched.</strong> That's the count of accounts whose name slug
+          appears in HR <em>at all</em>. Eighteen of those slugs belong to two employees each.
+          Group HR by slug first and check the group size before resolving.</p>
+          <p><strong>My total isn't 1200.</strong> You're probably counting entitlement rows
+          rather than accounts. There are 15,188 rows and 1,200 distinct
+          <code>account_id</code> values. De-duplicate to one row per account first.</p>
+          <p><strong>Where does 87.9% come from?</strong> 1055 / 1200. Whether that's the right
+          denominator is a genuine question &mdash; you could argue the five known service
+          accounts shouldn't count against you. Pick one, say which you picked, and be consistent.
+          Auditors care far more about the second part than the first.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Read the unmatched pile with your own eyes</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Print all 122 unmatched account names and actually look at them.</div>
+          <p class="step-why">Why: 122 rows is small enough to read and large enough to have
+          structure. This is the one moment in the theme where the right tool is your eyes. Do not
+          ask Claude to summarize the list for you &mdash; you are trying to notice something, and
+          a summary is the opposite of noticing.</p>
+          <div class="code labeled">
+            <span class="kind">a sample of what you'll see</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>cmckee        taylorc       natalieg      jburnett      eugenem
+kendra.brown  john.richards jill.smith    leah.lee      todd.hudson
+marcus.pipeline             emergency.admin</pre>
+          </div>
+          <p class="step-why">Two shapes should jump out. Names with no dot look like an older
+          username convention. Names <em>with</em> a dot look like real people who simply aren't
+          in the roster &mdash; a very different problem.</p>
+          <label class="done"><input type="checkbox" data-task="s9-eyes"> I read the whole list</label>
+        </li>
+        <li>
+          <div class="step-do">Widen the matcher to cover the initial-style variants &mdash; and
+          keep the ambiguity rule.</div>
+          <p class="step-why">Why: <code>cmckee</code> is plausibly <em>C. McKee</em>;
+          <code>taylorc</code> is plausibly <em>Taylor C.</em> Both patterns are worth handling.
+          Both also collide far more often than full names do, so a variant that fits two people
+          must land in <strong>ambiguous</strong>, not in <strong>matched</strong>.</p>
+          <div class="code labeled">
+            <span class="kind">expected output &mdash; after widening</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>+ first-initial + lastname  (cmckee)   and  firstname + last-initial  (taylorc)
+
+  matched      1118      (+63)
+  ambiguous      32      (+14)
+  service         5
+  unmatched      45      (-77)
+  ------------------
+  total        1200      match rate 93.2%</pre>
+          </div>
+          <p class="step-why">Note what happened to <strong>ambiguous</strong>: it grew. A wider
+          matcher does not only find more people, it finds more ways to be unsure &mdash; and a
+          matcher that never grows its ambiguous bucket is one that's quietly guessing.</p>
+          <label class="done"><input type="checkbox" data-task="s9-widen"> 1118 / 32 / 5 / 45 confirmed</label>
+        </li>
+        <li>
+          <div class="step-do">Look at what's left. Those 45 are the real answer.</div>
+          <p class="step-why">Why: forty of them are ordinary <code>firstname.lastname</code>
+          names &mdash; <code>kendra.brown</code>, <code>jill.smith</code>,
+          <code>todd.hudson</code> &mdash; that no widening will ever reach, because there is no
+          such person in HR. Those are <strong>orphan accounts</strong>: live credentials with no
+          owner. In a user access review that is a finding in its own right, and one of the more
+          serious ones.</p>
+          <label class="done"><input type="checkbox" data-task="s9-orphans"> Genuine orphans identified and kept</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My widened numbers are higher than 1118.</strong> Almost always the
+          ambiguity check. There are 98 distinct first-initial+lastname keys in HR that fit more
+          than one employee. If a variant match resolves to two different
+          <code>employee_id</code> values, it is not a match.</p>
+          <p><strong>Should I go further &mdash; fuzzy matching, edit distance, nicknames?</strong>
+          You can, and in a real engagement you might. Two cautions. Every widening buys matches
+          at the price of false attributions, so measure both. And the remaining 45 in this data
+          are not near-misses; they have no counterpart at any distance.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Refuse to merge the collisions</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Find the HR name slugs owned by more than one employee.</div>
+          <p class="step-why">Why: there are <strong>10</strong> of them, and they account for the
+          <strong>18</strong> ambiguous accounts in your baseline. This is the mechanism behind
+          the 1,200-vs-1,188 anomaly you noticed in sub-task 8.</p>
+          <label class="done"><input type="checkbox" data-task="s9-collide"> 10 shared slugs found</label>
+        </li>
+        <li>
+          <div class="step-do">Check the worked case: <code>jacob.miller</code>.</div>
+          <p class="step-why">Why: accounts <strong>A000450</strong> and <strong>A001148</strong>
+          are both named <code>jacob.miller</code>, and they belong to <em>two different
+          employees</em>. A join on name attaches both accounts to whichever Jacob sorts first,
+          and the other Jacob's access silently vanishes from the review. The kit tests this
+          case by name.</p>
+          <p class="step-why">The correct handling is to resolve neither. An unresolved account
+          that says so is honest; a resolved account that's wrong is worse than useless, because
+          it looks reviewed.</p>
+          <label class="done"><input type="checkbox" data-task="s9-jacob"> A000450 and A001148 do not share an employee_id</label>
+        </li>
+        <li>
+          <div class="step-do">Handle the service accounts &mdash; including the two that look
+          human.</div>
+          <p class="step-why">Why: <code>data/2026-Q3/service_accounts.json</code> lists five
+          names. Three are obvious: <code>svc-atlas-batch</code>,
+          <code>svc-backup-runner</code>, <code>svc-gateway-sync</code>. Two are not:
+          <strong><code>marcus.pipeline</code></strong> and
+          <strong><code>emergency.admin</code></strong> look exactly like people, and
+          <code>marcus.pipeline</code> owns three separate accounts.</p>
+          <p class="step-why">Any rule of the shape &quot;names starting with <code>svc-</code>
+          are service accounts&quot; will misclassify both. Read the file; don't infer from the
+          string. A service account must resolve to no human owner &mdash; the kit tests that
+          too.</p>
+          <label class="done"><input type="checkbox" data-task="s9-svc"> All 5 service accounts resolve to no person</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 4</div>
+      <h3>Write <code>identities.csv</code> and state your rate</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Emit one row per account to <code>identities.csv</code> at the
+          repository root.</div>
+          <p class="step-why">Why: exactly <strong>1,200</strong> rows, one per
+          <code>account_id</code>, covering every account in <code>entitlements.csv</code> with
+          none dropped. At minimum: <code>account_id</code>, <code>account_name</code>,
+          <code>employee_id</code> (blank when unresolved), and a status column recording
+          <em>which</em> of the four buckets it landed in. Column naming is your call; the tests
+          accept sensible variants.</p>
+          <p class="step-why">The status column is not decoration. Without it, an unresolved
+          orphan and an unresolved collision look identical downstream, and they need opposite
+          treatment.</p>
+          <label class="done"><input type="checkbox" data-task="s9-csv"> <code>identities.csv</code> written, 1200 rows</label>
+        </li>
+        <li>
+          <div class="step-do">Run the tests &mdash; and expect failures.</div>
+          <p class="step-why">Why: <code>test_ledger.py</code> skipped itself while none of the
+          four Theme B artifacts existed. You just created the first one, so it wakes up and
+          starts checking all four. You should see something close to:</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+# 8 failed, 38 passed, 10 skipped, 1 deselected</pre>
+          </div>
+          <p class="step-why">Read which ones failed. They are asking for
+          <code>ledger.csv</code>, <code>findings.json</code> and <code>exemptions.json</code>
+          &mdash; sub-tasks 10 through 12. <strong>Failures here mean you are on the path, not
+          off it.</strong> They all go green at the end of sub-task 12. The five
+          <code>identities.csv</code> tests should pass right now; if any of those fail, fix that
+          before moving on.</p>
+          <label class="done"><input type="checkbox" data-task="s9-tests"> The identity tests pass; I know which failures are expected</label>
+        </li>
+        <li>
+          <div class="step-do">State your match rate and your orphan judgment in writing.</div>
+          <p class="step-why">Why: this is the sentence that goes in the report, and the one a
+          reviewer will push on. It has to survive &quot;how do you know?&quot;</p>
+          <div class="worksheet" id="ws-match">
+            <div class="label">My reconciliation position</div>
+            <p class="hint">Numbers, not adjectives. This is the paragraph an auditor reads first.</p>
+            <div class="field">
+              <label>My match rate, and the denominator I chose
+                <span class="eg">e.g. 1118/1200 = 93.2%, counting service accounts against me &mdash; because&hellip;</span>
+              </label>
+              <textarea data-ws="m-rate" rows="3" placeholder="X of 1200 = Y%. I counted the denominator this way because…"></textarea>
+            </div>
+            <div class="field">
+              <label>The accounts I deliberately left unresolved, and why</label>
+              <textarea data-ws="m-unres" rows="3" placeholder="N ambiguous (two people fit — resolving would misattribute), 5 service accounts (no human owner by definition)…"></textarea>
+            </div>
+            <div class="field">
+              <label>The genuine orphans &mdash; and why they're a finding rather than a defect</label>
+              <textarea data-ws="m-orph" rows="3" placeholder="45 accounts with no HR counterpart at any matching distance. These have live access and no owner…"></textarea>
+            </div>
+            <div class="field">
+              <label>What my match rate is hiding</label>
+              <textarea data-ws="m-risk" rows="3" placeholder="A wider matcher would raise the rate and also raise the false-attribution risk. The number I can't yet bound is…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-match">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-match">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s9-note"> All four boxes answered</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <p class="step-why"><code>identities.csv</code> is gitignored as a learner artifact
+          &mdash; commit the code that produces it, not the output.</p>
+          <label class="done"><input type="checkbox" data-task="s9-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><code>identities.csv</code> exists at the repository root with
+      <strong>1,200 rows</strong> &mdash; one per account, none dropped &mdash; and:</p>
+      <ul>
+        <li>Every resolved <code>employee_id</code> is a real ID from
+            <code>hr_roster.csv</code></li>
+        <li><strong>A000450</strong> and <strong>A001148</strong> (both
+            <code>jacob.miller</code>) do <em>not</em> resolve to the same person</li>
+        <li>All <strong>5</strong> service accounts &mdash; including
+            <code>marcus.pipeline</code> and <code>emergency.admin</code> &mdash; resolve to
+            no human owner</li>
+        <li>At least <strong>1,055</strong> accounts resolve; if you widened the matcher,
+            <strong>1,118</strong></li>
+        <li>You can state your match rate, your denominator, and your orphan count out loud</li>
+      </ul>
+      <p style="margin-top:14px"><strong>The failing <code>test_ledger.py</code> tests are
+      correct and expected.</strong> They are the specification for sub-tasks 10 to 12, written
+      down in advance.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://en.wikipedia.org/wiki/Record_linkage">Record linkage</a> &mdash;
+        the formal name for what you just did by hand. The literature on probabilistic matching
+        is deep, and it exists because this problem is genuinely hard.</li>
+        <li>Open <code>tests/test_ledger.py</code> and read the assertions about
+        <code>identities.csv</code>. A test suite that names <code>jacob.miller</code>
+        specifically is telling you where the bodies are buried.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-08.html"><span class="arr">&larr;</span> Sub-task 8</a>
+    <a class="navbtn next" href="subtask-10.html">Sub-task 10 &middot; Normalize and re-count duplicates <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 2 of 5
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask09-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask09-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
