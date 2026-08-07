@@ -363,7 +363,9 @@
       skills, tools, subagents, and hooks — run against a fresh, pre-shipped Q4 quarter, producing a
       valid Q4 <code>findings.json</code> with no logic changes, its audit log filling and its
       secret-guardrail still firing on the new seed, and every place it secretly leaned on Q3's specifics
-      found and removed.</p>
+      found and removed. Then, because Q4 ships with no answer key at all, your own: a hand-labeled
+      micro-key and a rationale check on every finding, so you can judge whether Q4 is actually right —
+      not just present.</p>
     </div>
 
     <div class="panel">
@@ -372,6 +374,8 @@
         <li>The difference between learning a <em>pattern</em> and memorizing one quarter's specifics</li>
         <li>How the same company under a new seed becomes a genuinely unseen quarter to test transfer against</li>
         <li>How to catch a pipeline that silently special-cases Q3 people, IDs, paths, or exact counts</li>
+        <li>How to build your own hand-labeled micro-key when there's no answer key to check against — and score your pipeline honestly against it</li>
+        <li>How to judge a finding's rationale on its own terms — evidence and policy citation, not just a plausible-looking verdict</li>
         <li>How to prove a review system transfers — and reason about the quarters you haven't run yet</li>
       </ul>
     </div>
@@ -864,6 +868,148 @@ git commit -m "Replace memorized Q3 specifics with general rules; pipeline runs 
       <div class="cycle-num">4</div>
       <div class="meta">
         <div class="eyebrow">Cycle 4</div>
+        <h2>Build your own answer key</h2>
+        <span class="time">≈ 75 min</span>
+      </div>
+    </div>
+
+    <div class="concept">
+      <div class="label">Concept</div>
+      <p>Cycle 3 proved the pipeline runs on Q4 without special-casing it. That's still a check on
+      <em>form</em> — did the run complete, do the counts look plausible. It doesn't tell you whether
+      the individual verdicts are actually <em>right</em>, and this time you can't just diff against a
+      number you memorized on Day 3, because Q4 shipped with no answer key at all — same as it will at
+      a real client. So today you build the one you're allowed to have: your own.</p>
+
+      <div class="whatis">
+        <span class="tag">Two checks, for two different failure modes</span>
+        <p>A <strong>hand-labeled micro-key</strong> catches a wrong <em>verdict</em> — you read a
+        handful of accounts yourself and see whether the pipeline agrees with a human who actually
+        looked. A <strong>rationale rubric</strong> catches a right verdict for the wrong (or missing)
+        <em>reason</em> — a finding can name the correct account and still be indefensible if its
+        rationale doesn't actually cite the evidence and the policy clause behind it. You need both,
+        because a system can pass one and fail the other: a lucky guess with a hollow rationale, or a
+        well-argued finding pointing at the wrong account.</p>
+      </div>
+
+      <p>This is exactly the situation Day 4's <code>/cost</code>-and-self-consistency check couldn't
+      cover — self-consistency tells you a prompt is <em>stable</em>, not that it's <em>correct</em>.
+      Today's techniques are slower and more expensive on purpose: they're for the one quarter where
+      you have no shortcut.</p>
+    </div>
+
+    <div class="task">
+      <div class="label">Task</div>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Hand-label 10–12 Q4 accounts yourself, before looking at your pipeline's answer.</div>
+          <p class="step-why">Why: the order matters. Read the evidence and decide first — checking
+          your own findings.json before you've formed an opinion means you're just confirming the
+          pipeline instead of testing it.</p>
+
+          <p><strong>What you're building.</strong> A small, honest micro-key. Pick 10–12 Q4 accounts —
+          a mix: a few you'd expect to be clean, a few you suspect are findings, one or two you're
+          genuinely unsure about. For each, use the same tools your specialists use (the
+          <code>meridian-systems</code> MCP lookups, the five policies) to decide for yourself:
+          revoke, review, or retain — and write down why, in one sentence, citing the clause or fact
+          that drove the call.</p>
+
+          <div class="code labeled">
+            <span class="kind">micro-key.md — one row per account</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>| account   | your call | one-sentence why                              |
+|-----------|-----------|------------------------------------------------|
+| A000523   | revoke    | SoD conflict — Vendor Admin + AP Manager (ACP-4.2, no exemption on file) |
+| A000690   | revoke    | Dormant privileged — Vault role, no login 210+ days |
+| A000518   | retain    | Controller, ACP-4.2 exemption applies, compensating control documented |
+| ...       |           |                                                  |</pre>
+          </div>
+
+          <p><strong>How you'll know you got it right.</strong> Twelve rows, each with a verdict and a
+          one-sentence rationale you could defend to an auditor — written before you opened
+          <code>findings.2026-Q4.json</code>.</p>
+
+          <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Score your pipeline against your own micro-key.</div>
+          <p class="step-why">Why: this is the one piece of ground truth you're allowed — you built it,
+          so it's not cheating to check against it, and it's the closest you can get to the number
+          only the grader will ever see.</p>
+
+          <p><strong>What you're building.</strong> A short scorecard. For each of your 12 accounts,
+          look up the pipeline's verdict in <code>findings.2026-Q4.json</code> (or its absence, if the
+          pipeline retained it) and compare to your own call. Count agreements and disagreements.</p>
+
+          <p><strong>How you'll know you got it right.</strong> You can state a number — "11 of 12
+          agree" — and for every disagreement, you can say which of you is wrong and why. A
+          disagreement isn't automatically the pipeline's fault: sometimes your own read was too quick,
+          or missed a compensating control the pipeline's specialist caught. Either way, name the
+          reason before moving on.</p>
+
+          <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
+          <details class="stuck">
+            <summary>Stuck? — you disagree with your own pipeline</summary>
+            <div class="body">
+              <p><strong>Pipeline flagged something you called clean?</strong> Re-check the account
+              against the policy clause the finding cites. If the citation is real and you missed it,
+              the pipeline was right and your first read was the miss — that's useful to know too.</p>
+              <p><strong>Pipeline missed something you flagged?</strong> That's the more concerning
+              case — a false negative your micro-key caught that the case-study grading wouldn't
+              surface until Q5. Trace which specialist should have caught it and why it didn't.</p>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <div class="step-do">Run a rationale check across every Q4 finding, not just your 12.</div>
+          <p class="step-why">Why: your micro-key only covers a dozen accounts. A rationale check scales
+          to every finding the pipeline actually produced, and it catches a different defect — a right
+          verdict with a rationale that doesn't hold up.</p>
+
+          <p><strong>What you're building.</strong> A pass over all eight Q4 findings asking one
+          question per finding: does the <code>rationale</code> field actually name the evidence
+          (which fact, from which source) and the policy clause behind the verdict — or does it just
+          restate the category name in prose? Have Claude Code read each finding cold, without the
+          context of having produced it, and judge the rationale on those terms alone.</p>
+
+          <p><strong>How you'll know you got it right.</strong> For every finding, you can point to the
+          specific evidence field and the specific clause its rationale cites — and where one is thin
+          or missing, you've named it rather than let it pass because the verdict itself looked right.</p>
+
+          <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
+        </li>
+
+        <li>
+          <div class="step-do">Commit your micro-key and rationale notes.</div>
+          <div class="code labeled">
+            <span class="kind">Terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git add .
+git commit -m "Add hand-labeled Q4 micro-key and rationale check"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="c4-s4"> Mark done</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="checkpoint">
+      <div class="label">Checkpoint</div>
+      <p><strong>You're done with Cycle 4 when</strong> you have a 10–12 account micro-key you labeled
+      before looking at the pipeline's output, a scored comparison against it with every disagreement
+      explained, and a rationale check across all eight Q4 findings that names real evidence and real
+      citations rather than just restating the verdict. You now have a way to judge whether Q4's
+      findings are actually right — without ever seeing the answer key that decides your grade.</p>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE 5 ============ -->
+  <section class="cycle" id="cycle-5">
+    <div class="cycle-head">
+      <div class="cycle-num">5</div>
+      <div class="meta">
+        <div class="eyebrow">Cycle 5</div>
         <h2>Prove transfer &amp; capstone reflection</h2>
         <span class="time">≈ 90 min</span>
       </div>
@@ -894,7 +1040,7 @@ git commit -m "Replace memorized Q3 specifics with general rules; pipeline runs 
           <p><strong>How you'll know you got it right.</strong> Eight findings across the three
           categories with full citation coverage, five exemptions recorded, and not a single Q3 account
           anywhere in the output.</p>
-          <label class="done"><input type="checkbox" data-task="c4-s1"> Mark done</label>
+          <label class="done"><input type="checkbox" data-task="c5-s1"> Mark done</label>
         </li>
 
         <li>
@@ -911,7 +1057,7 @@ git commit -m "Replace memorized Q3 specifics with general rules; pipeline runs 
           handed the Q4 file couldn't tell it was produced on unseen data — same citation discipline,
           same field completeness, same shape. If anything in Q4 is weaker (a missing citation, a vaguer
           rationale), name it; that's a generalization gap, not a cosmetic one.</p>
-          <label class="done"><input type="checkbox" data-task="c4-s2"> Mark done</label>
+          <label class="done"><input type="checkbox" data-task="c5-s2"> Mark done</label>
         </li>
 
         <li>
@@ -940,7 +1086,7 @@ tail -n 3 audit/2026-Q4.jsonl</pre>
           <p><strong>How you'll know you got it right.</strong> There's a line for every write the Q4 run
           made, each a valid JSON object with the four fields — the same PostToolUse hook, unchanged,
           recording a quarter it was never built for.</p>
-          <label class="done"><input type="checkbox" data-task="c4-s5"> Mark done</label>
+          <label class="done"><input type="checkbox" data-task="c5-s5"> Mark done</label>
           <details class="stuck">
             <summary>Stuck?</summary>
             <div class="body">
@@ -971,7 +1117,7 @@ tail -n 3 audit/2026-Q4.jsonl</pre>
           the pattern that matched, and <code>findings.2026-Q4.json</code> does <em>not</em> contain the
           fake secret afterward. The guarantee held on a quarter it had never seen — because it never
           depended on the quarter in the first place.</p>
-          <label class="done"><input type="checkbox" data-task="c4-s6"> Mark done</label>
+          <label class="done"><input type="checkbox" data-task="c5-s6"> Mark done</label>
         </li>
 
         <li>
@@ -988,6 +1134,8 @@ tail -n 3 audit/2026-Q4.jsonl</pre>
 What made each fix a rule rather than a specific value?
 Did all six building blocks — rules, skills, tools, subagents,
 hooks, and generalization — travel to Q4? Which one surprised me?
+Did my hand-labeled micro-key agree with the pipeline? Where it
+didn't, was my read wrong or the pipeline's?
 If I ran this against Q5, Q6, Q7 — quarters I haven't seen — what
 would break first, and why?</pre>
           </div>
@@ -997,7 +1145,7 @@ would break first, and why?</pre>
           IDs) and the rule that replaced it — and takes an honest guess at what a Q5 would still expose.
           That last question is the point: a system you can reason about ahead of unseen data is one you
           can put in front of a client.</p>
-          <label class="done"><input type="checkbox" data-task="c4-s3"> Mark done</label>
+          <label class="done"><input type="checkbox" data-task="c5-s3"> Mark done</label>
         </li>
 
         <li>
@@ -1008,14 +1156,14 @@ would break first, and why?</pre>
             <pre>git add .
 git commit -m "Prove transfer to Q4; add capstone reflection"</pre>
           </div>
-          <label class="done"><input type="checkbox" data-task="c4-s4"> Mark done</label>
+          <label class="done"><input type="checkbox" data-task="c5-s4"> Mark done</label>
         </li>
       </ol>
     </div>
 
     <div class="checkpoint">
       <div class="label">Checkpoint</div>
-      <p><strong>You're done with Cycle 4 when</strong> Q4 has a complete, well-formed
+      <p><strong>You're done with Cycle 5 when</strong> Q4 has a complete, well-formed
       <code>findings.2026-Q4.json</code> of comparable quality to Q3's, nothing in the pipeline keys off
       a specific quarter, the enforcement layer travels — <code>audit/2026-Q4.jsonl</code> fills and the
       secret-guardrail still blocks — and your reflection is written and committed.</p>
@@ -1065,6 +1213,7 @@ git commit -m "Prove transfer to Q4; add capstone reflection"</pre>
         <li>A pass through the unseen <strong>Q4 quarter</strong> — same company, a new cast, data your pipeline had never touched</li>
         <li>A diagnosis of every place the pipeline memorized Q3 — the split-brain data path, the loud crashes and the quiet wrong answers alike</li>
         <li>A <strong>generalized pipeline</strong> keyed to rules instead of Q3 specifics: the exemption by role not ID, the count by data not by a typed-in number, the path by quarter not baked in</li>
+        <li>Your own <strong>answer key</strong> — a hand-labeled Q4 micro-key you scored the pipeline against, plus a rationale check across every finding — the two evals that work when there's no ground truth to check against</li>
         <li>Confirmation the <strong>enforcement layer</strong> travels — the Q4 audit log fills and the secret-guardrail still fires on the new seed</li>
         <li>Proof of transfer across quarters — eight Q4 findings, no logic changes — plus your capstone reflection</li>
       </ul>
