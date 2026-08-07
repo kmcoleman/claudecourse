@@ -177,6 +177,133 @@
     border-radius: 4px; padding: 1px 6px;
   }
   .block p { margin: 4px 0 0; color: var(--muted); font-size: 15.5px; }
+  .block .wheres {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 9px;
+  }
+  .block .wsub {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    font-size: 12.5px; font-weight: 600; text-decoration: none;
+    color: var(--brand-dk); background: var(--info-bg);
+    border: 1px solid #cfdcf7; border-radius: 999px; padding: 2px 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .block .wsub:hover { background: #e2ebfd; }
+  .block:last-child .wsub {
+    color: #7a5c0a; background: var(--task-bg); border-color: #ece3c2;
+  }
+  .block:last-child .wsub:hover { background: #f5f0dd; }
+  .block .wday {
+    font-size: 12px; color: var(--faint); text-decoration: none;
+  }
+  .block .wday:hover { color: var(--muted); text-decoration: underline; }
+
+  /* ---------- The linear course (v2) ---------- */
+  .courselede { font-size: 18px; color: #33414f; max-width: 44em; margin: 0 0 22px; }
+  .startrow {
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--border);
+    border-left: 4px solid var(--brand);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 20px 24px; margin: 0 0 26px;
+  }
+  .startbtn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--brand); color: #fff; text-decoration: none;
+    font-size: 16px; font-weight: 700;
+    padding: 13px 24px; border-radius: 6px;
+    transition: background .12s, transform .12s;
+    white-space: nowrap;
+  }
+  .startbtn:hover { background: var(--brand-dk); transform: translateY(-1px); }
+  .startbtn svg { width: 16px; height: 16px; }
+  .startwhat { font-size: 14.5px; color: var(--muted); max-width: 34em; }
+  .startwhat b { color: var(--ink); font-weight: 600; }
+  .coursestats {
+    display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 24px;
+  }
+  .coursestats .chip {
+    font-size: 12px; color: var(--muted);
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .themegrid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px; align-items: start;
+  }
+  details.theme {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: box-shadow .14s, border-color .14s;
+  }
+  details.theme:hover { border-color: #cdd6e0; }
+  details.theme[open] { box-shadow: 0 6px 22px rgba(27,39,51,.08); }
+  details.theme > summary {
+    list-style: none; cursor: pointer;
+    padding: 18px 20px; display: block; position: relative;
+  }
+  details.theme > summary::-webkit-details-marker { display: none; }
+  details.theme > summary::after {
+    content: "▸"; position: absolute; right: 18px; top: 18px;
+    color: var(--faint); font-size: 14px; transition: transform .14s;
+  }
+  details.theme[open] > summary::after { transform: rotate(90deg); }
+  .theme .thead { display: flex; align-items: baseline; gap: 10px; padding-right: 22px; }
+  .theme .tletter {
+    font-family: var(--serif); font-size: 30px; line-height: .9;
+    font-weight: 600; color: var(--brand);
+  }
+  .theme .tname {
+    font-family: var(--serif); font-size: 21px; font-weight: 600; color: var(--ink);
+  }
+  .theme .tdesc { margin: 8px 0 12px; font-size: 14.5px; color: #3a4653; }
+  .theme .tmeta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .theme .tmeta .chip {
+    font-size: 11.5px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .theme .tmeta .chip.block {
+    color: #7a5c0a; background: var(--task-bg); border-color: #ece3c2; font-weight: 600;
+  }
+  .stlist { list-style: none; margin: 0; padding: 0 14px 14px; }
+  .stlist li { border-top: 1px solid var(--border); }
+  .stlist a {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 9px 8px; text-decoration: none; color: var(--ink);
+    border-radius: 5px; transition: background .12s;
+  }
+  .stlist a:hover { background: var(--info-bg); }
+  .stlist .stnum {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    color: var(--brand); font-variant-numeric: tabular-nums;
+    min-width: 22px; text-align: right;
+  }
+  .stlist .sttitle { font-size: 14.5px; line-height: 1.4; flex: 1; }
+  .stlist .stmin {
+    font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .stlist .stblock {
+    display: inline-block; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: #7a5c0a; background: var(--task-bg);
+    border: 1px solid #ece3c2; border-radius: 4px;
+    padding: 0 6px; margin-left: 6px; white-space: nowrap;
+  }
+
+  /* ---------- Alternate pacing banner ---------- */
+  .altnote {
+    background: var(--info-bg); border: 1px solid #cfdcf7;
+    border-left: 4px solid var(--info-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px; margin: 0 0 22px;
+    font-size: 14.5px; color: #26364d;
+  }
+  .altnote strong { color: var(--brand-dk); }
 
   /* ---------- Day cards ---------- */
   .daygrid {
@@ -549,6 +676,9 @@
     .pollayout { grid-template-columns: 1fr; }
     .quarters { grid-template-columns: 1fr; }
     .block { padding-left: 54px; }
+    .themegrid { grid-template-columns: 1fr; }
+    .startrow { padding: 18px 18px; }
+    .startbtn { width: 100%; justify-content: center; }
   }
 </style>
 </head>
@@ -561,8 +691,9 @@
     <span class="home">Course <em>Portal</em></span>
     <nav class="top">
       <a href="#prework">Before You Arrive</a>
-      <a href="#arc">The Arc</a>
-      <a href="#days">Days</a>
+      <a href="#course">The Course</a>
+      <a href="#arc">Building Blocks</a>
+      <a href="#days">5-Day Pacing</a>
       <a href="#world">The World</a>
       <a href="#explore">Explore Data</a>
       <a href="#resources">Resources</a>
@@ -615,79 +746,294 @@
     </div>
   </section>
 
+  <!-- ================= THE LINEAR COURSE (v2) ================= -->
+  <section id="course">
+    <h2 class="section-title"><span class="n">01</span>The linear course — 39 sub-tasks</h2>
+    <p class="courselede">The main path. Thirty-nine sub-tasks in one straight line, each with a
+    stated outcome you can check before moving on. Work them in order — every sub-task assumes the
+    one before it is done and green. Nine themes group them; the themes are signposts, not gates.</p>
+
+    <div class="startrow">
+      <a class="startbtn" href="course/v2/subtask-01.html">Start here → Sub-task 1
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <p class="startwhat"><b>Name the access-review headache you'll test everything against.</b>
+      Thirty minutes, no setup required — you write down the problem in your own words before you
+      touch a terminal. Everything after it is measured against what you wrote.</p>
+    </div>
+
+    <div class="coursestats">
+      <span class="chip">39 sub-tasks</span>
+      <span class="chip">9 themes</span>
+      <span class="chip">~42 hours</span>
+      <span class="chip">6 building blocks</span>
+      <span class="chip">2 quarters of data</span>
+    </div>
+
+    <div class="themegrid">
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">A</span><span class="tname">Foundations</span></div>
+          <p class="tdesc">Get a bench that provably works, learn to state intent instead of
+          instructions, and write your first Rules.</p>
+          <div class="tmeta">
+            <span class="chip">7 sub-tasks</span><span class="chip">~6.75 h</span>
+            <span class="chip block">Block #1 Rules · sub-task 7</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-01.html"><span class="stnum">01</span><span class="sttitle">Name the access-review headache you'll test everything against</span><span class="stmin">30m</span></a></li>
+          <li><a href="course/v2/subtask-02.html"><span class="stnum">02</span><span class="sttitle">Get a bench you can prove works</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-03.html"><span class="stnum">03</span><span class="sttitle">Run the kit's green light and read what it tells you</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-04.html"><span class="stnum">04</span><span class="sttitle">Store a secret so it can't leak, then talk to Claude Code</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-05.html"><span class="stnum">05</span><span class="sttitle">Turn a vague ask into an intent that produces the right code</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-06.html"><span class="stnum">06</span><span class="sttitle">Break the same script three ways and name each failure</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-07.html"><span class="stnum">07</span><span class="sttitle">Write Rules that visibly change how Claude behaves<span class="stblock">Block #1</span></span><span class="stmin">45m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">B</span><span class="tname">Reconciliation is code</span></div>
+          <p class="tdesc">Join messy exports into one trustworthy ledger and triage 15,000 grants
+          to a candidate list — with zero model calls.</p>
+          <div class="tmeta">
+            <span class="chip">5 sub-tasks</span><span class="chip">~5.5 h</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-08.html"><span class="stnum">08</span><span class="sttitle">Load the raw data and prove it has three planted messes</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-09.html"><span class="stnum">09</span><span class="sttitle">Match accounts to people and report your own match rate</span><span class="stmin">75m</span></a></li>
+          <li><a href="course/v2/subtask-10.html"><span class="stnum">10</span><span class="sttitle">Normalize the mess and watch the duplicate count move</span><span class="stmin">45m</span></a></li>
+          <li><a href="course/v2/subtask-11.html"><span class="stnum">11</span><span class="sttitle">Triage 15k grants down to a candidate list with zero model calls</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-12.html"><span class="stnum">12</span><span class="sttitle">Emit a schema-valid finding, then break the schema on purpose</span><span class="stmin">60m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">C</span><span class="tname">First agent</span></div>
+          <p class="tdesc">One account, one model call, one verdict — then make it machine-readable
+          and catch it citing a clause that doesn't exist.</p>
+          <div class="tmeta">
+            <span class="chip">3 sub-tasks</span><span class="chip">~2.25 h</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-13.html"><span class="stnum">13</span><span class="sttitle">Get a verdict on one account from one model call</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-14.html"><span class="stnum">14</span><span class="sttitle">Make that verdict machine-readable and count what it cost</span><span class="stmin">45m</span></a></li>
+          <li><a href="course/v2/subtask-15.html"><span class="stnum">15</span><span class="sttitle">Catch your agent citing a policy clause that doesn't exist</span><span class="stmin">30m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">D</span><span class="tname">Skills</span></div>
+          <p class="tdesc">Turn Meridian's five written policies into Agent Skills the reviewer
+          reaches for — exemptions, traps and all.</p>
+          <div class="tmeta">
+            <span class="chip">4 sub-tasks</span><span class="chip">~4.75 h</span>
+            <span class="chip block">Block #2 Skills · sub-task 17</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-16.html"><span class="stnum">16</span><span class="sttitle">Inventory what the five policies really say</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-17.html"><span class="stnum">17</span><span class="sttitle">Build the SoD Skill and make it honor the exemption<span class="stblock">Block #2</span></span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-18.html"><span class="stnum">18</span><span class="sttitle">Build two more Skills and fall into the contractor trap</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-19.html"><span class="stnum">19</span><span class="sttitle">Re-run your single-account agent with Skills loaded</span><span class="stmin">45m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">E</span><span class="tname">Tools</span></div>
+          <p class="tdesc">Rank Claude Code's own tools by blast radius, then give the agent
+          read-only reach into Meridian's systems over MCP.</p>
+          <div class="tmeta">
+            <span class="chip">3 sub-tasks</span><span class="chip">~2.75 h</span>
+            <span class="chip block">Block #3 Tools · sub-task 20</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-20.html"><span class="stnum">20</span><span class="sttitle">Inventory Claude Code's own tools and rank them by blast radius<span class="stblock">Block #3</span></span><span class="stmin">45m</span></a></li>
+          <li><a href="course/v2/subtask-21.html"><span class="stnum">21</span><span class="sttitle">Call Meridian's systems by hand over MCP</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-22.html"><span class="stnum">22</span><span class="sttitle">Let your agent look things up mid-judgment</span><span class="stmin">60m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">F</span><span class="tname">Subagents</span></div>
+          <p class="tdesc">One orchestrator, many specialists, exactly one agent holding the pen —
+          fanned out across a full quarter.</p>
+          <div class="tmeta">
+            <span class="chip">3 sub-tasks</span><span class="chip">~4.25 h</span>
+            <span class="chip block">Block #4 Subagents · sub-task 23</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-23.html"><span class="stnum">23</span><span class="sttitle">Build one specialist that can't write anything<span class="stblock">Block #4</span></span><span class="stmin">75m</span></a></li>
+          <li><a href="course/v2/subtask-24.html"><span class="stnum">24</span><span class="sttitle">Stand up the orchestrator and give exactly one agent the pen</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-25.html"><span class="stnum">25</span><span class="sttitle">Fan out across the full candidate set for a complete quarter</span><span class="stmin">90m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">G</span><span class="tname">Hooks + injection defense</span></div>
+          <p class="tdesc">Deterministic guards before a write, an audit trail after — and a
+          defense against text that tries to give your agent orders.</p>
+          <div class="tmeta">
+            <span class="chip">3 sub-tasks</span><span class="chip">~2.75 h</span>
+            <span class="chip block">Block #5 Hooks · sub-task 26</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-26.html"><span class="stnum">26</span><span class="sttitle">Make a hook deny a write that would leak a secret<span class="stblock">Block #5</span></span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-27.html"><span class="stnum">27</span><span class="sttitle">Make every write leave an audit trail</span><span class="stmin">45m</span></a></li>
+          <li><a href="course/v2/subtask-28.html"><span class="stnum">28</span><span class="sttitle">Defend against prompt injection</span><span class="stmin">60m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">H</span><span class="tname">Evals, HITL &amp; tiering</span></div>
+          <p class="tdesc">Prove the thing works, decide when a human must look, and make one
+          quarterly review affordable enough to run for real.</p>
+          <div class="tmeta">
+            <span class="chip">8 sub-tasks</span><span class="chip">~8.75 h</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-29.html"><span class="stnum">29</span><span class="sttitle">Sort the seven eval types by who can run them</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-30.html"><span class="stnum">30</span><span class="sttitle">Run twice and diff — instability is an underspecified prompt</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-31.html"><span class="stnum">31</span><span class="sttitle">Hand-label twelve dossiers and score your system against yourself</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-32.html"><span class="stnum">32</span><span class="sttitle">Decide when to escalate to a human</span><span class="stmin">60m</span></a></li>
+          <li><a href="course/v2/subtask-33.html"><span class="stnum">33</span><span class="sttitle">Judge the rationales, not the verdicts</span><span class="stmin">75m</span></a></li>
+          <li><a href="course/v2/subtask-34.html"><span class="stnum">34</span><span class="sttitle">Put a dollar figure and a clock on one quarterly review</span><span class="stmin">45m</span></a></li>
+          <li><a href="course/v2/subtask-35.html"><span class="stnum">35</span><span class="sttitle">Route by model tier for cost</span><span class="stmin">45m</span></a></li>
+          <li><a href="course/v2/subtask-36.html"><span class="stnum">36</span><span class="sttitle">Turn on caching, verify it worked, then batch the full run</span><span class="stmin">90m</span></a></li>
+        </ul>
+      </details>
+
+      <details class="theme">
+        <summary>
+          <div class="thead"><span class="tletter">I</span><span class="tname">Generalization</span></div>
+          <p class="tdesc">Point the finished system at an unseen quarter, hunt every place you
+          memorized Q3, and prove transfer.</p>
+          <div class="tmeta">
+            <span class="chip">3 sub-tasks</span><span class="chip">~4 h</span>
+            <span class="chip block">Block #6 Generalization · sub-task 39</span>
+          </div>
+        </summary>
+        <ul class="stlist">
+          <li><a href="course/v2/subtask-37.html"><span class="stnum">37</span><span class="sttitle">Point the system at a new quarter and get a clean run with wrong answers</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-38.html"><span class="stnum">38</span><span class="sttitle">Hunt every place you memorized one quarter</span><span class="stmin">90m</span></a></li>
+          <li><a href="course/v2/subtask-39.html"><span class="stnum">39</span><span class="sttitle">Prove transfer: one codebase, two quarters, all green<span class="stblock">Block #6</span></span><span class="stmin">60m</span></a></li>
+        </ul>
+      </details>
+
+    </div>
+  </section>
+
   <!-- ================= THE ARC ================= -->
   <section id="arc">
-    <h2 class="section-title"><span class="n">01</span>The arc — six building blocks</h2>
-    <p class="worldlede">Each day adds one part. By Friday they're a single system: rules give
-    Claude its standing instructions, skills give it the rulebook, tools give it reach,
-    subagents divide the labor, hooks keep it honest, and generalization proves it holds.</p>
+    <h2 class="section-title"><span class="n">02</span>The arc — six building blocks</h2>
+    <p class="worldlede">Six parts, assembled in order. Rules give Claude its standing
+    instructions, skills give it the rulebook, tools give it reach, subagents divide the labor,
+    hooks keep it honest, and generalization proves it holds. Each block below is marked with the
+    sub-task where you <em>finish</em> it — the milestone, not the introduction.</p>
     <ol class="arc">
       <li class="block">
         <span class="node">1</span>
         <div class="head">
           <span class="name">Rules</span>
-          <span class="where"><a href="course/day-1.html">Day 1</a></span>
           <span class="artifact">CLAUDE.md</span>
         </div>
         <p>How you tell Claude Code to behave. Project rules that load every session and shape
         every response — the standing instructions the whole system sits on.</p>
+        <div class="wheres">
+          <a class="wsub" href="course/v2/subtask-07.html">Completed at sub-task 7</a>
+          <a class="wday" href="course/day-1.html">5-day pacing: Day 1 ↗</a>
+        </div>
       </li>
       <li class="block">
         <span class="node">2</span>
         <div class="head">
           <span class="name">Skills</span>
-          <span class="where"><a href="course/day-3.html">Day 3</a></span>
           <span class="artifact">policies/*.md</span>
         </div>
         <p>Markdown policies Claude applies on demand. Meridian's five written compliance
         policies become Agent Skills the reviewer reaches for when a case calls for them.</p>
+        <div class="wheres">
+          <a class="wsub" href="course/v2/subtask-17.html">Completed at sub-task 17 · starts at 16</a>
+          <a class="wday" href="course/day-3.html">5-day pacing: Day 3 ↗</a>
+        </div>
       </li>
       <li class="block">
         <span class="node">3</span>
         <div class="head">
           <span class="name">Tools</span>
-          <span class="where"><a href="course/day-4.html">Day 4</a></span>
           <span class="artifact">MCP server</span>
         </div>
         <p>The agent's senses and hands. Read-only lookups let Claude ask about one account,
         person, or ticket at judgment time — targeted questions, not bulk data.</p>
+        <div class="wheres">
+          <a class="wsub" href="course/v2/subtask-20.html">Completed at sub-task 20</a>
+          <a class="wday" href="course/day-4.html">5-day pacing: Day 4 ↗</a>
+        </div>
       </li>
       <li class="block">
         <span class="node">4</span>
         <div class="head">
           <span class="name">Subagents</span>
-          <span class="where"><a href="course/day-4.html">Day 4</a></span>
           <span class="artifact">orchestrator + specialists</span>
         </div>
         <p>One orchestrator directing many specialists. Split the review into focused agents
         that each own a single kind of judgment, then gather their findings.</p>
+        <div class="wheres">
+          <a class="wsub" href="course/v2/subtask-23.html">Completed at sub-task 23</a>
+          <a class="wday" href="course/day-4.html">5-day pacing: Day 4 ↗</a>
+        </div>
       </li>
       <li class="block">
         <span class="node">5</span>
         <div class="head">
           <span class="name">Hooks</span>
-          <span class="where"><a href="course/day-4.html">Day 4</a></span>
           <span class="artifact">.claude/hooks/</span>
         </div>
         <p>The enforcement and audit layer. Deterministic guards run before a tool fires;
         an audit trail records what happened after — the parts you don't leave to judgment.</p>
+        <div class="wheres">
+          <a class="wsub" href="course/v2/subtask-26.html">Completed at sub-task 26</a>
+          <a class="wday" href="course/day-4.html">5-day pacing: Day 4 ↗</a>
+        </div>
       </li>
       <li class="block">
         <span class="node">6</span>
         <div class="head">
           <span class="name">Generalization</span>
-          <span class="where"><a href="course/day-5.html">Day 5</a></span>
           <span class="artifact">2026-Q4</span>
         </div>
         <p>Pattern transfer to unseen data. Point the finished system at a new quarter and
         prove it holds — same shape, different specifics. This is the certification.</p>
+        <div class="wheres">
+          <a class="wsub" href="course/v2/subtask-39.html">Completed at sub-task 39</a>
+          <a class="wday" href="course/day-5.html">5-day pacing: Day 5 ↗</a>
+        </div>
       </li>
     </ol>
   </section>
 
   <!-- ================= DAYS ================= -->
   <section id="days">
-    <h2 class="section-title"><span class="n">02</span>Day by day</h2>
+    <h2 class="section-title"><span class="n">03</span>Alternate pacing — five days</h2>
+    <div class="altnote">
+      <strong>Same material, different packaging.</strong> These five day pages bundle the same
+      thirty-nine sub-tasks into daily blocks for instructor-led delivery. If you're working on
+      your own, use <a href="#course">the linear course</a> — it's the same content with a clearer
+      stopping point every hour. Pick one and stay with it; don't run both.
+    </div>
     <div class="daygrid">
 
       <article class="daycard">
@@ -756,7 +1102,7 @@
 
   <!-- ================= THE WORLD ================= -->
   <section id="world">
-    <h2 class="section-title"><span class="n">03</span>The world — Meridian Regional Energy</h2>
+    <h2 class="section-title"><span class="n">04</span>The world — Meridian Regional Energy</h2>
     <p class="worldlede">A fictional regional gas &amp; electric utility. Big enough to have a
     real access problem — entitlements scattered across two dozen systems that were never
     designed to talk to each other — and small enough to hold in your head. Everything you
@@ -786,7 +1132,7 @@
 
   <!-- ================= EXPLORE THE DATA ================= -->
   <section id="explore">
-    <h2 class="section-title"><span class="n">04</span>Explore the data</h2>
+    <h2 class="section-title"><span class="n">05</span>Explore the data</h2>
     <p class="worldlede">Browse Meridian's world without touching code. Read the policies, page
     through the roster and entitlements, and look up any person to see everything they hold.
     Flip the quarter toggle to watch the same shapes fill with different specifics — that's the
@@ -824,7 +1170,7 @@
 
   <!-- ================= RESOURCES ================= -->
   <section id="resources">
-    <h2 class="section-title"><span class="n">05</span>Resources &amp; for instructors</h2>
+    <h2 class="section-title"><span class="n">06</span>Resources &amp; for instructors</h2>
     <div class="reslist">
       <div class="rescard">
         <h3>This repository</h3>
@@ -832,6 +1178,7 @@
           <li><a href="README.md">Repository README</a> — how the kit and answer material fit together</li>
           <li><a href="CLAUDE.md">CLAUDE.md</a> — the project rules Claude Code reads</li>
           <li><a href="course/README.md">course/README.md</a> — the day pages</li>
+          <li><a href="course/v2/subtask-01.html">course/v2/</a> — the 39 linear sub-tasks</li>
         </ul>
       </div>
       <div class="rescard">
