@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 32 &mdash; Decide when to escalate to a human &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>32</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-31.html"><span class="arr">&larr;</span> Sub-task 31 &middot; Hand-label twelve dossiers</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme H &middot; Evals, HITL &amp; tiering &middot; Sub-task 4 of 8</div>
+    <h1>Decide when to escalate to a human</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-31.html">Sub-task 31</a>&nbsp;&mdash; the cases you found hard are the ones this is for</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;evals &middot; human in the loop</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">confidence threshold</span>
+        <span class="term">tri-state output</span>
+        <span class="term">review queue</span>
+        <span class="term">escalation rate</span>
+      </div>
+      <p class="note">The system stops pretending to be certain. &quot;I don't know&quot; becomes a supported answer.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Your pipeline currently has two answers: this is a finding, or it isn't.
+      Every account gets one, whether or not the evidence supports it.</p>
+      <p>You already know that's wrong, because sub-task 31 made you label twelve accounts and at
+      least one of them you weren't sure about. You had a third option available &mdash; write
+      "uncertain" and say what would resolve it. Your system doesn't.</p>
+      <p>This sub-task gives it one, and then measures how often it uses it &mdash; because a third
+      option that fires on 60% of accounts is not a safety feature, it's an abdication.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain why a forced binary is worse than an honest third state</li>
+        <li>Add a <code>needs_human_review</code> path without breaking the frozen contract</li>
+        <li>Set a threshold on something more defensible than a confidence number</li>
+        <li>Measure the escalation rate and justify it</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A system that can't say &quot;I don't know&quot; will say something else instead.</h3>
+
+      <p>Force a binary and every uncertain case gets pushed to one side. Which side depends on your
+      prompt's tone, and both directions are bad in ways that compound.</p>
+
+      <p>Push toward flagging and you get false positives. Reviewers spend time clearing accounts
+      that were fine, and after a few quarters they start clearing your findings by reflex &mdash;
+      which destroys the value of the true ones. Push toward clearing and you get false negatives:
+      invisible, unmeasurable, and exactly what sub-task 18's contractor trap produced.</p>
+
+      <div class="whatis">
+        <span class="tag">Tri-state output</span>
+        <p><strong>Finding</strong> &mdash; the evidence supports it; here's the clause.</p>
+        <p><strong>Clear</strong> &mdash; the evidence rules it out; here's why.</p>
+        <p><strong>Needs human review</strong> &mdash; the evidence is genuinely insufficient. Here
+        is what I found, what's missing, and what would resolve it.</p>
+        <p>The third state is not a failure mode. It's a correct answer to a question the available
+        evidence doesn't settle, and a reviewer who receives it can act on it in a way they cannot
+        act on a hedged finding.</p>
+      </div>
+
+      <p><strong>Confidence numbers are a weak threshold, and it's worth knowing why before you
+      build on one.</strong> A model's stated confidence is a token it produced, not a calibrated
+      probability. A finding at 0.7 is not reliably twice as uncertain as one at 0.35. You can use it
+      as one input, but a threshold built on it alone will be arbitrary.</p>
+
+      <div class="whatis">
+        <span class="tag">Better escalation triggers &mdash; and where each comes from</span>
+        <p><strong>Missing evidence.</strong> A dormancy judgment with no <code>last_login</code>
+        isn't low-confidence, it's unfounded. The absence is a fact you can test for in code.</p>
+        <p><strong>Unmatched identity.</strong> Sub-task 9 left accounts genuinely ambiguous &mdash;
+        two employees fit the same slug. Adjudicating access for a person you cannot name is not
+        something to do at 0.6 confidence.</p>
+        <p><strong>Conflicting signals.</strong> An exemption's conditions partly met. A ticket that
+        looks like a renewal and isn't. A001115 is the shape.</p>
+        <p><strong>Novelty.</strong> A role pair or category the Skills don't cover. Silence in the
+        specification should escalate, not default.</p>
+        <p>Every one of these is a structural test, not a vibe &mdash; which means you can implement
+        it, test it, and explain it.</p>
+      </div>
+
+      <p><strong>The contract constrains where this can live.</strong> <code>recommendation</code>
+      is an enum of <code>revoke</code> / <code>review</code> / <code>retain</code>, and
+      <code>additionalProperties</code> is <code>false</code>, so you cannot add a field. Two honest
+      options: use <code>review</code> as the escalation signal with the rationale saying what's
+      missing, or keep escalations out of <code>findings.json</code> entirely and write a separate
+      queue file. The second is cleaner &mdash; an escalation isn't a finding, and putting it in the
+      findings file inflates your count with things you haven't concluded.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Add the third state</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Decide where escalations live, and write down why.</div>
+          <p class="step-why">Why: this is a contract decision and it has consequences. A separate
+          <code>review_queue.json</code> keeps <code>findings.json</code> meaning "things I
+          concluded", which is what a client's auditor expects it to mean. Using
+          <code>recommendation: "review"</code> keeps everything in one file at the cost of
+          conflating "I think this needs a look" with "I couldn't decide".</p>
+          <label class="done"><input type="checkbox" data-task="s32-where"> Decision made and justified</label>
+        </li>
+        <li>
+          <div class="step-do">Define your escalation triggers as testable conditions.</div>
+          <p class="step-why">Why: implement at least three, and make each one something code or a
+          Skill can check rather than something a model feels. Missing evidence is the easiest and
+          most valuable: if the judgment depends on a field and the field is absent, escalate rather
+          than infer.</p>
+          <div class="code labeled">
+            <span class="kind">an escalation record</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>{
+  "account_id": "...",
+  "reason": "ambiguous_identity",
+  "what_i_found": "...",
+  "what_is_missing": "two employees match this account name; cannot
+                      determine employment status or term date",
+  "what_would_resolve_it": "confirmation from HR of which employee
+                            owns this account",
+  "provisional_view": "would be a contractor overstay if E01143"
+}</pre>
+          </div>
+          <p class="step-why">The last three fields are what make this useful rather than an
+          admission of defeat. A reviewer can act on "here's what I'd need". They cannot act on
+          "uncertain".</p>
+          <label class="done"><input type="checkbox" data-task="s32-triggers"> Three or more testable triggers implemented</label>
+        </li>
+        <li>
+          <div class="step-do">Teach the Skills that escalation is a legitimate output.</div>
+          <p class="step-why">Why: same lesson as sub-task 17's exemptions. If the Skills only
+          describe findings and clearances, the model has no vocabulary for the third state and will
+          force a binary regardless of what your code supports. Say explicitly when to escalate and
+          what an escalation must contain.</p>
+          <label class="done"><input type="checkbox" data-task="s32-skills"> Skills describe the escalation path</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Nothing escalates.</strong> Your triggers are too narrow, or genuinely nothing
+          in the sample qualifies. Test it deliberately: strip <code>last_login</code> from one
+          dossier and confirm the account escalates rather than being confidently cleared. If it
+          gets cleared, that's the finding.</p>
+          <p><strong>Everything escalates.</strong> Too broad. The commonest cause is treating low
+          model confidence as a trigger on its own, which catches every marginal case in the
+          quarter. Structural triggers are narrower and more defensible.</p>
+          <p><strong>Doesn't this just move work back to humans?</strong> Some, deliberately, and
+          the framing matters: the value isn't that the system decided everything, it's that it
+          decided the 87% that were decidable and told you precisely why the rest weren't. That's a
+          better product than a system that guesses on all of it.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Measure the rate and defend it</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run the quarter and count what landed in the queue.</div>
+          <p class="step-why">Why: the escalation rate is a headline number and you'll be asked for
+          it. Express it against the candidate set &mdash; N of 166 accounts reaching the agent layer
+          &mdash; not against all 1,200, since the other 1,034 were settled deterministically and
+          were never candidates for escalation.</p>
+          <label class="done"><input type="checkbox" data-task="s32-rate"> Escalation rate measured</label>
+        </li>
+        <li>
+          <div class="step-do">Read every escalation and check it deserved to be one.</div>
+          <p class="step-why">Why: this is the calibration step. For each, ask whether you could
+          have decided it from the dossier. If you could, the system escalated something it should
+          have handled and the trigger is too broad. If you couldn't, it's correct &mdash; and the
+          "what would resolve it" field should be something a reviewer can actually get.</p>
+          <label class="done"><input type="checkbox" data-task="s32-audit"> Every escalation checked</label>
+        </li>
+        <li>
+          <div class="step-do">Score the queue against your micro-key.</div>
+          <p class="step-why">Why: the sharpest test available. An account you labelled with high
+          confidence that the system escalated is a false escalation. An account you found genuinely
+          hard that it escalated is a calibrated one. And an account you found hard that it decided
+          confidently is the most interesting result of all &mdash; overconfidence exactly where you
+          hesitated.</p>
+          <label class="done"><input type="checkbox" data-task="s32-microkey"> Queue scored against the key</label>
+        </li>
+        <li>
+          <div class="step-do">Write the number down with its justification.</div>
+          <div class="worksheet" id="ws-hitl">
+            <div class="label">My escalation policy</div>
+            <p class="hint">This is a client-facing number. Write it as one.</p>
+            <div class="field">
+              <label>Where escalations live, and why not in <code>findings.json</code></label>
+              <textarea data-ws="h32-where" rows="3" placeholder="A separate review_queue.json, because a finding is a conclusion and an escalation isn't…"></textarea>
+            </div>
+            <div class="field">
+              <label>My triggers, and what each one catches</label>
+              <textarea data-ws="h32-trig" rows="4" placeholder="Missing evidence: … Ambiguous identity: … Conflicting signals: …"></textarea>
+            </div>
+            <div class="field">
+              <label>The rate, stated against the right denominator</label>
+              <textarea data-ws="h32-rate" rows="3" placeholder="N of 166 candidates = …%. Of 1,200 total accounts that's …%, but the honest denominator is…"></textarea>
+            </div>
+            <div class="field">
+              <label>What the micro-key said about my calibration</label>
+              <textarea data-ws="h32-cal" rows="3" placeholder="It escalated N I was confident about (too broad) and decided N I found hard (overconfident)…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-hitl">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-hitl">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s32-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Check the validator still passes, and commit.</div>
+          <p class="step-why">Why: <code>findings.json</code> may now contain fewer findings, since
+          some accounts moved to the queue. Your sub-task 29 coverage checks should still pass, and
+          if a "not empty" check now fails, that's the validator doing its job on a real change.</p>
+          <label class="done"><input type="checkbox" data-task="s32-commit"> Validator green; committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>What's a good escalation rate?</strong> There isn't a universal number, and
+          anyone who gives you one is guessing. What matters is that it's <em>justified</em>: every
+          escalation is a case you agree is undecidable, and every decided case is one you agree was
+          decidable. A defensible 15% beats an arbitrary 5%.</p>
+          <p><strong>The nine findings dropped to seven.</strong> Investigate before accepting.
+          Which two moved, and were they genuinely undecidable? A000686 moving to the queue would be
+          the trigger firing on "no ticket exists" &mdash; but absence of a ticket is exactly the
+          evidence the standard asks for, so that's a trigger that needs narrowing.</p>
+          <p><strong>Should escalated accounts count as findings for the client?</strong> No, and
+          the distinction is worth stating explicitly in the report. Findings are conclusions.
+          Escalations are open questions. Presenting them together inflates the finding count with
+          work you haven't done.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>A third output state exists, with a deliberate decision about where it lives</li>
+        <li>Three or more structural escalation triggers &mdash; not confidence numbers alone</li>
+        <li>Escalation records carrying what's missing and what would resolve it</li>
+        <li>A measured rate against the candidate set, with every escalation checked by hand</li>
+        <li>Calibration scored against the micro-key</li>
+      </ul>
+      <p style="margin-top:14px">Your system now declines to answer questions it can't answer, and
+      you can say how often that happens and why.</p>
+      <p>What you still can't say is whether the findings it <em>did</em> produce are well-argued.
+      Sub-task 33 grades the reasoning rather than the answer.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li>Take three escalations to a colleague and ask them to decide. Where they can and
+        you couldn't, the trigger is too broad. Where they also can't, you've found a genuine
+        limitation of the evidence &mdash; which is a finding about the client's data quality and
+        worth reporting as one.</li>
+        <li><a href="https://en.wikipedia.org/wiki/Calibration_(statistics)">Calibration</a> &mdash;
+        the statistical framing of what it means for a stated confidence to be trustworthy, and why
+        an uncalibrated number is a bad threshold.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-31.html"><span class="arr">&larr;</span> Sub-task 31</a>
+    <a class="navbtn next" href="subtask-33.html">Sub-task 33 &middot; Judge the rationales <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme H &middot; Sub-task 4 of 8
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask32-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask32-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

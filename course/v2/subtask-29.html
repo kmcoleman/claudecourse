@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 29 &mdash; Sort the seven eval types by who can run them &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>29</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-28.html"><span class="arr">&larr;</span> Sub-task 28 &middot; Defend against prompt injection</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme H &middot; Evals, HITL &amp; tiering &middot; Sub-task 1 of 8</div>
+    <h1>Sort the seven eval types by who can run them</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-28.html">Sub-task 28</a>&nbsp;&mdash; you need a complete run to evaluate</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;evals &middot; the free one</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">evals</span>
+        <span class="term">coverage check</span>
+        <span class="term">degeneracy</span>
+        <span class="term">effectiveness vs efficiency</span>
+      </div>
+      <p class="note">Theme H opens by naming everything you can measure without an answer key &mdash; then builds the cheapest one today.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">You have a complete quarterly review. Nine findings, five exemptions,
+      every citation real. You believe it's right because you checked it by hand against numbers
+      this course gave you.</p>
+      <p>On a real engagement nobody gives you the numbers. The client doesn't know the answer
+      &mdash; that's why they hired you. So the question that governs the rest of this theme is:
+      <strong>what can you measure when you can't measure accuracy?</strong></p>
+      <p>The answer is: quite a lot, in seven distinct ways. This sub-task names all seven and
+      builds the one that costs nothing.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Name the seven evaluations you can run without an answer key, and the one you can't</li>
+        <li>Separate effectiveness questions from efficiency questions</li>
+        <li>Build a validator that fails loudly on malformed <em>or</em> degenerate output</li>
+        <li>Find at least one way a run can be schema-valid and still worthless</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>You never see the key. Build the seven things that don't need it.</h3>
+
+      <p>Meridian's data was generated with a seed, and the generator can emit an answer key
+      classifying every account. Your instructor has it. You don't, and you won't &mdash; because a
+      real client cannot hand you one either. That constraint is the whole design of Theme H.</p>
+
+      <div class="whatis">
+        <span class="tag">The eighth evaluation, and why it isn't yours</span>
+        <p><strong>Accuracy against ground truth.</strong> Precision, recall, F1 against a known
+        answer key. It is the most informative measurement available and you cannot run it. The
+        instructor can, and will.</p>
+        <p>Everything below is what remains &mdash; and the point of this theme is that what remains
+        is enough to catch most real failures.</p>
+      </div>
+
+      <p>Split them by the question they answer. <strong>Effectiveness</strong> asks whether the
+      output is any good. <strong>Efficiency</strong> asks what it cost to get. Both go in front of
+      a client, and the second is usually the one that decides whether there's a second phase.</p>
+
+      <div class="whatis">
+        <span class="tag">The seven, and where each one gets built</span>
+        <p><strong>Effectiveness</strong></p>
+        <p><strong>1. Schema and coverage validation</strong> &mdash; is the output well-formed, and
+        is its distribution plausible? Free, deterministic, runs in a second. <em>Today.</em></p>
+        <p><strong>2. Self-consistency</strong> &mdash; does the same input produce the same answer
+        twice? <em>Sub-task 30.</em></p>
+        <p><strong>3. Hand-labelled micro-key</strong> &mdash; the only ground truth you're allowed
+        is the ground truth you make. <em>Sub-task 31.</em></p>
+        <p><strong>4. Escalation rate</strong> &mdash; what fraction the system declines to decide,
+        and whether that's calibrated. <em>Sub-task 32.</em></p>
+        <p><strong>5. LLM-as-judge on defensibility</strong> &mdash; are the rationales
+        evidence-grounded and policy-cited? Needs no key at all. <em>Sub-task 33.</em></p>
+        <p><strong>Efficiency</strong></p>
+        <p><strong>6. Cost and latency</strong> &mdash; per review, per finding, wall clock.
+        <em>Sub-task 34.</em></p>
+        <p><strong>7. Configuration deltas</strong> &mdash; what changes when you change the model
+        tier, or turn on caching and batching. <em>Sub-tasks 35 and 36.</em></p>
+      </div>
+
+      <p><strong>Today's is the cheapest and the most under-appreciated.</strong> Schema validation
+      you already have. What you don't have is a <em>coverage</em> check &mdash; and the failure it
+      catches is the one that looks most like success.</p>
+
+      <p>A run that returns zero findings is schema-valid. So is a run where all nine findings are
+      the same category, or every confidence is exactly 1.0, or every recommendation is
+      <code>revoke</code>. Those are <strong>degenerate</strong> distributions: technically
+      conforming, obviously broken to a human, and completely invisible to
+      <code>jsonschema.validate</code>.</p>
+
+      <div class="whatis">
+        <span class="tag">A gap in your own contract, worth finding today</span>
+        <p>Open <code>findings.schema.json</code> and look at <code>policy_citations</code>. It's
+        an array of strings with <strong>no minimum length</strong>. An empty array validates.</p>
+        <p>So a finding with no citation at all passes your contract, and every argument you've made
+        since sub-task 15 about audit-defensibility rests on something the schema does not enforce.
+        That is exactly the class of thing a coverage check exists to catch.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Write the taxonomy down</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">List all seven, and for each say what failure it catches and what it
+          misses.</div>
+          <p class="step-why">Why: this list is the plan for the next seven sub-tasks, and writing
+          it before building anything means you build with the shape in mind. It's also the slide
+          that answers "how do you know this works?" &mdash; a question you will be asked before
+          anyone signs anything.</p>
+          <div class="worksheet" id="ws-taxonomy">
+            <div class="label">My evaluation plan</div>
+            <p class="hint">Keep it. Sub-task 39 runs every one of these against a second quarter.</p>
+            <div class="field">
+              <label>The five effectiveness evals, and the distinct failure each one catches
+                <span class="eg">what would slip past all the others?</span>
+              </label>
+              <textarea data-ws="h29-eff" rows="5" placeholder="1. Schema+coverage catches… 2. Self-consistency catches… 3. Micro-key catches…"></textarea>
+            </div>
+            <div class="field">
+              <label>The two efficiency evals, and who asks for them</label>
+              <textarea data-ws="h29-cost" rows="3" placeholder="Cost per finding and latency — asked by the person approving the budget, not the auditor…"></textarea>
+            </div>
+            <div class="field">
+              <label>What none of the seven can tell me, and what I'd say to a client about it</label>
+              <textarea data-ws="h29-gap" rows="3" placeholder="None of them proves the findings are correct. What they establish is…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-taxonomy">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-taxonomy">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s29-tax"> All three answered</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Build the validator</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Start with schema validation, and make failure loud.</div>
+          <p class="step-why">Why: you have this from sub-task 12. What you may not have is a
+          runner that exits non-zero and prints every error rather than the first. Use
+          <code>iter_errors</code> rather than <code>validate</code> so one run tells you everything
+          that's wrong.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -c "
+import json, jsonschema
+schema = json.load(open('src/meridian_capstone/contract/findings.schema.json'))
+data = json.load(open('findings.json'))
+errs = list(jsonschema.Draft202012Validator(schema).iter_errors(data))
+for e in errs: print(list(e.absolute_path), e.message)
+print(len(errs), 'errors')
+"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s29-schema"> Schema check reports all errors and exits non-zero</label>
+        </li>
+        <li>
+          <div class="step-do">Add the coverage checks &mdash; the ones the schema can't express.</div>
+          <p class="step-why">Why: these are assertions about the <em>distribution</em>, not about
+          any individual record. Each one names a way a run can be technically fine and actually
+          broken.</p>
+          <div class="code labeled">
+            <span class="kind">the checks worth having</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>not empty            zero findings on 166 candidates is a bug, not a clean bill
+citations present    every finding has &ge;1 non-blank citation
+                     (the schema does NOT require this &mdash; check it yourself)
+citations real       every citation is one of the 5 clause numbers
+                     or 5 document titles from sub-task 16
+categories vary      more than one category present
+severities vary      not every finding at the same severity
+confidence varies    not every finding at exactly 1.0
+recommendations vary not everything "revoke"
+evidence non-trivial every evidence entry names a real source file
+exemptions recorded  suppressions land in exemptions.json, not nowhere
+accounts unique      no account flagged twice in the same category</pre>
+          </div>
+          <p class="step-why">On your 2026-Q3 run these should all pass: three categories present
+          out of ten in the enum, nine findings spread across them, five exemptions recorded
+          separately. The value isn't today's pass &mdash; it's the run in three months where a
+          prompt change quietly collapses everything to one category.</p>
+          <label class="done"><input type="checkbox" data-task="s29-coverage"> Coverage checks implemented</label>
+        </li>
+        <li>
+          <div class="step-do">Prove each check works by breaking the file.</div>
+          <p class="step-why">Why: a check you've never seen fail is a check you don't know works.
+          Take a copy of <code>findings.json</code> and, one at a time: empty it, blank a citation,
+          set every severity to <code>high</code>, set every confidence to 1.0. Each should trip
+          exactly one check with a message that tells you which.</p>
+          <p class="step-why">The blanked-citation case is the one to dwell on. It passes
+          <code>jsonschema.validate</code> and fails your coverage check &mdash; which is the
+          concrete demonstration that schema validity and usefulness are different properties.</p>
+          <label class="done"><input type="checkbox" data-task="s29-break"> Every check observed failing</label>
+        </li>
+        <li>
+          <div class="step-do">Wire it in so it runs without being remembered.</div>
+          <p class="step-why">Why: an eval you have to remember to run is an eval that runs the day
+          you write it. Make it a test, a make target, or the last thing
+          <code>run_review()</code> does before returning. Cheapest and most reliable is to let it
+          fail your existing <code>pytest</code> run.</p>
+          <label class="done"><input type="checkbox" data-task="s29-wire"> Validator runs automatically</label>
+        </li>
+        <li>
+          <div class="step-do">Run it against the real quarter and commit.</div>
+          <p class="step-why">Why: it should pass. Note the numbers it reports &mdash; findings per
+          category, severity spread, confidence range &mdash; because sub-task 30 diffs against
+          them.</p>
+          <label class="done"><input type="checkbox" data-task="s29-commit"> Passes on 2026-Q3; committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>How strict should "categories vary" be?</strong> Careful here. A quarter
+          legitimately might produce findings in one category only, so a hard requirement for three
+          is wrong. The useful version is a warning rather than a failure, or a check against the
+          <em>previous</em> run's distribution &mdash; a sudden collapse from three categories to one
+          is much more suspicious than one category in isolation.</p>
+          <p><strong>My citation-realness check is brittle.</strong> Then make it a set membership
+          test against the ten legitimate identifiers from sub-task 16 rather than a regex. Ten
+          strings, exact match, no ambiguity &mdash; and it fails loudly when someone adds a policy
+          without updating the list, which is correct behaviour.</p>
+          <p><strong>Is this really an eval, or just validation?</strong> Fair challenge. It doesn't
+          measure quality; it detects catastrophe. That's still the highest return per minute of any
+          check in this theme, because the failures it catches are total rather than marginal.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>All seven evaluation types named, with what each catches and misses</li>
+        <li>A validator that checks the contract <em>and</em> the distribution</li>
+        <li>Every coverage check observed failing on a deliberately broken file</li>
+        <li>At least one case found that is schema-valid and worthless &mdash; the empty
+            <code>policy_citations</code> array is the obvious one</li>
+        <li>The validator running automatically, and passing on 2026-Q3</li>
+      </ul>
+      <p style="margin-top:14px">You can now detect a run that has gone catastrophically wrong.
+      What you cannot detect is a run that has gone <em>slightly</em> wrong &mdash; or one that
+      disagrees with the run you did yesterday.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://platform.claude.com/docs/en/test-and-evaluate/eval-tool">Evaluating
+        model outputs</a> &mdash; Anthropic's framing of the same problem, including where automated
+        grading works and where it doesn't.</li>
+        <li>Add a check that compares this run's distribution against the last one and warns on a
+        large shift. Absolute thresholds age badly; relative ones catch the regression that matters
+        without needing you to know the right answer.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-28.html"><span class="arr">&larr;</span> Sub-task 28</a>
+    <a class="navbtn next" href="subtask-30.html">Sub-task 30 &middot; Run twice and diff <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme H &middot; Sub-task 1 of 8
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask29-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask29-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
