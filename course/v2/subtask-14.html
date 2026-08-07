@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 14 &mdash; Make that verdict machine-readable and count what it cost &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>14</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-13.html"><span class="arr">&larr;</span> Sub-task 13 &middot; One verdict from one model call</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme C &middot; First agent &middot; Sub-task 2 of 3</div>
+    <h1>Make that verdict machine-readable and count what it cost</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-13.html">Sub-task 13</a>&nbsp;&mdash; you need the dossier and a working call</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;first agent &middot; output constraint</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">output constraint</span>
+        <span class="term">per-call cost</span>
+        <span class="term"><code>output_config.format</code></span>
+      </div>
+      <p class="note">The schema from sub-task 12 stops being a validator and starts being a constraint on the model.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">The verdict you got in sub-task 13 is readable and useless. A human can
+      act on it, once. Nothing else can &mdash; you can't count it, sort it, diff it against last
+      quarter, or feed it to the next stage.</p>
+      <p>You already own the fix. <code>findings.schema.json</code> has been sitting in the repo
+      since sub-task 12, where you used it to validate findings you built by hand. This sub-task
+      hands the same schema to the model as a <em>constraint on what it is allowed to produce</em>.
+      Same file, different job.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Recognize structured output as sub-task 12's idea applied one level up</li>
+        <li>Constrain a model call to the findings schema and get back something that validates</li>
+        <li>Read per-call cost and project it across the candidate set</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>You already learned this. It just moves from the output file to the model call.</h3>
+
+      <p>Sub-task 12 made an argument about structured output that had nothing to do with
+      compliance: fixing the shape of output makes it composable, testable, and forces the ontology
+      early. That argument was about <code>findings.json</code> &mdash; a file you wrote.</p>
+
+      <p><strong>The same argument applies to the model's output, and the mechanism is the same
+      schema.</strong> That is the reframe. Structured output is not an agent technique you are
+      learning now; it is a general discipline you learned in Theme B, now applied to the one
+      component that can't be trusted to follow instructions perfectly.</p>
+
+      <div class="whatis">
+        <span class="tag">What is an output constraint?</span>
+        <p>A JSON Schema attached to the request. The model's response is forced to conform &mdash;
+        not asked politely in the prompt, <em>constrained</em>.</p>
+        <p>The difference matters. "Please reply in JSON with these fields" works most of the time
+        and fails unpredictably: a stray sentence before the brace, a missing field, an invented
+        enum value. A real output constraint doesn't have a failure mode you have to parse around.</p>
+        <p>This also changes how the model reasons. A required <code>evidence</code> array with a
+        minimum length means a finding without a citation is not expressible. The schema doesn't
+        ask for rigour &mdash; it removes the alternative.</p>
+      </div>
+
+      <p>There is a second thing to notice, and it is the reason this sub-task is only 45 minutes:
+      constraining the output shape usually <em>improves</em> the judgment, not just the format.
+      Ten named categories force a decision that prose lets the model dodge with "this may warrant
+      further review." A required severity means it has to commit.</p>
+
+      <div class="whatis">
+        <span class="tag">Cost, honestly</span>
+        <p><code>usage</code> gives you tokens. Tokens times the model's published rate gives you
+        dollars. Look up the current rate rather than trusting a number from a course page &mdash;
+        prices change, and a stale figure in a client deck is worse than no figure.</p>
+        <p>What you want out of today is the <em>per-account</em> cost of a judgment call, because
+        that number multiplied by 166 is the quarterly bill and you can compute it in your head.
+        Sub-task 34 does it properly, with wall-clock time attached. Today is the estimate.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Constrain the call to the contract</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Re-issue the sub-task 13 call with the findings schema as an output
+          constraint.</div>
+          <p class="step-why">Why: the schema describes a <em>list</em> of findings; a single call
+          about a single account should produce one finding object, or a signal that there's
+          nothing to report. Take the item schema out of <code>findings.schema.json</code> rather
+          than retyping it &mdash; a hand-copied schema drifts, and drift here means the model
+          produces output your own validator rejects.</p>
+          <div class="code labeled">
+            <span class="kind">the shape &mdash; write your own</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>import json, anthropic
+
+schema = json.load(open("src/meridian_capstone/contract/findings.schema.json"))
+item = schema["items"]                # the per-finding schema, straight from the contract
+
+response = client.messages.create(
+    model="claude-sonnet-5",
+    max_tokens=1024,
+    system="&lt;same reviewer framing as sub-task 13&gt;",
+    output_config={"format": {"type": "json_schema", "schema": item}},
+    messages=[{"role": "user", "content": dossier("A000012")}],
+)
+
+finding = json.loads(response.content[0].text)</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s14-call"> The call returns parseable JSON</label>
+        </li>
+        <li>
+          <div class="step-do">Validate the result against the contract &mdash; the same way you
+          validated your hand-built findings.</div>
+          <p class="step-why">Why: constrained output should validate by construction. Check anyway,
+          every time. The schema you passed and the schema you validate against must be the same
+          file, and asserting that is one line.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -c "
+import json, jsonschema
+schema = json.load(open('src/meridian_capstone/contract/findings.schema.json'))
+jsonschema.validate([json.load(open('one_finding.json'))], schema)
+print('valid')
+"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s14-valid"> Agent-produced finding validates</label>
+        </li>
+        <li>
+          <div class="step-do">Compare it, field by field, against the prose verdict from sub-task
+          13.</div>
+          <p class="step-why">Why: this is where the interesting thing shows up. Very often the
+          prose hedged and the structured version commits &mdash; and occasionally the commitment
+          is to something the prose never actually said. Check the <code>category</code> against
+          the enum, the <code>severity</code> against what the prose implied, and the
+          <code>confidence</code> against how hedged the prose was. A <code>confidence</code> of
+          0.95 attached to reasoning that said "it appears possible that" is a real signal, and
+          it's the kind of thing sub-task 33 will grade systematically.</p>
+          <label class="done"><input type="checkbox" data-task="s14-compare"> Prose and structured verdict compared</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The API rejects my schema.</strong> Output constraints don't accept every
+          JSON Schema feature. Numeric bounds, string length limits and recursive references are
+          common casualties. Strip the unsupported keywords from the copy you send and keep
+          validating against the original &mdash; the contract stays the contract.</p>
+          <p><strong>Every object needs <code>additionalProperties: false</code>.</strong> The
+          findings contract already sets it, which is convenient. Nested objects inside it may
+          need it too.</p>
+          <p><strong>It produced a finding for an account that shouldn't have one.</strong> A
+          constraint that only expresses "a finding" makes "no finding" inexpressible &mdash; so
+          the model invents one. That's a design defect in your schema, not a model failure. The
+          fix belongs in sub-task 17, where "not a finding" becomes a legitimate result. Note it
+          now.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Put a number on one judgment</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Log input and output tokens for the call, and convert to dollars
+          using the current published rates.</div>
+          <p class="step-why">Why: build the habit of logging usage next to every call now, while
+          there is one. Retrofitting cost tracking onto a pipeline you already built is miserable,
+          and Theme H assumes you didn't have to.</p>
+          <div class="code labeled">
+            <span class="kind">the log line you want</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>{"account_id": "A000012", "model": "claude-sonnet-5",
+ "input_tokens": ..., "output_tokens": ..., "usd": ...}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s14-cost"> Per-call cost computed</label>
+        </li>
+        <li>
+          <div class="step-do">Multiply out, and write the projection down.</div>
+          <p class="step-why">Why: <strong>166 accounts</strong> reach the agent layer in your
+          candidate set. One judgment call each gives you a first quarterly figure. It will be
+          wrong &mdash; some accounts need more context, the real pipeline makes more than one call
+          per account, and caching hasn't happened yet &mdash; but it's the right order of
+          magnitude, and knowing the order of magnitude on day one is what stops a project going
+          sideways in week six.</p>
+          <div class="worksheet" id="ws-cost">
+            <div class="label">First cost estimate</div>
+            <p class="hint">Sub-task 34 replaces this with a measured figure. Keep this one so you
+            can see how far off you were.</p>
+            <div class="field">
+              <label>Tokens in / out for one account judgment
+                <span class="eg">e.g. 620 in, 310 out</span>
+              </label>
+              <textarea data-ws="c14-tok" rows="2" placeholder="input …, output …"></textarea>
+            </div>
+            <div class="field">
+              <label>Cost of one judgment, and the rates I used</label>
+              <textarea data-ws="c14-unit" rows="2" placeholder="$… per account, at $…/$… per million tokens (looked up on …)"></textarea>
+            </div>
+            <div class="field">
+              <label>Projected cost of one quarter at 166 accounts &mdash; and what I think this estimate is missing</label>
+              <textarea data-ws="c14-proj" rows="3" placeholder="$… per quarter. This ignores retries, multi-call reasoning, and…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-cost">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-cost">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s14-proj"> Projection written down</label>
+        </li>
+        <li>
+          <div class="step-do">Commit.</div>
+          <p class="step-why">The constrained-call script and the usage logging. Not the finding.</p>
+          <label class="done"><input type="checkbox" data-task="s14-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>One agent-produced finding for <strong>A000012</strong> that validates against
+            <code>findings.schema.json</code> &mdash; produced by the model, not by you</li>
+        <li>The schema you constrain with is read from the contract file, not retyped</li>
+        <li>A usage log line carrying input tokens, output tokens, and dollars</li>
+        <li>A written projection for one quarter, with its own caveats stated</li>
+      </ul>
+      <p style="margin-top:14px">You now have both halves of a finding: a machine-readable shape
+      and a cost. What you do <em>not</em> have is any reason to believe the content is true.</p>
+      <p>Sub-task 15 asks the same agent for a policy citation, and then checks whether the clause
+      it cites exists.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs">Structured
+        outputs</a> &mdash; the supported subset of JSON Schema is documented here, and it is the
+        first place to look when a schema is rejected.</li>
+        <li><a href="https://platform.claude.com/docs/en/pricing">Current model pricing</a> &mdash;
+        look it up rather than trusting a number in a course page. Rates change; a stale figure in
+        a client deck is worse than none.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-13.html"><span class="arr">&larr;</span> Sub-task 13</a>
+    <a class="navbtn next" href="subtask-15.html">Sub-task 15 &middot; Catch a hallucinated citation <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme C &middot; Sub-task 2 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask14-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask14-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 13 &mdash; Get a verdict on one account from one model call &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>13</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-12.html"><span class="arr">&larr;</span> Sub-task 12 &middot; Emit a schema-valid finding</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme C &middot; First agent &middot; Sub-task 1 of 3</div>
+    <h1>Get a verdict on one account from one model call</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-12.html">Sub-task 12</a>&nbsp;&mdash; you need a candidate set and a working contract</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;first agent &middot; the model call</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">model call</span>
+        <span class="term">tokens</span>
+        <span class="term"><code>response.usage</code></span>
+        <span class="term">dossier</span>
+      </div>
+      <p class="note">Theme B produced 1,919 grants that a rule can't settle. This is the first one you hand to a model.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Everything you have built so far is deterministic. Given the same
+      files, your code produces the same ledger, the same candidates, the same two SoD findings,
+      forever. That is the right way to build the parts that <em>can</em> be built that way &mdash;
+      and it is why the remaining work is hard.</p>
+      <p>The 1,919 grants in your candidate set are the ones a rule couldn't settle. Not because
+      you wrote bad rules, but because settling them requires reading a policy written in English,
+      looking at a person's job title, and forming a view. That is judgment, and judgment is what
+      the model is for.</p>
+      <p>This sub-task is the smallest possible version of that: one account, one prompt, one
+      response, one verdict you read with your own eyes and decide whether you agree with.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain what a model call actually is &mdash; text in, text out, tokens billed both ways</li>
+        <li>Assemble a candidate dossier: everything one account looks like, in one string</li>
+        <li>Get a written verdict on a real Meridian account and judge it yourself</li>
+        <li>Read <code>response.usage</code> and know what you just paid for</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>An agent is a function call that happens to be expensive and non-deterministic.</h3>
+
+      <p>Strip away the vocabulary and a model call is unremarkable: you send a string, you get a
+      string back. There is no session, no memory, no state on the far end. The model knows exactly
+      what you put in the request and nothing else &mdash; not your ledger, not last quarter's
+      review, not the conversation you had with it five minutes ago unless you resent it.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a model call?</span>
+        <p>One HTTP request to the Claude API carrying a model name, a list of messages, and a cap
+        on how long the reply may be. One response carrying content blocks and a
+        <code>usage</code> object.</p>
+        <p><strong>Stateless.</strong> Every call is the first call. If the model needs to know
+        something, it has to be in the request.</p>
+        <p><strong>Billed both directions.</strong> You pay for the tokens you send
+        (<code>input_tokens</code>) and the tokens it generates (<code>output_tokens</code>), at
+        different rates. Output is several times more expensive than input.</p>
+        <p><strong>Non-deterministic.</strong> The same prompt can produce different words. That is
+        not a bug to be engineered away; it is the reason sub-task 30 exists.</p>
+      </div>
+
+      <p>Two consequences follow immediately, and they shape the rest of this course.</p>
+
+      <p><strong>Context is the whole product.</strong> A model that gives a bad verdict is usually
+      a model that wasn't told enough. Before blaming the prompt, ask what a competent human
+      reviewer would need on the desk in front of them to answer this &mdash; and check whether you
+      put it in the request. That list is your dossier.</p>
+
+      <p><strong>Every call has a price, and you should be able to say what it is.</strong> Not
+      approximately, not "it's cheap" &mdash; a number. The <code>usage</code> object on every
+      response gives you the raw material. Sub-task 34 turns that into a figure you can put in
+      front of a client's manager. Start counting now, while there is one call to count.</p>
+
+      <div class="whatis">
+        <span class="tag">Why one account, and why this one</span>
+        <p>You are going to run this on <strong>A000012</strong>, <code>gabriel.villa</code>. It is
+        a good first case because a rule genuinely cannot settle it and a human can.</p>
+        <p>The account holds <strong>Vault / Admin</strong> &mdash; a privileged role on a crown-tier
+        system. It was granted on <strong>2025-05-18</strong> by
+        <code>gateway.provisioning</code>. The last login on that grant was
+        <strong>2025-11-14</strong>. The employee, <strong>E00365</strong>, is a
+        <strong>Futures trader</strong> in <strong>Procurement</strong>, and is active.</p>
+        <p>Nothing there is a violation on its face. Whether it is a finding depends on how you
+        read a sentence in a policy document &mdash; which is exactly the shape of every hard
+        question in this domain.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Get an SDK that can make one call and tell you what it cost</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Install the Anthropic SDK into your virtualenv.</div>
+          <p class="step-why">Why: the kit ships <code>claude-agent-sdk</code>, which drives Claude
+          Code sessions. That is the right tool for Themes E&ndash;G, where an agent runs a loop and
+          calls tools. It is the wrong tool for <em>this</em> &mdash; you want one bare call whose
+          cost you can read off the response. Add <code>anthropic</code> alongside it; this is a
+          deliberate addition, exactly like installing pandas in sub-task 8.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pip install anthropic
+python -c "import anthropic; print(anthropic.__version__)"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s13-install"> SDK installed</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm your key is in the environment, not in a file you might
+          commit.</div>
+          <p class="step-why">Why: sub-task 4 put <code>ANTHROPIC_API_KEY</code> in
+          <code>.env</code> and <code>.env</code> in <code>.gitignore</code>. The SDK reads the
+          environment, not the file &mdash; export it, or load it with
+          <code>python-dotenv</code>. Never pass a key as a literal in code.</p>
+          <label class="done"><input type="checkbox" data-task="s13-key"> Key present, not committed</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Build the dossier before you write a word of prompt</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Write a function that takes an <code>account_id</code> and returns
+          everything you know about it as one readable block of text.</div>
+          <p class="step-why">Why: the intent is <em>"assemble the desk a reviewer would need"</em>,
+          not "format a prompt". Pull from the artifacts you already built &mdash;
+          <code>ledger.csv</code> for grants, <code>identities.csv</code> for the person,
+          the raw exports for tickets and prior review. Keep it plain and labelled; the model reads
+          English better than it reads your column names.</p>
+          <div class="code labeled">
+            <span class="kind">what a good dossier contains</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>account:      id, name, matched employee (and how confident that match is)
+person:       title, department, employment type, status, hire/term dates
+grants:       every app/role on this account, with granted_date, granted_by, last_login
+tickets:      any access request naming this account
+prior review: what a reviewer decided about this account last quarter
+as-of date:   the quarter end you are reviewing against</pre>
+          </div>
+          <p class="step-why">The last line matters more than it looks. "Has this account been
+          used recently?" is meaningless without a date to be recent relative to. Derive it from
+          the quarter &mdash; <code>2026-Q3</code> ends <strong>2026-09-30</strong> &mdash; rather
+          than typing it in. Sub-task 38 will come back for anyone who typed it in.</p>
+          <label class="done"><input type="checkbox" data-task="s13-dossier"> <code>dossier(account_id)</code> returns a complete block</label>
+        </li>
+        <li>
+          <div class="step-do">Print the dossier for <strong>A000012</strong> and read it as if you
+          were the reviewer.</div>
+          <p class="step-why">Why: check it against the numbers below before you spend a token. A
+          dossier missing the last-login date will produce a confident verdict about dormancy based
+          on nothing, and you will not be able to tell.</p>
+          <div class="code labeled">
+            <span class="kind">expected content &mdash; A000012</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>account_id    A000012        account_name  gabriel.villa
+employee_id   E00365         title         Futures trader
+department    Procurement    status        active
+grants        13 total, including Vault / Admin
+Vault/Admin   granted 2025-05-18 by gateway.provisioning
+              last_login 2025-11-14
+tickets       none referencing this account
+as-of         2026-09-30 (quarter end, 2026-Q3)</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s13-check"> Dossier matches on all eight lines</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My dossier has 15 grants, not 13.</strong> You're reading the raw
+          <code>entitlements.csv</code> rather than your de-duplicated ledger, or you're matching
+          on <code>account_name</code> instead of <code>account_id</code>. Use the ledger.</p>
+          <p><strong>I can't find a ticket and I think that's a bug.</strong> It isn't. There are
+          85 tickets for 1,200 accounts &mdash; most accounts have none. "No ticket" is a fact
+          about this account, and it belongs in the dossier stated explicitly rather than by
+          omission. A silent absence and a stated absence read very differently to a model.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Make the call and read what comes back</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Send the dossier to Claude and ask for a prose verdict.</div>
+          <p class="step-why">Why: intent, not incantation. You want a short written judgment on
+          whether this access should be revoked, reviewed, or retained &mdash; with the reasoning
+          visible, so you can disagree with it. Say who the model is (an access reviewer at a
+          regulated utility), give it the dossier, and ask the question. Don't ask for JSON yet;
+          that's sub-task 14, and reading the prose first is the point.</p>
+          <div class="code labeled">
+            <span class="kind">the call &mdash; shape only, write your own prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>import anthropic
+
+client = anthropic.Anthropic()          # reads ANTHROPIC_API_KEY from the environment
+
+response = client.messages.create(
+    model="claude-sonnet-5",
+    max_tokens=1024,
+    system="&lt;who the model is and what it is being asked to do&gt;",
+    messages=[{"role": "user", "content": dossier("A000012")}],
+)
+
+print(response.content[0].text)
+print(response.usage)</pre>
+          </div>
+          <p class="step-why">A note on the model name: <code>claude-sonnet-5</code> is the
+          judgment workhorse for this course &mdash; strong enough for the reasoning, cheap enough
+          to iterate on. Sub-task 35 makes you justify that choice against the alternatives with
+          measurements rather than vibes.</p>
+          <label class="done"><input type="checkbox" data-task="s13-call"> The call returns a verdict</label>
+        </li>
+        <li>
+          <div class="step-do">Read the verdict properly &mdash; then decide whether you agree.</div>
+          <p class="step-why">Why: this is the actual exercise. Not "did it work" but "is it
+          right". You have the same facts it had. Form your own view of A000012 first, then compare.
+          Agreeing is fine. Disagreeing is more interesting, and both go in the worksheet.</p>
+          <div class="worksheet" id="ws-verdict">
+            <div class="label">My first agent verdict</div>
+            <p class="hint">Write this before you move on. Sub-task 19 re-runs the same account
+            with Skills loaded, and sub-task 31 scores the pipeline against verdicts you wrote
+            yourself. This is the first entry in that record.</p>
+            <div class="field">
+              <label>What the model concluded, in one sentence
+                <span class="eg">e.g. revoke &mdash; a privileged Vault grant unused for ~10 months&hellip;</span>
+              </label>
+              <textarea data-ws="c-verdict" rows="2" placeholder="Its recommendation and the core of its reasoning…"></textarea>
+            </div>
+            <div class="field">
+              <label>My own verdict on A000012, reached independently</label>
+              <textarea data-ws="c-mine" rows="3" placeholder="Given the same dossier I would say… because…"></textarea>
+            </div>
+            <div class="field">
+              <label>Where we differ &mdash; and who I think is right</label>
+              <textarea data-ws="c-diff" rows="3" placeholder="It weighted X more heavily than I would. On reflection…"></textarea>
+            </div>
+            <div class="field">
+              <label>What it asserted that it could not have known from the dossier</label>
+              <textarea data-ws="c-unknown" rows="3" placeholder="It referred to a policy requirement I never gave it. It described the role as…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-verdict">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-verdict">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s13-judge"> All four boxes answered</label>
+        </li>
+        <li>
+          <div class="step-do">Look at <code>response.usage</code> and write the two numbers down.</div>
+          <p class="step-why">Why: <code>input_tokens</code> is what your dossier and system prompt
+          cost to send. <code>output_tokens</code> is what the verdict cost to generate. A dossier
+          for one account is small &mdash; a few hundred tokens. Multiply by 166 candidate accounts
+          in your head and notice that the number stops being negligible. That multiplication is
+          the whole of Theme H's cost argument, and you can do it today.</p>
+          <div class="code labeled">
+            <span class="kind">what usage looks like</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Usage(input_tokens=..., output_tokens=..., cache_creation_input_tokens=0,
+      cache_read_input_tokens=0)</pre>
+          </div>
+          <p class="step-why">The two cache fields are zero and will stay zero until sub-task 36.
+          Note that they exist; that's a lever you haven't pulled yet.</p>
+          <label class="done"><input type="checkbox" data-task="s13-usage"> Both token counts recorded</label>
+        </li>
+        <li>
+          <div class="step-do">Commit the script.</div>
+          <p class="step-why">Commit the dossier builder and the call script. Do not commit the
+          response &mdash; it isn't reproducible, and it'll be different next run anyway.</p>
+          <label class="done"><input type="checkbox" data-task="s13-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Authentication error.</strong> The SDK reads the process environment.
+          <code>echo $ANTHROPIC_API_KEY</code> in the same shell you're running from &mdash; if
+          it's empty, <code>.env</code> exists but was never exported.</p>
+          <p><strong>The verdict is vague and hedging.</strong> Usually a thin dossier. Print
+          exactly what you sent and read it as a stranger would: could <em>you</em> reach a verdict
+          from that text alone? If not, the model can't either.</p>
+          <p><strong>It refused to give a recommendation without more information.</strong> That's
+          a defensible answer and worth recording. It's also a preview of sub-task 32, where
+          "I don't know" becomes a first-class output rather than a failure.</p>
+          <p><strong>The response got cut off mid-sentence.</strong> <code>max_tokens</code> is a
+          hard ceiling. Raise it. It caps output length, not quality.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p>You have made a real model call about a real Meridian account, and:</p>
+      <ul>
+        <li>A <code>dossier(account_id)</code> function that assembles one account's full picture
+            from your own artifacts, with the as-of date derived from the quarter</li>
+        <li>A written verdict on <strong>A000012</strong> that you have read and formed an opinion
+            about</li>
+        <li>Your own independent verdict, written down <em>before</em> you decided whether you
+            agreed</li>
+        <li>The input and output token counts for that one call</li>
+      </ul>
+      <p style="margin-top:14px">That is your first agent. It is one function call, and it is
+      genuinely an agent &mdash; a model given context and asked to exercise judgment.
+      Everything else in this course is that, with more structure around it.</p>
+      <p>Next: the verdict is prose, which means nothing downstream can consume it. Sub-task 14
+      constrains it to the schema you already own.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://platform.claude.com/docs/en/api/messages">Messages API reference</a>
+        &mdash; the endpoint everything in this course ultimately calls. Read the
+        <code>usage</code> section; you'll be back for it in Themes H and I.</li>
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building
+        effective agents</a> &mdash; Anthropic's own argument for starting with the simplest thing
+        that works. One call is the simplest thing.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-12.html"><span class="arr">&larr;</span> Sub-task 12</a>
+    <a class="navbtn next" href="subtask-14.html">Sub-task 14 &middot; Make the verdict machine-readable <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme C &middot; Sub-task 1 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask13-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask13-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
