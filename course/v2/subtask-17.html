@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 17 &mdash; Build the SoD Skill and make it honor the exemption &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>17</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-16.html"><span class="arr">&larr;</span> Sub-task 16 &middot; Inventory the policies</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme D &middot; Skills &middot; Sub-task 2 of 4</div>
+    <h1>Build the SoD Skill and make it honor the exemption</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-16.html">Sub-task 16</a>&nbsp;&mdash; you need the clause inventory and the skills directory</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;building block #2</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">exemption as first-class output</span>
+        <span class="term"><code>exemptions.json</code></span>
+      </div>
+      <p class="note">Building block two of six. After this sub-task you have a Skill that clears people as deliberately as it flags them.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">You already found Meridian's two real SoD conflicts in sub-task 12, in
+      pure code, with no model involved. That was the right way to do it &mdash; set containment
+      against a matrix in a file is not a judgment call.</p>
+      <p>So why build a Skill for it? Because the deterministic version only worked because
+      <em>you</em> read ACP-4.2 and hard-coded the carve-out. The Skill has to encode the rule and
+      its exemption in a form a model can apply to a person it has never seen, in a quarter you
+      haven't generated yet. That is a different and harder artifact, and it is the one that
+      travels.</p>
+      <p>The exemption is the whole exercise. Three Controllers hold the conflicting pair
+      legitimately. A Skill that flags them is worse than no Skill.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Author a Skill that encodes a rule and its scoped carve-out</li>
+        <li>Make &quot;not a finding&quot; an output the system produces rather than a silence</li>
+        <li>Test it against all five holders of the conflicting pair and get 2 flagged, 3 cleared</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A suppression you can't see is indistinguishable from a miss.</h3>
+
+      <p>ACP-4.2 closes with a sentence worth quoting exactly: <em>"Access held under ACP-4.2 is
+      <strong>not</strong> a finding."</em> The policy author bothered to say that explicitly, and
+      the reason is that a reviewer reading a clean report cannot tell the difference between
+      <em>we checked and it's fine</em> and <em>we never checked</em>.</p>
+
+      <div class="whatis">
+        <span class="tag">Exemption as a first-class output</span>
+        <p>Your system produces two artifacts, not one. <code>findings.json</code> holds what you
+        are reporting. <code>exemptions.json</code> holds what you deliberately chose not to report
+        and the clause that authorised the suppression.</p>
+        <p>The second file is not paperwork. It is the evidence that your review was thorough,
+        and in an audit it is the more interesting document &mdash; anyone can produce findings.
+        Producing defensible non-findings is the harder half.</p>
+        <p>You built this file by hand in sub-task 12. From here on the Skill decides what goes in
+        it.</p>
+      </div>
+
+      <p><strong>Why the exemption can't be a list of account IDs.</strong> This is the trap, and
+      it is set now to spring in Theme I. The three exempt Controllers this quarter are A000387,
+      A000674 and A001125. Writing those three IDs into your Skill or your code produces exactly
+      the right answer for 2026-Q3 and a catastrophically wrong one for any other quarter &mdash;
+      three false positives on the new Controllers and three false negatives on people who left.</p>
+
+      <p>The exemption is keyed on <strong>title + department + role pair + application +
+      compensating control</strong>, because that is what ACP-4.2 says. The account IDs are a
+      consequence, never an input. <code>sod_matrix.json</code> mirrors the clause structurally in
+      its <code>exemptions</code> block &mdash; title, department, roles, app, clause,
+      compensating control &mdash; which tells you the data model agrees.</p>
+
+      <div class="whatis">
+        <span class="tag">What the Skill is for, given the code already works</span>
+        <p>Three things the deterministic version can't do. It can read the exemption's
+        <em>reasoning</em> and apply it to a case the matrix doesn't literally cover. It can
+        produce the rationale prose a finding needs. And it can say "this is close to the exemption
+        but doesn't meet it, and here is which condition fails" &mdash; which is precisely what
+        A001115 is.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Author the Skill</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Create <code>.claude/skills/sod-policy/SKILL.md</code> with valid
+          frontmatter.</div>
+          <p class="step-why">Why: directory, not a flat file. The <code>name</code> must match the
+          directory and satisfy the character rules from sub-task 16. The
+          <code>description</code> is the routing text &mdash; write it in the third person, and
+          make it say both what the Skill covers and when it applies.</p>
+          <div class="code labeled">
+            <span class="kind">frontmatter shape &mdash; write your own description</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>---
+name: sod-policy
+description: &lt;what this covers, and when Claude should reach for it &mdash;
+             one or two sentences, third person, well over 30 characters&gt;
+---
+
+&lt;the body: the rule, the exemption, how to cite, what to emit&gt;</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s17-file"> Skill file created at the right path</label>
+        </li>
+        <li>
+          <div class="step-do">Write the body so it covers the rule, the exemption, the citation
+          form, and the two possible outputs.</div>
+          <p class="step-why">Why: intent, not a template. A reviewer with no Meridian context
+          should be able to read your Skill and correctly adjudicate a case you didn't anticipate.
+          Four things have to be in there for that to be true.</p>
+          <p class="step-why"><strong>The rule.</strong> Conflicting role pairs are defined in
+          <code>sod_matrix.json</code>, not in your Skill &mdash; the Skill says where to look and
+          what a conflict means. <strong>ACP-4.1</strong> is the clause that forbids it, and it must
+          appear by name.</p>
+          <p class="step-why"><strong>The exemption, with all of its conditions.</strong>
+          <strong>ACP-4.2</strong>, scoped to a Controller in Finance &amp; Accounting holding
+          AP Manager plus Vendor Admin in Atlas ERP, with the CFO's quarterly manual payment review
+          as the compensating control. Every condition, or the Skill will over-apply it.</p>
+          <p class="step-why"><strong>How to cite.</strong> ACP-4.1 and ACP-4.2 by number; the SoD
+          Policy by title only. Say explicitly that the SoD Policy has no section numbers &mdash;
+          that one sentence is what stops sub-task 15's failure recurring.</p>
+          <p class="step-why"><strong>Both outputs.</strong> A conflict that isn't exempt is a
+          finding. A conflict that <em>is</em> exempt is an exemption record naming ACP-4.2 and the
+          compensating control. Neither case is silence.</p>
+          <label class="done"><input type="checkbox" data-task="s17-body"> Body covers rule, exemption, citation form, both outputs</label>
+        </li>
+        <li>
+          <div class="step-do">Check the Skill loads.</div>
+          <p class="step-why">Why: if you created <code>.claude/skills/</code> this session rather
+          than in sub-task 16, restart first. A Skill that isn't discovered fails silently, which
+          is the worst possible failure mode to debug from output alone.</p>
+          <label class="done"><input type="checkbox" data-task="s17-load"> Skill discovered by Claude Code</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>How long should the body be?</strong> Long enough to adjudicate an
+          unanticipated case; short enough that every sentence earns its place. A few hundred words
+          is normal for a policy this size. If you're writing paragraphs the model would already
+          know without you, cut them.</p>
+          <p><strong>Should I paste the whole policy text in?</strong> Quoting the operative
+          sentences is good &mdash; especially ACP-4.2's closing line, which is doing real work.
+          Pasting all five documents into one Skill defeats progressive disclosure; you'd be back
+          to paying for everything on every call.</p>
+          <p><strong>My description is one line and feels thin.</strong> Then it is. The tests
+          reject descriptions under about 30 characters for a reason: that string is the entire
+          basis on which Claude decides whether to load your Skill. Say what it covers and when it
+          applies.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Test it on all five holders &mdash; both outcomes</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run the sub-task 14 agent, with the Skill available, over each of the
+          five accounts holding Atlas ERP Vendor Admin + AP Manager.</div>
+          <p class="step-why">Why: five cases, two outcomes, and the split is the test. Every
+          Vendor Admin grant in the company is also an AP Manager &mdash; five out of five, which
+          you found in sub-task 12.</p>
+          <div class="code labeled">
+            <span class="kind">expected split</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>FINDING   A000384  james.hernandez   E00023  Ranger/warden
+                   Field Services      terminated 2026-07-07
+FINDING   A001115  michelle.mercado  E00251  Senior Accountant
+                   Finance &amp; Accounting  active
+
+EXEMPT    A000387  april.tyler       E00168  Controller  F&amp;A
+EXEMPT    A000674  patrick.ramos     E00042  Controller  F&amp;A
+EXEMPT    A001125  amanda.garrison   E00089  Controller  F&amp;A</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s17-five"> 2 findings, 3 exemptions</label>
+        </li>
+        <li>
+          <div class="step-do">Read the reasoning on the two that stayed findings, and check it
+          names the right condition.</div>
+          <p class="step-why">Why: both are near-misses on the exemption, and for different
+          reasons. <strong>A001115</strong> is a Senior Accountant in Finance &amp; Accounting
+          &mdash; right department, wrong title. If the rationale says "not in Finance &amp;
+          Accounting" the Skill got the right answer for the wrong reason, which will fail on the
+          next quarter. <strong>A000384</strong> is a Ranger/warden in Field Services who was
+          terminated on <strong>2026-07-07</strong> and still holds both roles in the finance
+          system; the exemption is nowhere near them, and the termination is arguably the more
+          alarming fact.</p>
+          <label class="done"><input type="checkbox" data-task="s17-reason"> Both rationales name the correct failing condition</label>
+        </li>
+        <li>
+          <div class="step-do">Check the three exemption records carry the clause and the
+          compensating control.</div>
+          <p class="step-why">Why: "suppressed" is not a reason. Each record needs the account, the
+          clause &mdash; <strong>ACP-4.2</strong> &mdash; and the compensating control it rests on,
+          the CFO's quarterly manual payment review. A reviewer must be able to challenge the
+          suppression on its merits, which requires knowing what those merits were.</p>
+          <label class="done"><input type="checkbox" data-task="s17-exempt"> 3 records, each citing ACP-4.2 and the compensating control</label>
+        </li>
+        <li>
+          <div class="step-do">Verify every citation against your sub-task 16 inventory.</div>
+          <p class="step-why">Why: this is the first payoff. Take each <code>policy_citations</code>
+          entry and check it appears in your list. ACP-4.1 and ACP-4.2 are real. "SoD Policy" is
+          real. "SoD Policy &sect;2.3" is not, and now you catch it in four seconds instead of
+          shipping it.</p>
+          <label class="done"><input type="checkbox" data-task="s17-verify"> Every citation verified against the inventory</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>It flagged the Controllers.</strong> The Skill states the exemption but
+          doesn't make it operative &mdash; usually because the rule reads as absolute and the
+          exemption as a footnote. Try stating both conditions as a single test the model has to
+          run: is this pair conflicting <em>and</em> not covered by ACP-4.2?</p>
+          <p><strong>It exempted A001115 too.</strong> The opposite failure, and worse: a real
+          conflict cleared. The exemption needs <em>both</em> title Controller <em>and</em>
+          department Finance &amp; Accounting. Senior Accountant is not Controller, however senior.
+          Make the conjunction explicit in the Skill.</p>
+          <p><strong>It exempted A000384 because it's not in Finance.</strong> Read that again
+          &mdash; being outside Finance means the exemption doesn't apply, so the conflict stands.
+          If the Skill is treating "outside the exemption's scope" as "outside the rule's scope",
+          the rule and the carve-out have been collapsed into one condition.</p>
+          <p><strong>Is it cheating to also run the deterministic version?</strong> No &mdash;
+          that's a regression test, and running both is exactly right. You know the answer from
+          sub-task 12; the Skill has to reach it by reasoning rather than by set arithmetic, and
+          comparing the two is how you find out whether it did.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Write down what makes this Skill portable</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Answer the transfer question before you move on.</div>
+          <p class="step-why">Why: Theme I regenerates Meridian under a new seed. Every account ID
+          changes. Your Skill either survives that or it doesn't, and the answer is decided today,
+          not in sub-task 37.</p>
+          <div class="worksheet" id="ws-sod">
+            <div class="label">My SoD Skill, and whether it travels</div>
+            <p class="hint">Sub-task 38 will hunt for hardcoded assumptions. This note is you
+            getting there first.</p>
+            <div class="field">
+              <label>How my Skill decides the exemption applies
+                <span class="eg">on title + department + role pair + app, or on something else?</span>
+              </label>
+              <textarea data-ws="d17-key" rows="3" placeholder="It tests title == Controller AND department == Finance & Accounting AND…"></textarea>
+            </div>
+            <div class="field">
+              <label>Anything in my Skill or code specific to 2026-Q3</label>
+              <textarea data-ws="d17-hard" rows="3" placeholder="Account IDs? A count of 5 holders? A quarter-end date? Names?"></textarea>
+            </div>
+            <div class="field">
+              <label>What my exemption records contain, and why a reviewer would accept them</label>
+              <textarea data-ws="d17-rec" rows="3" placeholder="account_id, ACP-4.2, the compensating control, and the conditions I verified…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-sod">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-sod">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s17-note"> All three answered</label>
+        </li>
+        <li>
+          <div class="step-do">Commit the Skill.</div>
+          <p class="step-why"><code>.claude/skills/</code> is source and belongs in git. It is as
+          much a part of the system as <code>run_review.py</code>.</p>
+          <label class="done"><input type="checkbox" data-task="s17-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><strong>Building block two exists.</strong> Specifically:</p>
+      <ul>
+        <li><code>.claude/skills/sod-policy/SKILL.md</code> loads, and encodes ACP-4.1, ACP-4.2 and
+            the Controller carve-out</li>
+        <li>All five holders of the conflicting pair adjudicated: <strong>A000384</strong> and
+            <strong>A001115</strong> flagged, <strong>A000387</strong>, <strong>A000674</strong> and
+            <strong>A001125</strong> cleared</li>
+        <li>Three exemption records, each citing ACP-4.2 and the CFO compensating control</li>
+        <li>The exemption keyed on title and department &mdash; never on an account ID</li>
+        <li>Every citation checked against your sub-task 16 inventory</li>
+      </ul>
+      <p style="margin-top:14px">The interesting property of this Skill is not that it finds two
+      conflicts. It's that it clears three people <em>on the record</em>, with the clause that
+      authorised it.</p>
+      <p>Sub-task 18 writes two more Skills, and one of them will quietly clear four real
+      violations.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li>Open <code>data/2026-Q3/sod_matrix.json</code> and compare its
+        <code>exemptions[0]</code> block to the text of ACP-4.2. The structure mirrors the clause
+        &mdash; app, roles, department, title, clause, compensating control. That is what it looks
+        like when a data model and a policy actually agree.</li>
+        <li><a href="https://code.claude.com/docs/en/skills">Skills reference</a> &mdash; worth a
+        second read now that you've written one, particularly the section on how descriptions drive
+        loading.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-16.html"><span class="arr">&larr;</span> Sub-task 16</a>
+    <a class="navbtn next" href="subtask-18.html">Sub-task 18 &middot; Two more Skills and the contractor trap <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme D &middot; Sub-task 2 of 4
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask17-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask17-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 18 &mdash; Build two more Skills and fall into the contractor trap &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>18</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-17.html"><span class="arr">&larr;</span> Sub-task 17 &middot; The SoD Skill</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme D &middot; Skills &middot; Sub-task 3 of 4</div>
+    <h1>Build two more Skills and fall into the contractor trap</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-17.html">Sub-task 17</a>&nbsp;&mdash; you need a working Skill as the pattern</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;skills &middot; policy ambiguity</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">policy ambiguity</span>
+        <span class="term">false-negative trap</span>
+      </div>
+      <p class="note">The most important sub-task in Theme D. A plausible reading of one sentence silently clears four real violations.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Two more Skills. The Privileged Access Standard is straightforward
+      work with one scope limit that matters. The Contractor Access Standard is the one this
+      sub-task is really about.</p>
+      <p>Its operative sentence is twenty-three words long. There is a reading of it that any
+      competent reviewer would call reasonable, that produces a clean report, and that is
+      <strong>wrong in a way nothing in your pipeline will tell you about</strong>. Four real
+      findings vanish. Every test still passes. The report looks better.</p>
+      <p>You're going to fall into it deliberately, watch the findings disappear, and then work out
+      what the sentence actually requires.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Author the Privileged Access Standard Skill, both requirements and the scoped carve-out</li>
+        <li>Author the Contractor Access Standard Skill and get the wrong answer on purpose</li>
+        <li>Locate the exact word in the clause that the plausible reading drops</li>
+        <li>Write down the general lesson, not just the fix</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A false negative is invisible. That is the entire problem with it.</h3>
+
+      <p>A false positive announces itself. Someone gets flagged, they push back, you look again,
+      you apologise. Painful, self-correcting, over in a day.</p>
+
+      <p>A false negative produces a shorter report and a quieter week. Nothing in the pipeline
+      knows. No test fails, because you'd have to already know the right answer to write the test.
+      Your evaluation suite says everything is green, because green is exactly what a missed
+      finding looks like from the inside.</p>
+
+      <div class="whatis">
+        <span class="tag">Where these come from</span>
+        <p>Not from a model being wrong. From <strong>a defensible reading of an ambiguous
+        sentence</strong> that happens not to be the one the author meant.</p>
+        <p>You will not catch this by testing harder. You catch it by reading the clause
+        adversarially &mdash; asking of each phrase "if I drop this word, what stops being a
+        finding?" &mdash; and by having ground truth to check against.</p>
+      </div>
+
+      <p>Meridian's Contractor Access Standard says, in full:</p>
+
+      <p style="font-family:var(--serif);font-size:18px;margin:16px 0 16px 20px;padding-left:16px;border-left:3px solid var(--border);color:#33414f">
+      Contractor access ends on the statement-of-work end date. Extensions require a new approved
+      ticket referencing the renewed SOW before the prior end date.</p>
+
+      <p>The plausible reading is: <em>an approved ticket dated before the end date means the
+      access was extended, so it's fine.</em> That reading is not lazy. It is the reading most
+      people produce on a first pass, because it's how extension processes usually work.</p>
+
+      <p>Now look at the data it meets. Three of Meridian's expired contractors have exactly that
+      &mdash; an approved ticket dated a few days before their term date. Under the plausible
+      reading, all three are cleared. And the tickets grant <code>VPN / User</code> and reference
+      no statement of work at all, because <strong>no ticket in the entire dataset has an SOW field
+      of any kind</strong>.</p>
+
+      <p>So under the clause as written, no ticket in this dataset can extend anything. Under the
+      plausible reading, three do. That gap is four findings wide.</p>
+
+      <div class="whatis">
+        <span class="tag">The second trap, in the same document</span>
+        <p>All <strong>117</strong> contractors have <code>status: active</code> in the HR roster.
+        A rule keyed on employment status finds nothing at all &mdash; not fewer findings,
+        <em>zero</em>. Only <code>term_date</code> reveals the lapse, and a contractor whose SOW
+        ended is still "active" until someone deprovisions them, which is precisely the failure the
+        control exists to catch.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>The Privileged Access Standard Skill</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Author
+          <code>.claude/skills/privileged-access-standard/SKILL.md</code> with
+          <strong>both</strong> requirements.</div>
+          <p class="step-why">Why: the standard sets two independent conditions, and people
+          routinely encode one. An approved access request <em>before</em> the grant, and activity
+          within <strong>180</strong> days. An account can breach either, or both, and the
+          rationale should say which.</p>
+          <p class="step-why">Cite by title. This document has no clause numbers &mdash; a "&sect;2.1"
+          here is a fabrication, and your Skill should say so in as many words.</p>
+          <label class="done"><input type="checkbox" data-task="s18-priv"> Skill encodes both requirements and the 180-day window</label>
+        </li>
+        <li>
+          <div class="step-do">Get the break-glass carve-out's scope exactly right.</div>
+          <p class="step-why">Why: the sentence is <em>"Break-glass accounts are exempt from the
+          dormancy rule when registered and documented."</em> Two limits, both load-bearing. It
+          exempts from the <strong>dormancy rule only</strong> &mdash; a break-glass account with no
+          approving ticket is still a finding on that half. And it applies only <strong>when
+          registered</strong>, which means present in
+          <code>data/2026-Q3/service_accounts.json</code>. A Skill that reads "break-glass accounts
+          are exempt" full stop over-applies on both axes.</p>
+          <label class="done"><input type="checkbox" data-task="s18-glass"> Carve-out scoped to dormancy, and to registered accounts</label>
+        </li>
+        <li>
+          <div class="step-do">Test it and check the numbers.</div>
+          <p class="step-why">Why: there are <strong>105</strong> privileged grants in the ledger,
+          of which <strong>23</strong> carry no approving ticket, and Vault alone has
+          <strong>77</strong> Admin grants. Out of all that, exactly three are stale enough to
+          breach the 180-day rule, and all three also breach the ticket requirement.</p>
+          <div class="code labeled">
+            <span class="kind">expected &mdash; dormant privileged</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>FINDING  A000012  gabriel.villa     Vault/Admin  last login 2025-11-14
+FINDING  A000598  robert.miller     Vault/Admin  last login 2025-09-14
+FINDING  A000742  debbie.gonzalez   Vault/Admin  last login 2025-10-27
+
+EXEMPT   A001159  emergency.admin   Active Directory / Domain Admin
+EXEMPT   A001199  emergency.admin   Active Directory / Domain Admin</pre>
+          </div>
+          <p class="step-why">All three findings are Vault Admins, all granted
+          <strong>2025-05-18</strong> by <code>gateway.provisioning</code>, none with an approving
+          ticket. Against a quarter end of <strong>2026-09-30</strong> the 180-day cutoff falls on
+          <strong>2026-04-03</strong>, and every one of those logins is months on the wrong side of
+          it. <strong>A000012</strong> is the account you have been judging since sub-task 13
+          &mdash; you now have a policy-grounded verdict on it.</p>
+          <label class="done"><input type="checkbox" data-task="s18-dormant"> 3 findings, 2 break-glass exemptions</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm the two exempt accounts are exempt for the stated reason.</div>
+          <p class="step-why">Why: <strong>A001159</strong> and <strong>A001199</strong> are both
+          <code>emergency.admin</code>, both Domain Admin in Active Directory, both registered in
+          <code>service_accounts.json</code>, and both hold approved tickets &mdash; so they clear
+          the dormancy rule by exemption and the ticket rule on the merits. If your Skill exempted
+          them without checking the registration, it got the right answer by luck and will clear an
+          unregistered break-glass account next quarter.</p>
+          <label class="done"><input type="checkbox" data-task="s18-registered"> Registration actually checked</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>I got more than three dormant findings.</strong> Probably counting non-
+          privileged grants, or applying dormancy to accounts rather than to grants. The rule is
+          about privileged roles specifically.</p>
+          <p><strong>Fewer than three.</strong> Check your as-of date. If you're measuring dormancy
+          against today rather than quarter end you may be shifting the window. All three of these
+          are stale by such a margin that the exact date doesn't change the answer &mdash; which is
+          convenient now and a hazard in sub-task 38, where a hardcoded date does change it.</p>
+          <p><strong>emergency.admin looks like a person.</strong> It does, deliberately &mdash;
+          along with <code>marcus.pipeline</code>. That's the same trap as sub-task 9: any rule
+          keyed on an <code>svc-</code> prefix misclassifies both. Registration is checked against
+          the file, not against the shape of the name.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Write the contractor Skill the obvious way, and watch it fail</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Author
+          <code>.claude/skills/contractor-access-standard/SKILL.md</code> encoding the plausible
+          reading: contractor access ends at the SOW date unless an approved ticket predates
+          it.</div>
+          <p class="step-why">Why: write it the way you would have written it anyway. The exercise
+          only works if the wrong version is one you'd genuinely have shipped.</p>
+          <label class="done"><input type="checkbox" data-task="s18-naive"> First version written, plausible reading encoded</label>
+        </li>
+        <li>
+          <div class="step-do">Run it over the contractor population and count what you get.</div>
+          <p class="step-why">Why: there are <strong>117</strong> contractors. Four accounts should
+          be findings. Under the plausible reading you will get one, or none.</p>
+          <div class="code labeled">
+            <span class="kind">the four real overstays &mdash; three people, four accounts</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>A000686  jamie.alvarez        E00175  term 2026-09-15   no ticket
+A000741  jamie.alvarez        E00175  term 2026-09-15   REQ-A000741
+A001185  anita.richardson     E01143  term 2026-09-12   REQ-A001185
+A001195  jennifer.gallagher   E01163  term 2026-09-15   REQ-A001195
+
+every ticket:  app VPN, role User, status approved,
+               requested a few days BEFORE the term date,
+               and referencing no SOW &mdash; because no ticket
+               in this dataset has an SOW field at all</pre>
+          </div>
+          <p class="step-why">Note <strong>A000686</strong> and <strong>A000741</strong> are the
+          same person. Jamie Alvarez (E00175, a Contractor in Marketing) holds two accounts, and
+          both lapse with the same SOW. There is also a second, unrelated Jamie Alvarez in the
+          roster &mdash; E00577, an FTE in operations &mdash; which is the ambiguous-slug case from
+          sub-task 9 coming back to bite. Match on account, not on name.</p>
+          <label class="done"><input type="checkbox" data-task="s18-fail"> Fewer than 4 findings; the shortfall observed</label>
+        </li>
+        <li>
+          <div class="step-do">Find the word.</div>
+          <p class="step-why">Why: read the clause once more and ask which phrase your Skill
+          dropped. <em>"a new approved ticket <strong>referencing the renewed SOW</strong> before
+          the prior end date."</em> Not a ticket. Not an approved ticket. A ticket that references
+          the renewed statement of work. Your Skill checked approval and date, and skipped the
+          object of the sentence.</p>
+          <p class="step-why">Then check whether any ticket <em>could</em> satisfy it. Open
+          <code>data/2026-Q3/access_tickets.json</code> and look at the fields:
+          <code>ticket_id</code>, <code>account_id</code>, <code>app</code>, <code>role</code>,
+          <code>requested_date</code>, <code>approver</code>, <code>status</code>. No SOW field
+          exists. Under the clause as written, <strong>no ticket in this dataset can extend any
+          contractor's access</strong> &mdash; which makes the correct answer four findings, not
+          one.</p>
+          <label class="done"><input type="checkbox" data-task="s18-word"> Dropped phrase located; ticket schema inspected</label>
+        </li>
+        <li>
+          <div class="step-do">Correct the Skill, and re-run to four.</div>
+          <p class="step-why">Why: the fix is not "be stricter". It is to make the Skill test the
+          condition the clause states, and to say what to do when the evidence needed to satisfy it
+          doesn't exist in the source data. A ticket that cannot reference an SOW cannot demonstrate
+          a renewal, and a Skill that says so is one a reviewer can act on.</p>
+          <p class="step-why">While you're there: make sure the Skill never keys on
+          <code>status</code>. All 117 contractors are active. The signal is
+          <code>term_date</code>.</p>
+          <label class="done"><input type="checkbox" data-task="s18-fixed"> 4 contractor findings on all 4 accounts</label>
+        </li>
+        <li>
+          <div class="step-do">Write the lesson down as a general principle.</div>
+          <p class="step-why">Why: the specific fix is worth ten minutes. The habit is worth the
+          rest of your career &mdash; and this is the story you tell a client about why their
+          "clean" review might not be.</p>
+          <div class="worksheet" id="ws-trap">
+            <div class="label">The contractor trap, written up</div>
+            <p class="hint">Keep both readings. The gap between them is the whole lesson.</p>
+            <div class="field">
+              <label>The reading I encoded first, and why it seemed right
+                <span class="eg">an approved ticket before the end date means the access was extended&hellip;</span>
+              </label>
+              <textarea data-ws="d18-naive" rows="3" placeholder="I read it as… which is how extension processes normally work…"></textarea>
+            </div>
+            <div class="field">
+              <label>What the clause actually requires, and the phrase I dropped</label>
+              <textarea data-ws="d18-real" rows="3" placeholder="'referencing the renewed SOW' — and no ticket in the dataset has an SOW field, so…"></textarea>
+            </div>
+            <div class="field">
+              <label>What it cost: findings missed, and how I would have found out</label>
+              <textarea data-ws="d18-cost" rows="3" placeholder="3 of 4 accounts cleared. Nothing in the pipeline would have told me because…"></textarea>
+            </div>
+            <div class="field">
+              <label>The general rule I'm taking from this</label>
+              <textarea data-ws="d18-rule" rows="3" placeholder="For each clause, ask of every phrase: if I drop this word, what stops being a finding?"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-trap">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-trap">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s18-note"> All four boxes answered</label>
+        </li>
+        <li>
+          <div class="step-do">Commit both Skills.</div>
+          <p class="step-why">Commit the corrected contractor Skill. Consider keeping the wrong
+          version's reasoning in a comment or a note &mdash; the next person to read the Skill
+          benefits from knowing which reading was rejected and why.</p>
+          <label class="done"><input type="checkbox" data-task="s18-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>I only found 3 accounts.</strong> You missed <strong>A000686</strong> &mdash;
+          Jamie Alvarez's second account. It has no ticket of its own, so a Skill that starts from
+          the ticket list never reaches it. Start from the contractor population and their term
+          dates, then look for tickets; not the other way round.</p>
+          <p><strong>I found more than 4.</strong> Check that you're only flagging contractors whose
+          <code>term_date</code> has passed relative to quarter end, and that you're not counting
+          each grant as a separate finding. Four accounts, three people.</p>
+          <p><strong>Isn't rejecting every ticket too strict?</strong> It's what the clause says,
+          and the more useful framing is what a reviewer should do about it. The right output is a
+          finding <em>plus</em> the observation that the ticketing system cannot record an SOW
+          reference, which makes the control unverifiable by design. That second half is a genuinely
+          valuable thing to hand a client.</p>
+          <p><strong>Which Jamie Alvarez is which?</strong> E00175 is the Contractor in Marketing
+          with a term date. E00577 is an FTE in operations with none. Two people, one
+          <code>firstname.lastname</code> slug &mdash; exactly the ambiguity sub-task 9 warned you
+          not to resolve by name.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>All three Skills exist and load:
+            <code>sod-policy</code>, <code>privileged-access-standard</code>,
+            <code>contractor-access-standard</code></li>
+        <li><strong>3</strong> dormant privileged findings &mdash; A000012, A000598, A000742 &mdash;
+            with A001159 and A001199 exempted as registered break-glass</li>
+        <li><strong>4</strong> contractor overstay findings across A000686, A000741, A001185 and
+            A001195</li>
+        <li>The trap documented: both readings, the dropped phrase, the cost, and the general rule</li>
+      </ul>
+      <p style="margin-top:14px">Totals for the quarter now stand at <strong>9 findings</strong>
+      (2 SoD + 3 dormant + 4 contractor) and <strong>5 exemptions</strong> (3 Controllers +
+      2 break-glass).</p>
+      <p>Sub-task 19 closes Theme D by taking A000012 &mdash; the account you have been judging
+      since sub-task 13 &mdash; back to the same agent, now with these Skills in reach.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li>Open <code>data/2026-Q3/access_tickets.json</code> and read the schema. Eighty-five
+        tickets, seven fields, no SOW reference anywhere. A control that cannot be evidenced by the
+        system meant to evidence it is a finding about the process, not about any individual
+        &mdash; and it is the kind of observation clients remember.</li>
+        <li><a href="https://en.wikipedia.org/wiki/Type_I_and_type_II_errors">Type I and type II
+        errors</a> &mdash; the statistical framing. A false negative is a type II error, and the
+        reason it dominates this domain is that the cost of missing a live privileged account
+        dwarfs the cost of an awkward conversation.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-17.html"><span class="arr">&larr;</span> Sub-task 17</a>
+    <a class="navbtn next" href="subtask-19.html">Sub-task 19 &middot; Re-run with Skills loaded <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme D &middot; Sub-task 3 of 4
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask18-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask18-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
