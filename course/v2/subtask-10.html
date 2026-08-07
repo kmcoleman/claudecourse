@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 10 &mdash; Normalize the mess and watch the duplicate count move &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>10</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-09.html"><span class="arr">&larr;</span> Sub-task 9 &middot; Match accounts to people</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 3 of 5</div>
+    <h1>Normalize the mess and watch the duplicate count move</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-09.html">Sub-task 9</a>&nbsp;&mdash; you need <code>identities.csv</code> and the 10-duplicate baseline</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; canonical form</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">normalization</span>
+        <span class="term">hidden duplicate</span>
+      </div>
+      <p class="note">Short sub-task, one idea, one number that moves. The number is the lesson.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">In sub-task 8 you counted ten exact duplicate rows. That number is
+      about to change, and the reason it changes is the most portable thing in this theme.</p>
+      <p>Ten felt like a small, tidy problem. It was small only because you were comparing raw
+      strings, and raw strings disagree about things that are actually the same. Normalize
+      first and the same comparison finds three times as many.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>State the rule: normalize before you compare, never after</li>
+        <li>Convert a two-format date column to one canonical form with zero losses</li>
+        <li>Show the duplicate count before and after, and explain the gap</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>&quot;Duplicate&quot; is not a property of the data. It's a property of your
+      comparison.</h3>
+
+      <p>Here are two rows from <code>entitlements.csv</code>, both belonging to account
+      <code>A000323</code>:</p>
+
+      <div class="code labeled">
+        <span class="kind">the same grant, twice</span>
+        <button class="copy" type="button">Copy</button>
+        <pre>A000323,jessica.schultz,Box,Member,2026-07-21,helpdesk,2026-07-08
+A000323,jessica.schultz,Box,Member,07/21/2026,helpdesk,2026-07-08</pre>
+      </div>
+
+      <p>Same account. Same app. Same role. Same day. Same approver. To
+      <code>drop_duplicates()</code> on the raw text, these are two distinct grants, because
+      <code>2026-07-21</code> and <code>07/21/2026</code> are different strings. To a human they
+      are obviously one grant recorded twice.</p>
+
+      <p>That's a <strong>hidden duplicate</strong> &mdash; a duplicate your comparison function
+      can't see. And hidden duplicates outnumber the visible kind here two to one.</p>
+
+      <div class="whatis">
+        <span class="tag">Normalization, in one sentence</span>
+        <p>Convert every value in a column to a single canonical form <em>before</em> comparing,
+        joining, sorting, or grouping. Dates to ISO. Text to trimmed-and-lowercased. Then, and
+        only then, ask whether two things are equal.</p>
+      </div>
+
+      <p><strong>Order of operations is not a style choice here &mdash; it changes the answer.</strong>
+      You have three ways to end up, and the kit's tests name all three:</p>
+
+      <div class="blocks">
+        <div class="row">
+          <div class="n">&times;</div>
+          <div>
+            <div class="b-name">15,188 rows &mdash; you didn't de-duplicate at all</div>
+            <p class="b-desc">Every grant counted as many times as it was recorded.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">&times;</div>
+          <div>
+            <div class="b-name">15,178 rows &mdash; de-duplicated, then normalized</div>
+            <p class="b-desc">You caught the 10 exact duplicates and missed 20 format-twins.
+            This is the plausible wrong answer, and it looks completely fine.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">&check;</div>
+          <div>
+            <div class="b-name">15,158 rows &mdash; normalized, then de-duplicated</div>
+            <p class="b-desc">All 30 removed. Same two operations, opposite order, 20 rows of
+            difference.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>Twenty rows out of fifteen thousand sounds like rounding. It isn't: each one is a grant
+      that would appear twice in a report a client signs, and &quot;your numbers are wrong&quot;
+      is not a survivable sentence in an audit deliverable.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Canonicalize <code>granted_date</code> and lose nothing</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Parse both formats into one ISO column, and assert that every row
+          parsed.</div>
+          <p class="step-why">Why: the assert is the point. Silent parse failures become
+          <code>NaT</code>, and <code>NaT</code> compares false against everything, so a broken
+          date turns into a grant that never triggers any rule. Your script must fail loudly
+          rather than quietly lose rows.</p>
+          <p class="step-why">The convention, decided in sub-task 8: slash dates are
+          <strong><code>MM/DD/YYYY</code></strong>. Getting this backwards moves 7,650 grants by
+          up to three months, in the direction that determines whether a grant predates a hire
+          date.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>granted_date parsed:  15188 / 15188
+unparsed (NaT):           0
+distinct formats after:   1  (YYYY-MM-DD)</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s10-dates"> 15188 parsed, 0 failures</label>
+        </li>
+        <li>
+          <div class="step-do">Spot-check a slash date you can verify by hand.</div>
+          <p class="step-why">Why: &quot;0 unparsed&quot; only proves it parsed, not that it
+          parsed correctly &mdash; <code>04/07/2025</code> parses cleanly under both conventions.
+          Find a value where the day exceeds 12, such as <code>04/23/2026</code>, and confirm it
+          lands on <strong>23 April 2026</strong>. Only day-values above 12 can distinguish the
+          two readings.</p>
+          <label class="done"><input type="checkbox" data-task="s10-spot"> Spot-checked a &gt;12 day value</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Some rows come out as NaT.</strong> You're likely parsing with a single
+          format. Parse each format separately and combine, or let the parser try both &mdash;
+          but if you use an automatic parser, pin the day-first behaviour explicitly rather than
+          letting it infer per row. Row-by-row inference is how you get April in one row and July
+          in the next.</p>
+          <p><strong>Everything parsed but my dates look wrong.</strong> Almost certainly
+          day-first vs month-first. Check a value with a day above 12.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Re-run the duplicate count and watch it move</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Count duplicates again on the normalized data.</div>
+          <p class="step-why">Why: same operation, same file, different comparison. Compare
+          against the guess you wrote down in sub-task 8.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>duplicate grants
+  before normalization (raw strings)      10
+  after  normalization                    30
+  ---------------------------------------------
+  hidden duplicates revealed              20</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s10-count"> 10 &rarr; 30 confirmed</label>
+        </li>
+        <li>
+          <div class="step-do">Verify the worked case: <code>A000323</code>.</div>
+          <p class="step-why">Why: this account belongs to <code>jessica.schultz</code> and has
+          <strong>12 raw rows</strong> covering <strong>11 distinct grants</strong>. The extra is
+          the Box / Member pair from the concept block above. After normalizing and
+          de-duplicating you should have exactly <strong>11</strong> rows for this account, with
+          exactly <strong>one</strong> Box / Member grant. The kit tests this account by name.</p>
+          <label class="done"><input type="checkbox" data-task="s10-a323"> A000323: 12 &rarr; 11, one Box/Member grant</label>
+        </li>
+        <li>
+          <div class="step-do">Prove the ordering claim to yourself.</div>
+          <p class="step-why">Why: run it both ways. De-duplicate first, then normalize: you keep
+          <strong>15,178</strong> rows. Normalize first, then de-duplicate:
+          <strong>15,158</strong>. Twenty format-twins survive the wrong order, and nothing
+          anywhere in your pipeline will ever warn you about them.</p>
+          <label class="done"><input type="checkbox" data-task="s10-order"> I ran both orders and got 15178 vs 15158</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>I get 20, or 23, not 30.</strong> Check which columns you're comparing on.
+          De-duplicating on <code>(account_id, app, role)</code> and de-duplicating on the full
+          normalized row both give 30 in this data &mdash; but they're different questions, and
+          the first is the one the ledger needs. Make sure you know which you asked.</p>
+          <p><strong>Which of the two duplicate rows should I keep?</strong> In this data it
+          doesn't matter &mdash; the twins are identical once normalized. Pick a deterministic
+          rule anyway, such as earliest <code>granted_date</code>, and write it down. A pipeline
+          whose output depends on row order is one you can't reproduce.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Canonicalize <code>department</code>, and understand what it buys you</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Collapse the 32 spellings to the 12 real departments.</div>
+          <p class="step-why">Why: trim, then lowercase, then map to a canonical display form.
+          Keep the raw value in a separate column rather than overwriting it &mdash; when a
+          finding is questioned, you want to be able to show what the source system actually
+          said.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>department spellings:  32 raw  ->  12 canonical
+rows changed:          every row retains its original value in department_raw</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s10-dept"> 32 &rarr; 12, raw value preserved</label>
+        </li>
+        <li>
+          <div class="step-do">Understand precisely why this matters &mdash; and precisely how it
+          would have fooled you.</div>
+          <p class="step-why">Why: in sub-task 12 a policy exemption applies only to a Controller
+          in <em>Finance &amp; Accounting</em>. It happens that all five accounts that exemption
+          touches have a cleanly-cased department in this export, so an exact string match would
+          have worked <em>on those five rows</em>.</p>
+          <p class="step-why">That is exactly what makes it dangerous. The bug is present, the
+          test data doesn't trigger it, and it ships. Next quarter one of those people is recorded
+          as <code>FINANCE &amp; ACCOUNTING</code>, the exemption silently stops applying, and a
+          Controller doing their job appears in a report as a critical finding. Normalizing isn't
+          fixing a failure you can see &mdash; it's removing one you can't yet.</p>
+          <label class="done"><input type="checkbox" data-task="s10-why"> I can explain the latent bug</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <p class="step-why">The tests still show the sub-task 9 failures &mdash;
+          <code>ledger.csv</code> doesn't exist yet. That's next.</p>
+          <label class="done"><input type="checkbox" data-task="s10-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p>You can show a before and an after, with the gap explained:</p>
+      <ul>
+        <li><code>granted_date</code>: <strong>15188 / 15188</strong> parsed to ISO,
+            <strong>0</strong> failures, verified against a day-value above 12</li>
+        <li>Duplicates: <strong>10</strong> before normalization,
+            <strong>30</strong> after &mdash; <strong>20</strong> hidden</li>
+        <li>Ordering proven both ways: <strong>15,178</strong> the wrong way,
+            <strong>15,158</strong> the right way</li>
+        <li><code>A000323</code>: <strong>12</strong> raw rows &rarr; <strong>11</strong> grants,
+            one Box / Member</li>
+        <li><code>department</code>: <strong>32</strong> &rarr; <strong>12</strong>, with the raw
+            value preserved</li>
+      </ul>
+      <p style="margin-top:14px">The transferable rule, which has nothing to do with Meridian:
+      <strong>normalize, then compare.</strong> Every dataset you ever reconcile will have its own
+      version of the July-versus-April problem.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://pandas.pydata.org/docs/reference/api/pandas.to_datetime.html">pandas.to_datetime</a>
+        &mdash; read the <code>format</code> and <code>dayfirst</code> parameters specifically,
+        and the warning about what happens when parsing is inferred per row.</li>
+        <li><a href="https://en.wikipedia.org/wiki/Canonicalization">Canonicalization</a> &mdash;
+        the same idea under its general name, as it appears in URLs, Unicode, and cryptographic
+        signing.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-09.html"><span class="arr">&larr;</span> Sub-task 9</a>
+    <a class="navbtn next" href="subtask-11.html">Sub-task 11 &middot; Triage to a candidate list <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 3 of 5
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask10-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask10-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

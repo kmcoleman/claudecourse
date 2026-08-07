@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 12 &mdash; Emit a schema-valid finding, then break the schema on purpose &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>12</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-11.html"><span class="arr">&larr;</span> Sub-task 11 &middot; Triage to a candidate list</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 5 of 5</div>
+    <h1>Emit a schema-valid finding, then break the schema on purpose</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-11.html">Sub-task 11</a>&nbsp;&mdash; you need <code>ledger.csv</code> and your candidate set</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; the output contract</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">JSON Schema</span>
+        <span class="term">the frozen contract</span>
+        <span class="term"><code>limit</code></span>
+      </div>
+      <p class="note">The last sub-task in Theme B. At the end of it, <code>test_ledger.py</code> goes fully green.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Everything you've built so far lives in your own head and your own
+      column names. This sub-task attaches it to something that doesn't care about either: a
+      schema someone else wrote, which will be validated by a grader you will never meet.</p>
+      <p>You'll produce the first real finding &mdash; a genuine separation-of-duties conflict,
+      derived entirely from code &mdash; validate it against the contract, and then deliberately
+      break it two different ways so you know what failure looks like before it happens to you at
+      a bad moment.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Read a JSON Schema and say what it will and won't accept</li>
+        <li>Derive a real SoD finding deterministically, exemptions included</li>
+        <li>Break validation on purpose, twice, and recognize both error messages</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A schema is a promise to someone who isn't in the room.</h3>
+
+      <p>Until now every artifact you've made was for you. <code>ledger.csv</code> can have any
+      columns you like; the tests are deliberately lenient about names. <code>findings.json</code>
+      is different. It's read by <code>run_review()</code>, which is imported and called by a
+      grader that has never seen your code and will not adapt to it.</p>
+
+      <div class="whatis">
+        <span class="tag">The frozen contract</span>
+        <p><code>src/meridian_capstone/contract/run_review.py</code> exposes exactly one function:</p>
+        <p style="font-family:var(--mono);font-size:14px;margin:8px 0">run_review(export_dir: Path, limit: int | None = None) -&gt; list[dict]</p>
+        <p>The signature does not change. Ever. Your <code>CLAUDE.md</code> from sub-task 7
+        already says so, which is a rule that is about to earn its place.</p>
+        <p><strong><code>limit</code></strong> caps how many candidates reach the agent layer.
+        With <code>limit=5</code> you can iterate in seconds instead of minutes; grading calls it
+        with <code>None</code>. It exists purely so that developing this system is affordable
+        &mdash; which is context economics again, aimed at your own time this time.</p>
+      </div>
+
+      <p>The findings schema is strict in the two ways that matter. Twelve fields are
+      <strong>required</strong> on every finding. And <code>additionalProperties</code> is
+      <strong>false</strong> &mdash; a field the schema doesn't know about is an error, not a
+      bonus. You cannot bolt on a <code>finding_id</code> or a <code>notes</code> field because it
+      seemed useful.</p>
+
+      <p>Read that as a constraint on your design rather than an annoyance. Anything the schema
+      won't hold has to live somewhere else &mdash; which is why exemptions go in a separate
+      <code>exemptions.json</code> rather than as a flag on a finding.</p>
+
+      <div class="whatis">
+        <span class="tag">Structured output isn't just for compliance</span>
+        <p>It would be easy to read this sub-task as an audit-paperwork detour. It isn't. Fixing
+        the shape of a model's output is one of the highest-leverage moves available in any
+        agentic system, for reasons that have nothing to do with regulators:</p>
+        <p><strong>It makes output composable.</strong> A structured finding can be sorted,
+        counted, diffed against last quarter, and fed to the next stage. Prose can only be read
+        by a human, once.</p>
+        <p><strong>It makes output testable.</strong> &quot;Did the model produce something
+        valid?&quot; becomes a boolean rather than an opinion. That's the difference between a
+        pipeline you can put in CI and one you have to babysit.</p>
+        <p><strong>It constrains the model usefully.</strong> A required <code>evidence</code>
+        array with at least one entry means a finding without a citation cannot be represented at
+        all. The schema doesn't ask for rigour &mdash; it makes the alternative unexpressible.</p>
+        <p><strong>It forces the ontology early.</strong> The <code>category</code> enum has ten
+        values. Deciding those ten is real design work, and a schema makes you do it in week one
+        rather than discovering in week six that you have forty ad-hoc labels meaning six things.</p>
+        <p>When you take this home: define the output shape <em>before</em> you write the prompt.
+        It will change the prompt, and it will change it for the better.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Read the schema before you write anything</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Open
+          <code>src/meridian_capstone/contract/findings.schema.json</code> and read all of it.</div>
+          <p class="step-why">Why: it's under 60 lines and it's the specification for every
+          finding you will produce for the rest of the course. Reading it now is cheaper than
+          discovering it through error messages later.</p>
+          <label class="done"><input type="checkbox" data-task="s12-read"> I read the whole schema</label>
+        </li>
+        <li>
+          <div class="step-do">Answer these five without re-opening the file.</div>
+          <p class="step-why">Why: if you can't, you didn't read it &mdash; you skimmed it.</p>
+          <div class="code labeled">
+            <span class="kind">check yourself</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>1. How many fields are required on every finding?
+2. How many values does the `category` enum allow?
+3. What are the three legal values of `recommendation`?
+4. What is the minimum length of the `evidence` array?
+5. When `scope` is "application", what must `account_id` be?</pre>
+          </div>
+          <p class="step-why">The answers: <strong>12</strong> required fields;
+          <strong>10</strong> categories; <code>revoke</code> / <code>review</code> /
+          <code>retain</code>; <strong>1</strong> evidence entry minimum; and
+          <code>null</code>. That last one is a conditional rule &mdash; an
+          application-scoped finding is about a whole app, so it must not name an account.</p>
+          <label class="done"><input type="checkbox" data-task="s12-quiz"> I got all five</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Derive the finding &mdash; it's pure code</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Read <code>data/2026-Q3/sod_matrix.json</code> and find the
+          critical Atlas ERP conflict.</div>
+          <p class="step-why">Why: <strong>Vendor Admin + AP Manager</strong>, rated
+          <code>critical</code>, with the reason stated in the file: <em>create a vendor, then
+          approve its payment</em>. That is the entire fraud, in one sentence, and it is why this
+          pair is the canonical SoD example.</p>
+          <label class="done"><input type="checkbox" data-task="s12-sod"> I found the conflict and its severity</label>
+        </li>
+        <li>
+          <div class="step-do">Find every account holding both roles.</div>
+          <p class="step-why">Why: group the ledger by account within Atlas ERP and test for
+          set containment. There are 62 Atlas ERP grants in the ledger &mdash; AP Manager 22,
+          AP Clerk 18, GL Accountant 14, Vendor Admin 5, ERP Admin 3.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>accounts holding Atlas ERP Vendor Admin + AP Manager: 5
+
+A000384  james.hernandez   E00023  Ranger/warden
+         Field Services         terminated 2026-07-07
+A000387  april.tyler       E00168  Controller
+         Finance & Accounting   active
+A000674  patrick.ramos     E00042  Controller
+         Finance & Accounting   active
+A001115  michelle.mercado  E00251  Senior Accountant
+         Finance & Accounting   active
+A001125  amanda.garrison   E00089  Controller
+         Finance & Accounting   active</pre>
+          </div>
+          <p class="step-why">Every single Vendor Admin grant in the company is also an AP
+          Manager. Five out of five. That is not five careless individual decisions &mdash; it's
+          a provisioning process that hands out the pair together, which is a much more
+          interesting thing to write in a report.</p>
+          <label class="done"><input type="checkbox" data-task="s12-five"> All 5 holders found</label>
+        </li>
+        <li>
+          <div class="step-do">Apply the exemption &mdash; and record what you suppressed.</div>
+          <p class="step-why">Why: the same <code>sod_matrix.json</code> carries an
+          <code>exemptions</code> entry: clause <strong>ACP-4.2</strong> permits this pair for a
+          <strong>Controller</strong> in <strong>Finance &amp; Accounting</strong>, on the basis
+          of a compensating control &mdash; a quarterly manual payment review by the CFO. Three of
+          the five qualify. Reporting them would be a false positive, and false positives are how
+          a review loses the room.</p>
+          <p class="step-why">But suppressed is not the same as deleted. Write the three to
+          <code>exemptions.json</code>, each naming <strong>ACP-4.2</strong> as the clause that
+          suppressed it. A reviewer must be able to see what you chose not to report and why
+          &mdash; a finding you can't trace isn't a finding, and neither is a suppression.</p>
+          <p class="step-why">Note the two that remain and why neither is exempt.
+          <strong>A001115</strong> is a Senior Accountant, not a Controller &mdash; right
+          department, wrong title, so the clause doesn't reach them.
+          <strong>A000384</strong> is a Ranger/warden in Field Services who was
+          <em>terminated on 2026-07-07</em> and still holds both roles in the finance system. The
+          exemption is nowhere near them.</p>
+          <label class="done"><input type="checkbox" data-task="s12-exempt"> 3 exemptions recorded, 2 findings remain</label>
+        </li>
+        <li>
+          <div class="step-do">Write <code>findings.json</code> with both findings, fully
+          populated.</div>
+          <p class="step-why">Why: <code>category</code> is <code>sod_conflict</code>,
+          <code>severity</code> is <code>critical</code> because the matrix says so, and
+          <code>evidence</code> must cite where each part came from &mdash; the ledger rows for
+          the role pair, the matrix entry for the rule. Cite the file, not your memory of it.</p>
+          <div class="code labeled">
+            <span class="kind">the shape &mdash; write your own values</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>{
+  "scope": "account",
+  "account_id": "...",
+  "employee_id": "...",
+  "app": "Atlas ERP",
+  "entitlement": "...",
+  "category": "sod_conflict",
+  "severity": "critical",
+  "recommendation": "revoke",
+  "rationale": "...",
+  "evidence": [
+    {"source": "ledger.csv", "detail": "..."},
+    {"source": "data/2026-Q3/sod_matrix.json", "detail": "..."}
+  ],
+  "policy_citations": ["..."],
+  "confidence": 1.0
+}</pre>
+          </div>
+          <p class="step-why">A note on <code>confidence</code>: this finding is derived entirely
+          from set membership and a rule in a file, so <code>1.0</code> is honest. Most later
+          findings will not be, and pretending otherwise is worse than a low number.</p>
+          <label class="done"><input type="checkbox" data-task="s12-write"> <code>findings.json</code> has exactly 2 findings</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>I found more or fewer than 5 holders.</strong> Check you're grouping within
+          Atlas ERP only, and that you're using the de-duplicated ledger. Both roles must be held
+          by the same <code>account_id</code>, not merely by the same person across two accounts
+          &mdash; though that second case is worth a thought for a future quarter.</p>
+          <p><strong>I exempted the wrong people.</strong> The exemption needs <em>both</em>
+          title Controller <em>and</em> department Finance &amp; Accounting. A001115 has the
+          department but not the title. Compare case-insensitively &mdash; sub-task 10's
+          normalization is what makes that reliable.</p>
+          <p><strong>Should terminated A000384 be an SoD finding or a termination finding?</strong>
+          Genuinely both, and it's a good question to sit with. The kit expects it under
+          <code>sod_conflict</code> here. In a real report you'd likely raise it once, at the
+          highest severity, and mention the second dimension in the rationale.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Validate &mdash; then break it twice, deliberately</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Validate <code>findings.json</code> against the schema and see it
+          pass.</div>
+          <p class="step-why">Why: <code>jsonschema</code> is already installed &mdash; the kit's
+          own tests use it.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -c "
+import json, jsonschema
+schema = json.load(open('src/meridian_capstone/contract/findings.schema.json'))
+jsonschema.validate(json.load(open('findings.json')), schema)
+print('valid')
+"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s12-valid"> It prints <code>valid</code></label>
+        </li>
+        <li>
+          <div class="step-do">Break it the first way: delete a required field.</div>
+          <p class="step-why">Why: take a copy, remove <code>policy_citations</code> from one
+          finding, and validate the copy. Read the error carefully &mdash; note that it tells you
+          which array index failed and which property is missing. Learning to read this message
+          when you caused it is much easier than learning to read it at 6pm on a deadline.</p>
+          <div class="code labeled">
+            <span class="kind">expected error</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>jsonschema.exceptions.ValidationError: 'policy_citations' is a required property
+
+Failed validating 'required' in schema['items']:
+On instance[0]: {...}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s12-break1"> Missing-field error seen</label>
+        </li>
+        <li>
+          <div class="step-do">Break it the second way: add a field that isn't in the schema.</div>
+          <p class="step-why">Why: add <code>"finding_id": "F-001"</code> to a finding &mdash;
+          exactly the sort of thing that feels harmless and useful. Validate. It fails, because
+          <code>additionalProperties</code> is <code>false</code>.</p>
+          <div class="code labeled">
+            <span class="kind">expected error</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>jsonschema.exceptions.ValidationError: Additional properties are not allowed
+('finding_id' was unexpected)</pre>
+          </div>
+          <p class="step-why">This is the more instructive of the two failures. A missing field
+          is obviously your mistake. An <em>extra</em> field feels like an improvement, and the
+          contract rejects it anyway &mdash; because a downstream consumer that has to cope with
+          fields it didn't ask for isn't a contract at all. Restore your valid file before moving
+          on.</p>
+          <label class="done"><input type="checkbox" data-task="s12-break2"> Extra-field error seen, valid file restored</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Removing a field didn't fail.</strong> You removed one of the optional ones,
+          or you edited a copy and validated the original. Only the twelve names in
+          <code>required</code> are mandatory.</p>
+          <p><strong>The error is enormous and unreadable.</strong> Normal &mdash; it prints the
+          whole failing instance. Read the first line and the <code>On instance[N]</code> line;
+          ignore the rest. Or use <code>jsonschema.Draft202012Validator(schema).iter_errors(data)</code>
+          to get them one at a time, which is what you'd want in a real pipeline.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 4</div>
+      <h3>Wire it into the frozen contract and close the theme</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Make <code>run_review()</code> return your two findings &mdash;
+          without touching its signature.</div>
+          <p class="step-why">Why: the function currently returns an empty list. Have it build
+          the ledger from <code>export_dir</code> and return the SoD findings it derives. There
+          is no agent in it yet; that's Theme C onward. <code>limit</code> should cap how many
+          candidates get processed &mdash; with only two findings it changes nothing today, which
+          makes today the cheap moment to wire it correctly.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian_capstone.contract.run_review data/2026-Q3 --limit 5
+python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s12-wire"> <code>run_review()</code> returns 2 findings, signature unchanged</label>
+        </li>
+        <li>
+          <div class="step-do">Run the full offline suite.</div>
+          <p class="step-why">Why: this is the moment. <code>test_ledger.py</code> has been
+          failing since sub-task 9, and every one of those failures was a specification for
+          something you hadn't built yet. All four artifacts now exist.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+# 46 passed, 10 skipped, 1 deselected</pre>
+          </div>
+          <p class="step-why">Thirteen tests that were skipping at the start of Theme B now pass,
+          and the passed count goes from <strong>33</strong> to <strong>46</strong>. The ten
+          remaining skips are Themes C onward &mdash; skills, subagents, hooks, and the
+          second-quarter transfer run.</p>
+          <label class="done"><input type="checkbox" data-task="s12-green"> 46 passed, 10 skipped, 1 deselected</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <p class="step-why"><code>findings.json</code> and <code>exemptions.json</code> are
+          gitignored learner artifacts &mdash; commit the code, including your changes to
+          <code>run_review.py</code>.</p>
+          <label class="done"><input type="checkbox" data-task="s12-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><code>pytest -m "not api"</code> reports <strong>46 passed, 10 skipped, 1
+      deselected</strong>, and:</p>
+      <ul>
+        <li><code>findings.json</code> holds exactly two SoD findings, on
+            <strong>A000384</strong> and <strong>A001115</strong>, both
+            <code>critical</code>, both with evidence</li>
+        <li><code>exemptions.json</code> holds the three Controllers &mdash;
+            <strong>A000387</strong>, <strong>A000674</strong>, <strong>A001125</strong>
+            &mdash; each citing <strong>ACP-4.2</strong></li>
+        <li>You have seen both validation failures and can recognize the messages</li>
+        <li><code>run_review(export_dir, limit)</code> returns your findings, signature
+            untouched</li>
+      </ul>
+      <p style="margin-top:14px"><strong>Theme B is complete.</strong> You have a reconciled
+      ledger, a defended candidate set, and a first finding that survives a contract you didn't
+      write &mdash; produced with zero model calls, entirely in code.</p>
+      <p>That last clause is the handover. Everything from here is the judgment half: the
+      1,919 candidates that a rule <em>can't</em> settle. Theme C starts by giving the model
+      something to reason with &mdash; Meridian's five policy documents, turned into building
+      block two.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://json-schema.org/learn/getting-started-step-by-step">JSON Schema &mdash; getting started</a>
+        &mdash; the official walkthrough. <code>additionalProperties</code> and conditional
+        <code>if</code>/<code>then</code> blocks are the two features doing the real work in the
+        findings contract.</li>
+        <li>Read the five policy documents in <code>data/2026-Q3/policies/</code>. You've now
+        cited ACP-4.2 without reading the clause it comes from. In Theme C those documents stop
+        being reference material and become part of the system.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-11.html"><span class="arr">&larr;</span> Sub-task 11</a>
+    <a class="navbtn next" href="subtask-13.html">Sub-task 13 &middot; Theme C begins <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 5 of 5
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask12-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask12-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

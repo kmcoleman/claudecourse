@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 1 — Name your access-review headache · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>01</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ NAV (top) ============ -->
+  <div class="navrow top">
+    <span class="navbtn disabled"><span class="arr">←</span> Start of the course</span>
+  </div>
+
+  <!-- ============ OPENER ============ -->
+  <section class="opener">
+    <div class="kicker">Theme A · Foundations · Sub-task 1 of 7</div>
+    <h1>Name the access-review headache you'll test everything against</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;nothing — start here</span>
+      <span class="chip time"><b>Time:</b>&nbsp;≈ 30 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;orientation — no code</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">agentic system</span>
+        <span class="term">the six building blocks</span>
+        <span class="term">Meridian Regional Energy</span>
+      </div>
+      <p class="note">Three ideas you'll use in every remaining sub-task. Each one is
+      explained in full below — you don't need to know any of them yet.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">This course has a shared practice case: a fictional utility called
+      Meridian Regional Energy with a genuinely messy access problem. But a practice case
+      only ever teaches you the practice case. So before you touch a single tool, you're
+      going to write down <em>your own</em> access-review headache — the real one, from
+      your real job — and carry it alongside Meridian's the whole way through.</p>
+
+      <p>That note is the quietest, most important artifact you'll make. Every checkpoint
+      from here on asks the same question: <em>could what you just learned have moved your
+      problem?</em> Without a written problem, that question has no teeth — it's very easy
+      to follow thirty-eight sub-tasks, get everything green, and still not know whether any
+      of it applies to Monday.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain what makes a system <em>agentic</em> rather than merely automated — and why that distinction changes what you can hand it</li>
+        <li>Name the six building blocks this course assembles, and what each one is for</li>
+        <li>State one access-review problem from your own work in terms specific enough to test a system against</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ CONCEPT ============ -->
+  <section>
+    <h2 class="section-title">Concept</h2>
+
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A practice case teaches the practice. Your own case teaches you.</h3>
+
+      <p>Everything in this course is built on a fixed data set from a fictional utility.
+      That's deliberate — a frozen, shared case means the numbers are checkable, and when
+      something you build is wrong, you can <em>prove</em> it's wrong instead of arguing
+      about it. You need that to learn.</p>
+
+      <p>But a frozen case has a failure mode, and it's the one that quietly ruins most
+      technical training: you get good at the exercise. The exercise ends. Nothing transfers.
+      The fix is cheap and takes thirty minutes: name a real problem of your own <em>now</em>,
+      in writing, before you know any of the answers — so it can't be retro-fitted to whatever
+      you happen to end up building.</p>
+
+      <div class="whatis">
+        <span class="tag">What is an "agentic system"?</span>
+        <p>A regular automation follows steps you wrote: <em>read this column, compare it to
+        that list, flag anything over 90 days.</em> It does exactly that, forever. If the
+        input shifts, it breaks or — worse — silently returns nonsense.</p>
+        <p>An <strong>agentic system</strong> is given an <em>outcome</em> and some
+        <em>judgment</em>, not a fixed sequence: <em>here is the access data, here is our
+        policy, find the violations and show me your evidence.</em> It decides which lookups
+        to make, in what order, and when it has enough to answer. That's the trade: it can
+        handle the mess and ambiguity a rule can't, and in exchange it can be confidently
+        wrong in ways a rule never is. Most of this course is about the second half of that
+        sentence — how you constrain, verify, and audit something that exercises judgment.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">Who is Meridian Regional Energy?</span>
+        <p>A fictional mid-size utility, and your practice case. A regulator has asked
+        Meridian a question that ought to be easy — <em>show us everyone who can approve a
+        vendor payment</em> — and nobody can answer it. Not because the access doesn't exist,
+        but because it's scattered across an HR system, an entitlements export, a ticketing
+        queue, and five policy documents that have never spoken to each other.</p>
+        <p>Meridian's data ships with this course and is intentionally messy: mismatched
+        names, two date formats in one column, duplicate rows. That mess is the point. Clean
+        data would teach you nothing about the job.</p>
+      </div>
+
+      <p><strong>The six building blocks.</strong> The rest of the course assembles exactly
+      six things. You're not expected to understand them yet — you're copying them down as a
+      map, so that when each one arrives you already know where it sits and what it's for.</p>
+
+      <div class="blocks">
+        <div class="row">
+          <div class="n">1</div>
+          <div>
+            <div class="b-name">Rules</div>
+            <p class="b-desc">Standing instructions that apply to everything Claude does in
+            your project — the things you'd otherwise repeat in every single prompt.</p>
+            <p class="b-when">You build this in sub-task 7.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">2</div>
+          <div>
+            <div class="b-name">Skills</div>
+            <p class="b-desc">Written expertise Claude loads when it's relevant — here,
+            Meridian's policy documents turned into checks Claude can actually apply.</p>
+            <p class="b-when">Later in the course, once you have data to apply them to.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">3</div>
+          <div>
+            <div class="b-name">Tools</div>
+            <p class="b-desc">Live lookups into real systems — asking "who is this person,
+            and is this account theirs?" at the moment the question comes up, instead of
+            guessing from a stale export.</p>
+            <p class="b-when">Later in the course.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">4</div>
+          <div>
+            <div class="b-name">Subagents</div>
+            <p class="b-desc">Splitting the work across several narrow specialists rather
+            than asking one generalist to hold the entire review in its head at once.</p>
+            <p class="b-when">Later in the course.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">5</div>
+          <div>
+            <div class="b-name">Hooks</div>
+            <p class="b-desc">Automatic checks that fire around the system's actions — one
+            to block what shouldn't happen, one to record what did. This is your audit trail.</p>
+            <p class="b-when">Later in the course.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">6</div>
+          <div>
+            <div class="b-name">Generalization</div>
+            <p class="b-desc">Proving the thing you built works on data it has never seen —
+            a different quarter, different people, different violations. The difference
+            between a system and a very elaborate answer key.</p>
+            <p class="b-when">The final theme — and the real test.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>Six blocks, and the last one is the only one that matters to your boss. Keep that
+      in view.</p>
+    </div>
+  </section>
+
+  <!-- ============ TASK 1 ============ -->
+  <section>
+    <h2 class="section-title">Do this</h2>
+
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Write down your own access-review headache</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Pick one access-review question from your own work that is
+          genuinely annoying to answer today.</div>
+          <p class="step-why">Why: "genuinely annoying" is the filter. If it's already easy,
+          there's nothing for a system to do. If it's so vague you can't tell whether an
+          answer is right, you won't be able to test anything against it.</p>
+        </li>
+        <li>
+          <div class="step-do">Fill in the four fields below.</div>
+          <p class="step-why">Why: these four turn a vague complaint ("access reviews are
+          painful") into something checkable ("I can't tell which of our 40 contractors still
+          have Salesforce admin, and it takes me two days of spreadsheet work to find out").
+          Your notes save in this browser automatically.</p>
+
+          <div class="worksheet" id="ws-headache">
+            <div class="label">My headache</div>
+            <p class="hint">Plain language. No jargon, no tooling — you're describing the
+            problem, not the solution. Two or three sentences per box is plenty.</p>
+
+            <div class="field">
+              <label>1. The question I can't easily answer
+                <span class="eg">e.g. "Which contractors still hold privileged access after their contract ended?"</span>
+              </label>
+              <textarea data-ws="q1" rows="3" placeholder="Write the question exactly as someone would ask you for it…"></textarea>
+            </div>
+
+            <div class="field">
+              <label>2. Who asks me for it, and when
+                <span class="eg">e.g. "Internal audit, quarterly — plus whenever a regulator turns up."</span>
+              </label>
+              <textarea data-ws="q2" rows="2" placeholder="The person or function, and how often…"></textarea>
+            </div>
+
+            <div class="field">
+              <label>3. Where the answer actually lives
+                <span class="eg">e.g. "HR system for people, Okta for accounts, a SharePoint sheet for exceptions — none of them share an ID."</span>
+              </label>
+              <textarea data-ws="q3" rows="3" placeholder="List every system, spreadsheet, or inbox involved…"></textarea>
+            </div>
+
+            <div class="field">
+              <label>4. How I answer it today, and how long it takes
+                <span class="eg">e.g. "Export three files, VLOOKUP on name, chase 20 managers by email. About two days, and I don't fully trust the result."</span>
+              </label>
+              <textarea data-ws="q4" rows="3" placeholder="Be honest about the manual steps and the elapsed time…"></textarea>
+            </div>
+
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-headache">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-headache">Saved in this browser</span>
+            </div>
+          </div>
+
+          <label class="done"><input type="checkbox" data-task="s1-headache"> All four fields filled in</label>
+        </li>
+        <li>
+          <div class="step-do">Save it somewhere outside this page too.</div>
+          <p class="step-why">Why: this page keeps your text in your browser's local storage,
+          which is convenient but not durable — clearing site data wipes it. Hit
+          <em>Copy my note</em> and paste it into whatever you actually keep notes in. You'll
+          be asked to reread it many times.</p>
+          <label class="done"><input type="checkbox" data-task="s1-saved-out"> Pasted into my own notes</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>"I don't run access reviews — I'm here for the agent part."</strong>
+          Fine. Use any recurring question at your job where the answer is scattered across
+          systems that don't share an identifier, and where being wrong has consequences.
+          Vendor risk, contract renewals, data retention, incident review — the shape is what
+          matters, not the subject.</p>
+
+          <p><strong>"My real problem is too big for this."</strong> Good — most real ones
+          are. Don't shrink it. Write the big version, then add one line at the end:
+          <em>"the smallest useful slice of this is ___"</em>. Later sub-tasks will keep asking
+          you to name that slice, and it's much easier to cut down from the true problem than
+          to build up from a toy one.</p>
+
+          <p><strong>"I can't say what systems it lives in — that's confidential."</strong>
+          Describe them generically: "the HR system", "the identity provider", "a shared
+          spreadsheet owned by one person in Finance". The structure is what you need. Never
+          paste real employee names, account IDs, or client data into this page or into any
+          prompt in this course.</p>
+
+          <p><strong>"I filled it in but it feels thin."</strong> Check field 4. If you
+          couldn't write concrete manual steps and a real elapsed time, the problem is still
+          too abstract — you're describing a category, not a task. Push until you can say what
+          you'd physically do on a Tuesday morning.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- ============ TASK 2 ============ -->
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Copy the six blocks down, with a guess against each</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">For each of the six blocks, write one line: how might it apply
+          to <em>your</em> headache?</div>
+          <p class="step-why">Why: guessing badly right now is the entire point. These guesses
+          get compared against reality as each block arrives, and being wrong in a specific,
+          written way is what makes the correction stick. A vague guess can't be wrong, so it
+          can't teach you anything.</p>
+
+          <div class="worksheet" id="ws-blocks">
+            <div class="label">Six blocks vs. my headache</div>
+            <p class="hint">One line each. "No idea yet" is an acceptable answer for any of
+            them — write that rather than leaving it blank, so you can tell later which ones
+            genuinely surprised you.</p>
+
+            <div class="field">
+              <label>1 · Rules <span class="eg">Standing instructions for every task</span></label>
+              <textarea data-ws="b1" rows="2" placeholder="What would I always want it to know or never do?"></textarea>
+            </div>
+            <div class="field">
+              <label>2 · Skills <span class="eg">Written expertise, loaded when relevant</span></label>
+              <textarea data-ws="b2" rows="2" placeholder="Which of my policies or procedures would it need?"></textarea>
+            </div>
+            <div class="field">
+              <label>3 · Tools <span class="eg">Live lookups into real systems</span></label>
+              <textarea data-ws="b3" rows="2" placeholder="What would it need to look up mid-task?"></textarea>
+            </div>
+            <div class="field">
+              <label>4 · Subagents <span class="eg">Several narrow specialists</span></label>
+              <textarea data-ws="b4" rows="2" placeholder="How would I split this work up?"></textarea>
+            </div>
+            <div class="field">
+              <label>5 · Hooks <span class="eg">Automatic guardrails and audit trail</span></label>
+              <textarea data-ws="b5" rows="2" placeholder="What must never happen, and what must be recorded?"></textarea>
+            </div>
+            <div class="field">
+              <label>6 · Generalization <span class="eg">Works on data it has never seen</span></label>
+              <textarea data-ws="b6" rows="2" placeholder="What would convince me it works next quarter too?"></textarea>
+            </div>
+
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-blocks">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-blocks">Saved in this browser</span>
+            </div>
+          </div>
+
+          <label class="done"><input type="checkbox" data-task="s1-blocks"> Six lines written (including any "no idea yet")</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>"I can't guess — I don't know what these words mean."</strong> Expected,
+          and fine. Read only the one-line description in the table above and guess from that
+          alone. You are not being graded; you're planting a flag so you can see how far you
+          moved.</p>
+          <p><strong>"Several of them sound like the same thing."</strong> They do at this
+          stage — especially Rules vs. Skills, and Tools vs. Subagents. Write down which pairs
+          feel blurry to you. Those exact confusions get resolved directly when the blocks
+          arrive, and noticing them now makes that moment land harder.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- ============ OUTCOME ============ -->
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p>You have a one-page note — in your own notes app, not just in this browser —
+      containing both halves:</p>
+      <ul>
+        <li>Your access-review headache, with the question, the asker, the systems, and the
+        current manual cost</li>
+        <li>All six building blocks, each with one line guessing how it might apply</li>
+      </ul>
+      <p style="margin-top:12px">That page is the reference point for every checkpoint that
+      follows. When a later sub-task says "check this against your note," this is the note.</p>
+    </div>
+  </section>
+
+  <!-- ============ CURIOUS ============ -->
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building effective agents</a>
+        — Anthropic's engineering write-up on when an agentic system is the right call, and
+        when a plain workflow beats it. Skim the opening section; the rest will make more
+        sense after Theme B.</li>
+        <li><a href="https://code.claude.com/docs/en/overview">Claude Code documentation</a>
+        — the reference for the tool you'll install in sub-task 4. No need to read it yet;
+        bookmark it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ NAV (bottom) ============ -->
+  <div class="navrow bottom">
+    <span class="navbtn disabled"><span class="arr">←</span> Start of the course</span>
+    <a class="navbtn next" href="subtask-02.html">Sub-task 2 · Get a bench you can prove works <span class="arr">→</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Theme A · Sub-task 1 of 7
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask01-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask01-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

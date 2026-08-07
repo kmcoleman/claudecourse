@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 39 &mdash; Prove transfer &mdash; one codebase, two quarters, all green &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>39</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-38.html"><span class="arr">&larr;</span> Sub-task 38 &middot; Hunt every memorized assumption</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme I &middot; Generalization &middot; Sub-task 3 of 3</div>
+    <h1>Prove transfer: one codebase, two quarters, all green</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-38.html">Sub-task 38</a>&nbsp;&mdash; you need a correct Q4 run and the fix log</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;building block #6</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">demonstrated generalization</span>
+        <span class="term">regression across quarters</span>
+      </div>
+      <p class="note">The last sub-task, and the last building block. Generalization is a demonstrated property, never a claim.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">You fixed the traps and Q4 came out right. That is not yet a
+      demonstration of anything, for a reason worth taking seriously: you fixed Q4 while looking at
+      Q4's answers, which is the same activity that produced the memorization in the first place.</p>
+      <p>The claim you actually want to make is stronger. <em>One codebase, unmodified, produces
+      correct results on both quarters, and every evaluation passes on both.</em></p>
+      <p>That claim you can only make by running it.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Run both quarters from one unmodified codebase</li>
+        <li>Run all seven evaluations against both</li>
+        <li>Confirm Q3 didn't regress while you were fixing Q4</li>
+        <li>State the property you have demonstrated, and its limits</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>Generalization is a property you demonstrate, not one you claim.</h3>
+
+      <p>"The system generalizes" is a hypothesis. Every project believes it right up until someone
+      runs the second dataset, and it is not an unreasonable belief &mdash; it's just not evidence.</p>
+
+      <p>The evidence is boring and specific: the same commit, run twice, against two exports,
+      producing two correct answers, with every check green on both. Nothing in between. No branch,
+      no environment variable set differently for one of them, no "well, on Q4 we also do this".</p>
+
+      <div class="whatis">
+        <span class="tag">Why Q3 has to be re-run</span>
+        <p>This is the half people skip, and it is where the interesting failure lives.</p>
+        <p>You spent sub-task 38 changing exemption logic, date derivation, path handling and test
+        assertions. Every one of those touched the code path that produces Q3's answers. It is
+        entirely possible &mdash; common, actually &mdash; to generalize a system in a way that
+        breaks the case it started from.</p>
+        <p>A fix that makes Q4 right and Q3 wrong hasn't generalized anything. It has moved the
+        memorization.</p>
+      </div>
+
+      <p><strong>Two quarters is a demonstration, not a proof.</strong> Both were generated by the
+      same generator from the same world model, so they share more structure than two real clients
+      would. Your system has demonstrated that it doesn't depend on one <em>population</em>. It has
+      not demonstrated independence from Meridian's schema, its policy structure, or its 22
+      applications.</p>
+
+      <p>Being precise about that is the difference between a claim you can defend and one that
+      falls apart in the first real engagement. What you can say is: <em>this system's behaviour
+      depends on the policies and the data, not on the specific people in it, and here are two
+      quarters demonstrating that.</em></p>
+
+      <div class="whatis">
+        <span class="tag">The six building blocks, assembled</span>
+        <p><strong>1. Rules</strong> &mdash; <code>CLAUDE.md</code>, sub-task 7.</p>
+        <p><strong>2. Skills</strong> &mdash; three policy Skills, sub-tasks 16&ndash;19.</p>
+        <p><strong>3. Tools</strong> &mdash; MCP over Meridian's systems, sub-tasks 20&ndash;22.</p>
+        <p><strong>4. Subagents</strong> &mdash; three specialists, one writer, sub-tasks
+        23&ndash;25.</p>
+        <p><strong>5. Hooks</strong> &mdash; guard before, audit after, sub-tasks 26&ndash;28.</p>
+        <p><strong>6. Generalization</strong> &mdash; this sub-task. Not a component; the property
+        the other five have to have for any of it to matter.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Both quarters, one commit</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Commit everything, then confirm the tree is clean.</div>
+          <p class="step-why">Why: the claim is about one codebase. Uncommitted changes mean you
+          cannot say which code produced which result, and "it worked on my machine with some edits"
+          is not a demonstration.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>git status --short     # empty
+git rev-parse --short HEAD</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s39-clean"> Tree clean; commit hash recorded</label>
+        </li>
+        <li>
+          <div class="step-do">Run both quarters back to back, changing nothing but the argument.</div>
+          <p class="step-why">Why: if either run needs a code edit, an environment variable set by
+          hand, or a config file swapped, the parameter isn't derived yet. Go back to sub-task 38.
+          The only thing that may differ between the two invocations is the export directory.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json
+python -m meridian_capstone.contract.run_review data/2026-Q4 &gt; findings.2026-Q4.json</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s39-both"> Both run from one commit, one argument different</label>
+        </li>
+        <li>
+          <div class="step-do">Check both against ground truth.</div>
+          <p class="step-why">Why: nine and eight, with different casts and no overlap between them.
+          If any Q3 account appears in the Q4 findings, the split brain is back.</p>
+          <div class="code labeled">
+            <span class="kind">both quarters</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>2026-Q3   9 findings   2 sod / 3 dormant / 4 contractor   5 exemptions
+2026-Q4   8 findings   2 sod / 3 dormant / 3 contractor   5 exemptions
+
+no account appears in both findings files</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s39-truth"> 9 and 8, correct casts, no overlap</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm Q3 didn't regress.</div>
+          <p class="step-why">Why: compare this Q3 run against the one from sub-task 36, before you
+          started generalizing. Same nine accounts, same categories, same five exemptions. If
+          anything moved, sub-task 38 broke something &mdash; and the micro-key is the fastest way to
+          find out which.</p>
+          <label class="done"><input type="checkbox" data-task="s39-regress"> Q3 unchanged from the pre-Theme-I run</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Every eval, both quarters</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run all five effectiveness evals against both.</div>
+          <p class="step-why">Why: the validator and coverage checks on both. Self-consistency on
+          both. The judge on both. The micro-key on Q3 &mdash; it's Q3-specific by construction, and
+          that's fine as long as you say so. Escalation calibration on both, and note whether the
+          rate is similar; a wildly different escalation rate on Q4 means a trigger is quarter-
+          sensitive in a way you haven't noticed.</p>
+          <label class="done"><input type="checkbox" data-task="s39-evals"> All five run on both quarters</label>
+        </li>
+        <li>
+          <div class="step-do">Check the two efficiency numbers hold.</div>
+          <p class="step-why">Why: cost and latency on Q4 should be close to Q3's &mdash; same
+          candidate volume, same architecture. A large difference means something is behaving
+          differently rather than just seeing different data, and it's worth a look. Confirm the
+          cache is still hitting; a prefix change during sub-task 38's refactor could have quietly
+          reintroduced an invalidator.</p>
+          <label class="done"><input type="checkbox" data-task="s39-cost"> Cost, latency and cache hit rate comparable</label>
+        </li>
+        <li>
+          <div class="step-do">Check the enforcement layer travelled.</div>
+          <p class="step-why">Why: three things. <code>audit/2026-Q4.jsonl</code> exists and has
+          entries &mdash; if it doesn't, <code>MERIDIAN_QUARTER</code> is still pinned. The secret
+          guard still denies on a Q4 write; it's pattern-based, so it should work unchanged, and
+          confirming that is the cheapest win in this sub-task. And the tool restrictions still hold
+          &mdash; <code>ledger-reader</code> still can't write.</p>
+          <label class="done"><input type="checkbox" data-task="s39-enforce"> Audit log, guard, and restrictions all working on Q4</label>
+        </li>
+        <li>
+          <div class="step-do">Run the full test suite.</div>
+          <p class="step-why">Why: <code>test_transfer.py</code> has been skipping since your first
+          clone. It now runs, and it checks the Q4 answer against Q4 ground truth, that no Q3 account
+          leaked into it, that the exemptions are the new cast, that every finding cites a policy,
+          and that the audit log and guard both work on the new seed. Everything else &mdash;
+          ledger, skills, pipeline, hooks &mdash; should still pass.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+pytest                     # includes the one live API call</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s39-test"> Full suite green, including <code>test_transfer.py</code></label>
+        </li>
+        <li>
+          <div class="step-do">Write the claim, and its limits.</div>
+          <p class="step-why">Why: this is the last thing you write in this course and the most
+          useful. A precise claim about what has been demonstrated, with the boundaries stated
+          &mdash; because a claim without boundaries is one that will be tested at the worst possible
+          moment.</p>
+          <div class="worksheet" id="ws-transfer">
+            <div class="label">Demonstrated transfer</div>
+            <p class="hint">Write it as the methodology section of an engagement report. Someone
+            skeptical should be able to reproduce every sentence.</p>
+            <div class="field">
+              <label>The claim, stated precisely
+                <span class="eg">commit hash, two exports, what was identical between the runs</span>
+              </label>
+              <textarea data-ws="i39-claim" rows="4" placeholder="At commit …, one codebase produced 9 findings on 2026-Q3 and 8 on 2026-Q4, with only the export directory differing…"></textarea>
+            </div>
+            <div class="field">
+              <label>Which evals passed on both, and which is quarter-specific by construction</label>
+              <textarea data-ws="i39-evals" rows="4" placeholder="Validator, coverage, self-consistency, judge, escalation on both. Micro-key is Q3-only because…"></textarea>
+            </div>
+            <div class="field">
+              <label>What this does <em>not</em> demonstrate</label>
+              <textarea data-ws="i39-limits" rows="4" placeholder="Both quarters share a schema, a policy set and 22 applications. A different client would…"></textarea>
+            </div>
+            <div class="field">
+              <label>The first three things I'd check on a real client's data</label>
+              <textarea data-ws="i39-next" rows="4" placeholder="1. Whether their policies have citable clause identifiers at all. 2. Whether their exports share a join key. 3. …"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-transfer">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-transfer">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s39-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Produce the submission and commit.</div>
+          <p class="step-why">Why: <code>findings.json</code> is the Q3 answer the grader wants, from
+          the frozen contract, with the signature untouched since sub-task 12.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s39-submit"> Submission produced; work committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Q4 is right and Q3 regressed.</strong> The most instructive possible outcome
+          and worth every minute it takes to fix. Score Q3 against the micro-key to find which
+          accounts moved, then look at what changed in sub-task 38 that touches them. The as-of
+          derivation is the usual culprit &mdash; an off-by-one on quarter end shifts the dormancy
+          cutoff.</p>
+          <p><strong>One run needs an environment variable set by hand.</strong> Then it isn't
+          derived. Move the derivation into the code so <code>export_dir</code> determines every
+          quarter-dependent value.</p>
+          <p><strong><code>test_transfer.py</code> fails on the account sets.</strong> Check the seed
+          first &mdash; anything other than <code>20261015</code> produces a valid quarter with
+          different answers. If the seed is right, the failure names which category is off, and
+          sub-task 38's Stuck section maps each one to its trap.</p>
+          <p><strong>Everything passes. Am I actually done?</strong> Yes. Both quarters correct from
+          one commit, every eval green, the enforcement layer travelling, and the full suite
+          including <code>test_transfer.py</code>. That is the deliverable.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>Two quarter-stamped findings files from <strong>one commit</strong>, differing only in
+            the export directory</li>
+        <li>2026-Q3: <strong>9 findings</strong>, 5 exemptions. 2026-Q4: <strong>8 findings</strong>,
+            5 exemptions. No account in both.</li>
+        <li>Q3 confirmed unregressed against the pre-Theme-I run</li>
+        <li>All five effectiveness evals on both quarters, with the micro-key's Q3-specificity
+            stated</li>
+        <li>Enforcement travelling: <code>audit/2026-Q4.jsonl</code>, the guard denying on Q4, tool
+            restrictions holding</li>
+        <li><code>pytest</code> green, <code>test_transfer.py</code> included</li>
+        <li>A written claim with its boundaries stated</li>
+      </ul>
+      <p style="margin-top:14px"><strong>Building block six is complete, and so is the course.</strong></p>
+      <p>You have an agentic access-review system built from six blocks: Rules that constrain how
+      Claude works in your repo, Skills that ground judgment in policy, Tools that reach the client's
+      systems, Subagents with minimum capability and a single writer, Hooks that prevent and record,
+      and a demonstrated generalization property tying all of it together.</p>
+      <p>You also have the part that matters more than the code. A reconciled ledger built in code
+      because reconciliation is not a judgment call. A fabricated citation you caught with
+      <code>grep</code>. A policy clause you misread in a way that cleared four real violations.
+      Seven ways to evaluate a system whose answers nobody knows. A cost figure you can defend. And a
+      run that passed every check while being entirely wrong.</p>
+      <p>The next client's data will be messier, their policies longer and no clearer, and their
+      systems will disagree with each other. The method transfers. That is the whole point, and you
+      have two quarters of evidence for it.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://en.wikipedia.org/wiki/Overfitting">Overfitting</a> &mdash; the
+        general statement of what Theme I was about, and worth reading once you've experienced it
+        rather than before.</li>
+        <li>Take your trap-by-trap fix log from sub-task 38 and turn it into a checklist for the
+        next project. Hardcoded identifiers, counts, dates, paths &mdash; those four questions asked
+        early are worth more than any framework.</li>
+        <li>Re-read your sub-task 1 worksheet: the access-review headache you named before any of
+        this existed. Which parts of it would this system actually solve, and which parts were never
+        a modelling problem at all? That answer is what you take to the next engagement.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-38.html"><span class="arr">&larr;</span> Sub-task 38</a>
+    <span class="navbtn disabled next">End of the course</span>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme I &middot; Sub-task 3 of 3 &middot; End of the course
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask39-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask39-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

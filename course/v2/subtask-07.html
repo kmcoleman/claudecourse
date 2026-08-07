@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 7 — Write Rules that change how Claude behaves · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>07</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-06.html"><span class="arr">←</span> Sub-task 6 · Break it three ways</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme A · Foundations · Sub-task 7 of 7</div>
+    <h1>Write Rules that visibly change how Claude behaves</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-06.html">Sub-task 6</a>&nbsp;— you need the failure modes card</span>
+      <span class="chip time"><b>Time:</b>&nbsp;≈ 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;building block #1</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">Rules</span>
+        <span class="term">CLAUDE.md</span>
+      </div>
+      <p class="note">The first of the six building blocks. After this sub-task, Theme A is complete.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Everything so far has been preparation. This is the first of the six building blocks you mapped in sub-task 1 — and the simplest: a file of standing instructions that Claude reads at the start of every session.</p>
+      <p>The reason it goes first is that it's the cheapest possible demonstration of the course's real subject. You'll take a prompt that produced behaviour you didn't want, write down a rule, and run the same prompt again. Same question, different answer — and you changed nothing but a text file.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain what <code>CLAUDE.md</code> is and when a rule belongs in it</li>
+        <li>Write project rules that are specific enough to actually change behaviour</li>
+        <li>Demonstrate the change with a before-and-after pair of transcripts</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A rule is a correction you only have to make once.</h3>
+
+      <p>You've now had several sessions with Claude Code. You've probably repeated yourself:
+      <em>don't change that file</em>, <em>show me the count</em>, <em>don't paste the data in</em>.
+      Every one of those repetitions is a rule you haven't written down yet.</p>
+
+      <p><strong>Rules</strong> — building block one — live in a file called
+      <code>CLAUDE.md</code> at the root of your project. Claude reads it at the start of every
+      session, so anything in it applies to every task without you asking. This repository
+      already has one; you'll read it, then extend it.</p>
+
+      <div class="whatis">
+        <span class="tag">What is <code>CLAUDE.md</code>?</span>
+        <p>A plain markdown file of persistent project instructions. No special syntax — headers
+        and bullets. It's shared through git, so a rule you write applies to your whole team.</p>
+        <p>Rule of thumb for what goes in: <em>anything you've had to say twice.</em> Build
+        commands, conventions, things that must never be touched, how to check work is correct.
+        Keep it short — under about 200 lines. Long files get followed less reliably, not more.</p>
+      </div>
+
+      <p><strong>The honest limitation, stated up front.</strong> <code>CLAUDE.md</code> is
+      context, not enforcement. Claude reads your rules and tries to follow them, but nothing
+      <em>blocks</em> a violation. Specific, concrete rules are followed far more reliably than
+      vague ones — "don't paste more than 50 rows of CSV into your reply" beats "be careful with
+      data" — but a rule is guidance.</p>
+
+      <p>When something must be impossible rather than discouraged, you need a different block:
+      <strong>Hooks</strong>, number five on your map, which run as actual code and can refuse.
+      Rules are the cheap 80%; hooks are the guarantee. Knowing which you need is a large part of
+      designing these systems well.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Capture the "before"</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Read the rules that already exist.</div>
+          <p class="step-why">Why: this repository ships a <code>CLAUDE.md</code>. Open it in VS
+          Code and read it — it names a frozen function signature, says reconciliation is done in
+          code while judgment is done by agents, and points at the test suite as the green light.
+          Every one of those is a correction someone got tired of repeating.</p>
+          <label class="done"><input type="checkbox" data-task="s7-read"> I've read the existing <code>CLAUDE.md</code></label>
+        </li>
+        <li>
+          <div class="step-do">Run a prompt that invites the behaviour you don't want — and save
+          what you get.</div>
+          <p class="step-why">Why: you need a documented "before". Start a fresh session
+          (<code>/clear</code>) and ask:</p>
+          <div class="code prompt labeled">
+            <span class="kind">prompt · before</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Show me the entitlements data for Q3 and tell me which accounts look risky.</pre>
+          </div>
+          <p class="step-why">That file has <strong>15,188 rows</strong> across 22 applications.
+          The prompt quietly invites two bad habits: dumping bulk data into the conversation, and
+          calling accounts "risky" against no stated policy. Watch how much data comes back, and
+          whether it says what "risky" means.</p>
+          <p class="step-why">Copy the reply into your notes as <strong>BEFORE</strong>.</p>
+          <label class="done"><input type="checkbox" data-task="s7-before"> BEFORE transcript saved</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>It behaved well — it didn't dump anything.</strong> Quite likely; the
+          existing <code>CLAUDE.md</code> is already doing work, and that's a finding in itself.
+          Note precisely what it <em>did</em> do. You can still improve it: did it define
+          "risky"? Did it cite a policy? Did it show its evidence? Aim your new rules at whatever
+          it left vague.</p>
+          <p><strong>It dumped hundreds of rows into my terminal.</strong> Perfect — you have a
+          vivid BEFORE. That's slow, expensive, and in a real engagement it's client data
+          sprayed into a transcript.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Write the rules</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Add a rules section to <code>CLAUDE.md</code>.</div>
+          <p class="step-why">Why: three rules, each aimed at something real you've seen. Open
+          <code>CLAUDE.md</code> in VS Code and append:</p>
+          <div class="code labeled">
+            <span class="kind">claude.md</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>## My working rules
+
+- **The contract is frozen.** Do not change the signature of
+  `run_review(export_dir, limit)` in
+  `src/meridian_capstone/contract/run_review.py`. If a task seems to
+  need a different signature, stop and tell me instead.
+- **Never paste bulk data into a reply.** Read files with tools and
+  report aggregates — counts, distinct values, a handful of example
+  rows. Never more than 20 rows of any CSV in your response.
+- **Tests are the green light.** After changing code, run
+  `pytest -m "not api"` and report the exact pass/skip/fail counts.
+  Do not describe work as done without that output.
+- **Cite evidence for judgments.** Any claim that an account or person
+  is risky must name the policy or rule it violates and the file the
+  evidence came from. If no policy covers it, say so.</pre>
+          </div>
+          <p class="step-why">Notice the shape: each is concrete enough to check. "Never more
+          than 20 rows" can be violated observably; "be careful with data" cannot.</p>
+          <label class="done"><input type="checkbox" data-task="s7-write"> Rules added and saved</label>
+        </li>
+        <li>
+          <div class="step-do">Add one rule of your own, aimed at your sub-task 1 headache.</div>
+          <p class="step-why">Why: this is where the course stops being about Meridian. What
+          would you always want an assistant working on <em>your</em> problem to know or never
+          do? A system it must never write to, a stakeholder whose sign-off is required, a
+          definition your organisation uses differently from everyone else.</p>
+          <label class="done"><input type="checkbox" data-task="s7-own"> My own rule added</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Capture the "after" and mark the difference</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Start a completely new session and run the identical prompt.</div>
+          <p class="step-why">Why: <code>CLAUDE.md</code> is read at session start, so a running
+          session won't have picked up your edit. Exit fully (<code>/exit</code>) and start
+          <code>claude</code> again — don't just <code>/clear</code>.</p>
+          <div class="code prompt labeled">
+            <span class="kind">prompt · after (identical)</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Show me the entitlements data for Q3 and tell me which accounts look risky.</pre>
+          </div>
+          <p class="step-why">Same words. Different behaviour: aggregates instead of dumps, and
+          either cited reasoning or an honest statement that no policy covers it yet.</p>
+          <label class="done"><input type="checkbox" data-task="s7-after"> AFTER transcript saved</label>
+        </li>
+        <li>
+          <div class="step-do">Mark the difference explicitly.</div>
+          <p class="step-why">Why: "it seemed better" isn't a result. Name which rule caused
+          which change — that's what makes this a demonstration rather than an impression.</p>
+          <div class="worksheet" id="ws-rules">
+            <div class="label">Before / after</div>
+            <p class="hint">Be specific. Quote both transcripts where you can.</p>
+            <div class="field">
+              <label>BEFORE — what did it do that I didn't want?</label>
+              <textarea data-ws="r-before" rows="3" placeholder="How much data came back? Did it define 'risky'? Did it cite anything?"></textarea>
+            </div>
+            <div class="field">
+              <label>AFTER — what changed?</label>
+              <textarea data-ws="r-after" rows="3" placeholder="Same prompt, what's different in the reply…"></textarea>
+            </div>
+            <div class="field">
+              <label>Which rule caused which change?</label>
+              <textarea data-ws="r-map" rows="3" placeholder="Rule 2 → no bulk dump. Rule 4 → it said no policy covers this yet…"></textarea>
+            </div>
+            <div class="field">
+              <label>What did NOT change — and would a Hook have been needed?</label>
+              <textarea data-ws="r-gap" rows="3" placeholder="Rules are guidance, not enforcement. What slipped through anyway?"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-rules">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-rules">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s7-diff"> Difference marked, including the last box</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm you didn't break anything, then commit.</div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+git add CLAUDE.md
+git commit -m "Add my working rules to CLAUDE.md"</pre>
+          </div>
+          <p class="step-why">Still 33 passed, 11 skipped, 1 deselected — editing rules doesn't
+          touch code. But running the check anyway is the habit, and you just wrote a rule
+          demanding exactly that.</p>
+          <label class="done"><input type="checkbox" data-task="s7-commit"> Tests green and rules committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Nothing changed between before and after.</strong> Check the file is at the
+          repository root and named exactly <code>CLAUDE.md</code>. Inside a session, run
+          <code>/context</code> and look for it under <strong>Memory files</strong> — if it isn't
+          listed, Claude never saw it. And confirm you fully restarted rather than
+          <code>/clear</code>ing.</p>
+          <p><strong>It followed some rules and ignored others.</strong> That's the honest
+          behaviour of a guidance mechanism, and it's worth writing in the last box. Look at the
+          ignored one — is it vaguer than the others? Vague rules lose. If it must be guaranteed,
+          you're looking at a job for Hooks.</p>
+          <p><strong>My rules contradict the existing ones.</strong> Resolve it rather than
+          leaving both. Contradictory rules get resolved arbitrarily, which is the worst of all
+          worlds.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p>You have two transcripts of the <em>same prompt</em> — before and after your rules — with
+      the differences marked and attributed to specific rules. Plus:</p>
+      <ul>
+        <li><code>CLAUDE.md</code> contains your rules, including one aimed at your own headache</li>
+        <li><code>pytest -m "not api"</code> is still green</li>
+        <li>Your rules are committed</li>
+      </ul>
+      <p style="margin-top:14px"><strong>Theme A is complete, and building block one is
+      standing.</strong> Go back to your sub-task 1 note and reread your guess about Rules. Was
+      it right? Mark it either way — that mark is the first evidence that this course is moving
+      your own problem and not just Meridian's.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>
+        — the full reference for <code>CLAUDE.md</code>, including how to split rules into
+        <code>.claude/rules/</code> once one file gets long.</li>
+        <li><a href="https://code.claude.com/docs/en/hooks-guide">Hooks guide</a> — read only if
+        the "rules aren't enforcement" point is nagging at you. This is building block five, and
+        it's coming.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-06.html"><span class="arr">←</span> Sub-task 6</a>
+    <a class="navbtn next" href="subtask-08.html">Theme A complete ✓ · Sub-task 8 <span class="arr">→</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Theme A · Sub-task 7 of 7
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask07-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask07-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

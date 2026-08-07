@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 37 &mdash; Point the system at a new quarter and get a clean run with wrong answers &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>37</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-36.html"><span class="arr">&larr;</span> Sub-task 36 &middot; Caching and batching</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme I &middot; Generalization &middot; Sub-task 1 of 3</div>
+    <h1>Point the system at a new quarter and get a clean run with wrong answers</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-36.html">Sub-task 36</a> and <a href="subtask-06.html">sub-task 6</a>&nbsp;&mdash; the optimised pipeline, and failure mode two</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;generalization &middot; silent wrong answer</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">seeded regeneration</span>
+        <span class="term">split-brain config</span>
+      </div>
+      <p class="note">Failure mode two from sub-task 6, at full scale. Every check passes and every answer is wrong.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Everything you have built has been tuned against one quarter of one
+      fictional company. Every number in every worksheet came from 2026-Q3. Every Skill was written
+      while looking at accounts you now know by name.</p>
+      <p>The question Theme I answers is whether you built a system or memorized an answer. There is
+      only one way to find out, and it is to point it at data it has never seen.</p>
+      <p>The run will succeed. Every test will pass. The findings will name people who do not exist
+      in the quarter you asked about.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Generate a second quarter under a new seed</li>
+        <li>Run the pipeline against it and watch every check pass</li>
+        <li>Recognize the findings as the wrong quarter's answers</li>
+        <li>Diagnose the split-brain configuration that caused it</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>The most dangerous failure is the one that looks like success.</h3>
+
+      <p>In sub-task 6 you broke a script three ways. Mode one crashed and told you where. Mode three
+      hallucinated a rationale you could catch by asking for a citation. Mode two was the one worth
+      fearing: <strong>the silent wrong answer</strong>. Nothing errors. The output is well-formed.
+      You have no signal at all.</p>
+
+      <p>That was a toy. This is the same failure across an entire pipeline, and it is much harder to
+      spot because everything you built to detect problems will report that there aren't any.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a split-brain configuration?</span>
+        <p>Two parts of the same system pointed at two different data sources, each internally
+        consistent, neither aware of the other.</p>
+        <p><code>run_review(export_dir)</code> takes its path as a parameter, so pointing it at Q4 is
+        a one-line change. Your MCP server does not &mdash; it reads
+        <code>MERIDIAN_DATA_DIR</code> from <code>.mcp.json</code>, which says
+        <code>data/2026-Q3</code>.</p>
+        <p>So <code>run_review</code> reads Q4 and <code>ledger-reader</code> reads Q3. Both work
+        perfectly. The findings describe Q3 and are labelled Q4.</p>
+      </div>
+
+      <p>You have already seen this configuration once, in passing. Sub-task 21 asked you to note
+      what <code>MERIDIAN_DATA_DIR</code> could do to you, and sub-task 28 mentioned it again when
+      you pointed the pipeline at a poisoned copy. This is the sub-task where noting it pays off
+      &mdash; or where not noting it costs you an hour.</p>
+
+      <div class="whatis">
+        <span class="tag">Why every check you built will pass</span>
+        <p><strong>Schema validation</strong> &mdash; Q3 findings are valid findings.</p>
+        <p><strong>Coverage checks</strong> &mdash; the distribution is exactly the healthy one you
+        calibrated against, because it <em>is</em> that distribution.</p>
+        <p><strong>Self-consistency</strong> &mdash; two runs agree perfectly. Both read Q3.</p>
+        <p><strong>The micro-key</strong> &mdash; scores perfectly. It was built from Q3.</p>
+        <p><strong>The judge</strong> &mdash; every rationale is well-evidenced and correctly cited,
+        because the reasoning is sound. It's sound about the wrong quarter.</p>
+        <p>Six evaluations, all green, all wrong. The only thing that catches this is a human
+        noticing that <code>gabriel.villa</code> does not appear in the Q4 roster.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Generate a quarter you have never seen</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Generate <code>data/2026-Q4</code> with seed
+          <strong>20261015</strong>.</div>
+          <p class="step-why">Why: the seed matters. The kit's transfer tests carry Q4 ground truth
+          for exactly this seed, so a different one produces a valid quarter that no test can check.
+          The generator ships alongside the kit rather than inside it &mdash; if the command below
+          doesn't resolve, ask your instructor for the generator or for the export itself.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian.generate --seed 20261015 --quarter 2026-Q4 --out data/2026-Q4</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s37-gen"> <code>data/2026-Q4</code> exists</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm it's the same company and a different cast.</div>
+          <p class="step-why">Why: the world design is unchanged &mdash; same 22 applications, same
+          five policies, same SoD matrix, same service accounts, 1,200 accounts and
+          <strong>1,190</strong> HR rows. What changed is every person, every ID, and every specific
+          finding.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>wc -l data/2026-Q4/hr_roster.csv          # 1191 incl. header
+diff &lt;(ls data/2026-Q3) &lt;(ls data/2026-Q4)  # same files
+head -3 data/2026-Q4/hr_roster.csv        # different people</pre>
+          </div>
+          <p class="step-why">Do <strong>not</strong> go looking for the Q4 findings. The whole
+          exercise depends on you not knowing them, and knowing them is a bell you cannot un-ring.</p>
+          <label class="done"><input type="checkbox" data-task="s37-check"> Same structure, 1,190 HR rows, unfamiliar names</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The generator isn't available.</strong> It lives in the course repository rather
+          than in the kit &mdash; ask your instructor. Failing that, ask for <code>data/2026-Q4</code>
+          generated at seed 20261015 directly; the sub-task works fine with a supplied export.</p>
+          <p><strong>My row counts don't match.</strong> Then the seed differs. Regenerate with
+          exactly <code>20261015</code>, or the transfer tests will fail against ground truth that
+          doesn't describe your data.</p>
+          <p><strong>Should <code>data/2026-Q4</code> be committed?</strong> No &mdash;
+          <code>data/</code> is gitignored. It's regenerable from a seed, which is the point.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Run it, and believe the result for a moment</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Point <code>run_review()</code> at Q4 and run the full quarter.</div>
+          <p class="step-why">Why: write to a quarter-stamped file. Keep <code>findings.json</code>
+          as your Q3 answer &mdash; the pipeline test still checks it, and losing your Q3 result to
+          overwrite it would be an unforced error.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian_capstone.contract.run_review data/2026-Q4 &gt; findings.2026-Q4.json</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s37-run"> Q4 run completed without error</label>
+        </li>
+        <li>
+          <div class="step-do">Run every evaluation you built, and note that they all pass.</div>
+          <p class="step-why">Why: this is the point of the sub-task and it deserves a moment.
+          Schema, coverage, self-consistency, micro-key, judge. Six green results. Write down that
+          they were green, because it is the most instructive fact in Theme I and it will be tempting
+          to forget once you know what's wrong.</p>
+          <label class="done"><input type="checkbox" data-task="s37-evals"> All evals green on the Q4 run</label>
+        </li>
+        <li>
+          <div class="step-do">Now read the findings.</div>
+          <p class="step-why">Why: take each <code>account_id</code> and each name in the findings
+          and look for them in <code>data/2026-Q4/hr_roster.csv</code>. If you see
+          <code>gabriel.villa</code>, <code>michelle.mercado</code> or <code>james.hernandez</code>,
+          you are reading Q3's answers in a file named Q4.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python3 -c "
+import json,csv
+f=json.load(open('findings.2026-Q4.json'))
+ids={r['account_id'] for r in csv.DictReader(open('data/2026-Q4/entitlements.csv'))}
+for x in f:
+    print(x['account_id'], 'IN Q4' if x['account_id'] in ids else 'NOT IN Q4')
+"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s37-wrong"> Findings identified as belonging to the wrong quarter</label>
+        </li>
+        <li>
+          <div class="step-do">Diagnose it properly &mdash; find the two data paths.</div>
+          <p class="step-why">Why: don't guess. Trace where each component gets its data.
+          <code>run_review()</code> takes <code>export_dir</code>, so that half followed you.
+          <code>ledger-reader</code> calls MCP tools; the MCP server reads
+          <code>MERIDIAN_DATA_DIR</code> from <code>.mcp.json</code>; that file says
+          <code>data/2026-Q3</code>.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>grep -n MERIDIAN_DATA_DIR .mcp.json
+grep -rn "2026-Q3" .mcp.json .claude/ src/ *.py 2&gt;/dev/null</pre>
+          </div>
+          <p class="step-why">That second command is worth running in full. It will find more than
+          the one you're looking for, and everything it finds is sub-task 38's work list.</p>
+          <label class="done"><input type="checkbox" data-task="s37-diag"> Split-brain located; other Q3 references listed</label>
+        </li>
+        <li>
+          <div class="step-do">Fix the split brain and re-run.</div>
+          <p class="step-why">Why: point <code>MERIDIAN_DATA_DIR</code> at Q4, or better,
+          parameterize it so the pipeline can't disagree with itself. Restart &mdash;
+          <code>.mcp.json</code> is read at startup. Then run again and confirm the findings now
+          name people who exist in Q4.</p>
+          <p class="step-why">Expect the answers to be <em>different</em>, not necessarily
+          <em>right</em>. Sub-task 38 is the rest of the fix.</p>
+          <label class="done"><input type="checkbox" data-task="s37-fix"> Both halves reading Q4; findings name real Q4 accounts</label>
+        </li>
+        <li>
+          <div class="step-do">Write up the failure while it's fresh.</div>
+          <div class="worksheet" id="ws-split">
+            <div class="label">The silent wrong answer</div>
+            <p class="hint">This is the story you tell a client about why "all tests pass" is not
+            the same as "it works". Write it so it lands.</p>
+            <div class="field">
+              <label>What the Q4 run produced, and which evals passed on it</label>
+              <textarea data-ws="i37-run" rows="3" placeholder="N findings, all naming Q3 accounts. Schema ✓ coverage ✓ consistency ✓ micro-key ✓ judge ✓"></textarea>
+            </div>
+            <div class="field">
+              <label>How I actually noticed</label>
+              <textarea data-ws="i37-notice" rows="3" placeholder="I recognised the names. Nothing in the system told me."></textarea>
+            </div>
+            <div class="field">
+              <label>The two data paths, and why they diverged</label>
+              <textarea data-ws="i37-cause" rows="3" placeholder="run_review takes export_dir as a parameter; the MCP server reads MERIDIAN_DATA_DIR from .mcp.json…"></textarea>
+            </div>
+            <div class="field">
+              <label>What check would have caught this automatically</label>
+              <textarea data-ws="i37-check" rows="3" placeholder="Assert every finding's account_id exists in the export being reviewed. I'd add it to the validator because…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-split">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-split">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s37-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Add that check to your validator, and commit.</div>
+          <p class="step-why">Why: the last worksheet box names a check that would have caught this
+          in a second &mdash; every <code>account_id</code> in the findings must exist in the export
+          under review. It is one line, it is quarter-independent, and it closes the exact hole that
+          just made every other eval useless. Add it now.</p>
+          <label class="done"><input type="checkbox" data-task="s37-commit"> Provenance check added; committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The findings already named Q4 accounts.</strong> Either you parameterized the
+          data directory earlier &mdash; well done, note that you avoided the trap &mdash; or your
+          pipeline doesn't route through MCP at all. Check which. If your agents read files directly
+          the split-brain never happens, and that's a legitimate architecture with its own trade-offs
+          worth writing down.</p>
+          <p><strong>The Q4 run crashed.</strong> Different and easier failure. Something is
+          hardcoded to a Q3 path or a Q3 identifier. Fix it and note it &mdash; it's the first entry
+          on sub-task 38's list.</p>
+          <p><strong>It found zero findings on Q4.</strong> Also a memorization symptom, and a
+          revealing one. Something keyed to Q3 specifics &mdash; account IDs in an exemption list, a
+          hardcoded as-of date &mdash; is now matching nothing. That's sub-task 38's subject.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li><code>data/2026-Q4</code> generated at seed <strong>20261015</strong>, same structure,
+            <strong>1,190</strong> HR rows, a completely different cast</li>
+        <li>A Q4 run that completed cleanly and passed every evaluation while being entirely wrong</li>
+        <li>The split-brain configuration diagnosed by tracing both data paths</li>
+        <li>A list of every other <code>2026-Q3</code> reference in the repo &mdash; sub-task 38's
+            work list</li>
+        <li>A provenance check added to the validator so this can never be silent again</li>
+      </ul>
+      <p style="margin-top:14px">The most useful thing you did in this sub-task was believe a wrong
+      answer for a few minutes. That is what it feels like from the inside, and it feels exactly like
+      being right.</p>
+      <p>Sub-task 38 goes after everything else you memorized.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://developers.google.com/machine-learning/crash-course/overfitting/overfitting">Overfitting</a>
+        &mdash; the same idea from machine learning. A model that memorizes its training set scores
+        perfectly on it and fails on anything else, which is precisely what your pipeline just did to
+        2026-Q3.</li>
+        <li>Diff the two exports structurally &mdash; row counts, application list, policy files,
+        the SoD matrix. What stays identical is the <em>world</em>; what changes is the
+        <em>population</em>. A system should depend only on the first.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-36.html"><span class="arr">&larr;</span> Sub-task 36</a>
+    <a class="navbtn next" href="subtask-38.html">Sub-task 38 &middot; Hunt every memorized assumption <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme I &middot; Sub-task 1 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask37-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask37-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

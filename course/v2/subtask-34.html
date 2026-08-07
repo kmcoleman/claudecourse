@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 34 &mdash; Put a dollar figure and a clock on one quarterly review &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>34</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-33.html"><span class="arr">&larr;</span> Sub-task 33 &middot; Judge the rationales</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme H &middot; Evals, HITL &amp; tiering &middot; Sub-task 6 of 8</div>
+    <h1>Put a dollar figure and a clock on one quarterly review</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-33.html">Sub-task 33</a>&nbsp;&mdash; you need the full pipeline including judging</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;evals &middot; efficiency</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">cost per finding</span>
+        <span class="term">latency SLA</span>
+      </div>
+      <p class="note">The first efficiency eval, and the numbers that decide whether there is a phase two.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Everything so far has answered "is it any good?". The person approving
+      the budget asks a different question, and asks it first.</p>
+      <p>What does one quarterly review cost, and how long does it take? Not roughly. A number, with
+      the method behind it, that survives being challenged.</p>
+      <p>You have been logging <code>usage</code> since sub-task 14. This is where it becomes a
+      figure you can put on a slide.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Aggregate token usage across every call in a complete run</li>
+        <li>Compute cost per review, cost per finding, and cost per candidate</li>
+        <li>Measure wall clock and understand what dominates it</li>
+        <li>State the numbers with their assumptions attached</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>Three numbers, and the third is the one that gets quoted.</h3>
+
+      <p><strong>Cost per review</strong> is the total for a quarter. It's the number that goes in a
+      budget line and it's the easiest to compute.</p>
+
+      <p><strong>Cost per candidate</strong> is the total divided by the 166 accounts that reached
+      the agent layer. It's the number that tells you what happens if the client's next engagement
+      has 12,000 accounts instead of 1,200, and it's the one you should reason with internally.</p>
+
+      <p><strong>Cost per finding</strong> is the total divided by nine. It is the number that gets
+      quoted back at you, and it is dangerously misleading &mdash; which is exactly why you need to
+      compute it yourself and be ready to explain it.</p>
+
+      <div class="whatis">
+        <span class="tag">Why cost per finding is a trap</span>
+        <p>A quarter with few findings has a high cost per finding. That reads as poor value and it
+        is precisely backwards: <em>a clean quarter is a good outcome</em>. You did the same work to
+        establish that 1,034 accounts were fine, and establishing that is most of what an access
+        review is for.</p>
+        <p>Compute it anyway, because someone will. Then say the other sentence in the same breath:
+        the cost is per account reviewed, not per problem found, and a quarter with no findings costs
+        the same and is worth just as much.</p>
+      </div>
+
+      <p><strong>Count everything.</strong> The judge calls from sub-task 33 are part of the cost.
+      So are retries, failed calls, the tool-use loop's repeated resends, and every call your
+      subagents made. A figure that counts only the successful judgment calls is one that will be
+      wrong the first time you scale, and wrong in the expensive direction.</p>
+
+      <div class="whatis">
+        <span class="tag">Latency, and what it's for</span>
+        <p>Wall clock for a full <code>limit=None</code> run. This is not a user-facing latency
+        &mdash; nobody is waiting on a quarterly review &mdash; but it constrains the iteration loop
+        and it answers "can this run overnight in the maintenance window?"</p>
+        <p>Note what dominates. If it's serialized model calls, concurrency helps. If it's rate
+        limits, more concurrency makes it worse. Knowing which is which is what stops you optimising
+        the wrong thing in sub-task 36.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Aggregate</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Make sure every call is logged, including the ones you forget.</div>
+          <p class="step-why">Why: audit your instrumentation before you trust its output. Each
+          subagent's calls, every iteration of every tool-use loop, the judge, and any retries. A
+          run that made 400 calls and logged 180 gives you a confident number that's less than half
+          the real one.</p>
+          <p class="step-why">Sanity check: multiply your logged call count by a plausible average
+          and see whether it lands near the total. Large discrepancies mean something isn't
+          logging.</p>
+          <label class="done"><input type="checkbox" data-task="s34-log"> Every call logged and cross-checked</label>
+        </li>
+        <li>
+          <div class="step-do">Run the full quarter and time it.</div>
+          <p class="step-why">Why: one clean <code>limit=None</code> run with complete
+          instrumentation. Record wall clock, total input tokens, total output tokens, and the call
+          count, broken down by which component made them.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>time python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s34-run"> Full run timed and instrumented</label>
+        </li>
+        <li>
+          <div class="step-do">Convert to dollars using current published rates.</div>
+          <p class="step-why">Why: input and output are priced differently and output is several
+          times more expensive, so a run that's output-heavy costs more than the token count
+          suggests. If you used more than one model, price each separately &mdash; that breakdown is
+          what makes sub-task 35's argument concrete.</p>
+          <p class="step-why">Look the rates up rather than trusting a number from a course page.
+          They change, and a stale figure in a client deck is worse than no figure.</p>
+          <label class="done"><input type="checkbox" data-task="s34-dollars"> Cost computed with current rates</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>State the numbers, with their assumptions</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Compute all three, with the right denominators.</div>
+          <p class="step-why">Why: total cost. Divided by 166 candidates. Divided by 9 findings. And
+          note the fourth figure someone will compute themselves &mdash; divided by 1,200 total
+          accounts &mdash; which looks flatteringly small and is the least honest of the four, since
+          1,034 of those accounts never reached a model at all.</p>
+          <div class="code labeled">
+            <span class="kind">the four denominators</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>per quarter      total
+per candidate    total / 166      accounts reaching the agent layer
+per finding      total / 9        the quotable one, and the misleading one
+per account      total / 1200     flattering; 1,034 never saw a model</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s34-three"> All four computed</label>
+        </li>
+        <li>
+          <div class="step-do">Break the cost down by component.</div>
+          <p class="step-why">Why: this is where the optimisation targets are. Which of
+          <code>ledger-reader</code>, <code>policy-applier</code>, <code>findings-writer</code> and
+          the judge dominates? Almost always the tool-use loop in <code>ledger-reader</code>, because
+          every iteration resends everything before it. That single observation is what makes
+          sub-tasks 35 and 36 obvious rather than speculative.</p>
+          <label class="done"><input type="checkbox" data-task="s34-break"> Cost attributed by component</label>
+        </li>
+        <li>
+          <div class="step-do">Say what dominates the wall clock.</div>
+          <p class="step-why">Why: serialized calls, rate limiting, or a slow local step are three
+          different problems with three different fixes, and the wrong diagnosis wastes sub-task 36.
+          If you saw 429s during the full run, that's the answer.</p>
+          <label class="done"><input type="checkbox" data-task="s34-latency"> Latency bottleneck identified</label>
+        </li>
+        <li>
+          <div class="step-do">Write the sentence you'd say out loud.</div>
+          <p class="step-why">Why: the deliverable is one sentence a manager can repeat, plus the
+          caveats that stop it being misused.</p>
+          <div class="worksheet" id="ws-cost34">
+            <div class="label">The cost of a quarter</div>
+            <p class="hint">Sub-tasks 35 and 36 both try to move these numbers. This is the
+            baseline &mdash; record it precisely.</p>
+            <div class="field">
+              <label>The sentence
+                <span class="eg">&quot;$X and Y minutes per quarter, $Z per finding&quot;</span>
+              </label>
+              <textarea data-ws="h34-line" rows="2" placeholder="A quarterly review of 1,200 accounts costs $… and takes … minutes."></textarea>
+            </div>
+            <div class="field">
+              <label>Total tokens and calls, broken down by component</label>
+              <textarea data-ws="h34-break" rows="4" placeholder="… calls total. ledger-reader …%, policy-applier …%, judge …%"></textarea>
+            </div>
+            <div class="field">
+              <label>What dominates wall clock, and what would fix it</label>
+              <textarea data-ws="h34-lat" rows="3" placeholder="Serialized calls / rate limits / … The fix would be…"></textarea>
+            </div>
+            <div class="field">
+              <label>The caveats that go with the number</label>
+              <textarea data-ws="h34-caveat" rows="4" placeholder="Cost per finding is misleading because a clean quarter is a good outcome. Rates as of … . Excludes …"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-cost34">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-cost34">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s34-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Compare against your sub-task 14 projection, and commit.</div>
+          <p class="step-why">Why: you estimated this from one call, before you had a pipeline. How
+          far off were you, and in which direction? Almost certainly low, because the estimate
+          assumed one call per account and the reality is a tool-use loop across three agents plus a
+          judge. Knowing the size of that gap is what makes your next estimate better.</p>
+          <label class="done"><input type="checkbox" data-task="s34-commit"> Compared to the projection; committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My cost is much higher than I expected.</strong> Look at the tool-use loop
+          first. Every iteration resends the whole conversation, so an agent making six tool calls
+          per account is paying for that conversation seven times, growing each time. That single
+          mechanism dominates most agentic cost bills.</p>
+          <p><strong>Should I include my own debugging runs?</strong> Not in the per-quarter figure
+          &mdash; that's the cost of a production run. But track development cost separately and be
+          ready to state it, because on a real engagement someone will ask what it cost to
+          <em>build</em>, and "I don't know" is a bad answer.</p>
+          <p><strong>The numbers feel too small to matter.</strong> For 1,200 accounts, quite
+          possibly. Multiply by a realistic enterprise &mdash; tens of thousands of accounts,
+          quarterly, across several regulated entities &mdash; and it stops being negligible. That
+          multiplication is the argument for sub-tasks 35 and 36.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>Every model call in a full run logged, with the instrumentation cross-checked</li>
+        <li>Cost per quarter, per candidate, per finding and per account &mdash; with the right
+            denominator identified for each</li>
+        <li>Cost attributed by component, so you know what to optimise</li>
+        <li>Wall clock measured and its bottleneck diagnosed</li>
+        <li>One quotable sentence, with the caveats that stop it being misused</li>
+      </ul>
+      <p style="margin-top:14px">You can now answer the budget question. The next two sub-tasks try
+      to make the answer smaller.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/token-counting">Token
+        counting</a> &mdash; <code>count_tokens</code> lets you price a request before making it,
+        which is how you estimate a client's bill without running their whole quarter.</li>
+        <li>Work out the break-even against a human reviewer. At a plausible hourly rate, how many
+        accounts per hour would a person need to clear to match your cost per candidate? The answer
+        is usually the most persuasive number in the whole deck.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-33.html"><span class="arr">&larr;</span> Sub-task 33</a>
+    <a class="navbtn next" href="subtask-35.html">Sub-task 35 &middot; Route by model tier <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme H &middot; Sub-task 6 of 8
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask34-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask34-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

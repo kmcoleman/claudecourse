@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 11 &mdash; Triage 15,000 grants to a candidate list with zero model calls &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>11</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-10.html"><span class="arr">&larr;</span> Sub-task 10 &middot; Normalize and re-count duplicates</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 4 of 5</div>
+    <h1>Triage 15,000 grants down to a candidate list with zero model calls</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-10.html">Sub-task 10</a>&nbsp;&mdash; you need normalized dates and departments, and <code>identities.csv</code></span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; the design principle</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">the Ledger</span>
+        <span class="term">mechanical triage</span>
+        <span class="term">context economics</span>
+      </div>
+      <p class="note">The longest sub-task in Theme B, and the one carrying the idea the rest of the course is built on.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">You are about to build the artifact everything else in this course
+      reads from, and then throw away 87% of it before any agent ever sees it. Both halves matter,
+      and the second half is the one worth remembering.</p>
+      <p>Everything you've done in Theme B has been code. No agent, no judgment, no prompt. That
+      was not an accident of ordering &mdash; it's the design principle, and this sub-task is
+      where you name it.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Build the Ledger &mdash; one de-duplicated, identity-attached row per grant</li>
+        <li>State the context-economics principle and apply it as a triage rule</li>
+        <li>Defend a candidate count with the claim that everything else is provably clean</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>Context is expensive. Move bulk to code; move judgment to the model.</h3>
+
+      <p>This is the design principle of the whole course, and it's worth stating in a form you
+      could use on a system that has nothing to do with access reviews:</p>
+
+      <div class="whatis">
+        <span class="tag">Context economics</span>
+        <p>A model's context window is the scarcest resource in any agentic system &mdash; scarce
+        in tokens, in money, in latency, and above all in <em>attention</em>. Every row you put
+        in front of a model competes with every other row for the model's care.</p>
+        <p>So the design question for every step is not &quot;can the model do this?&quot; It is:
+        <strong>does this step require judgment?</strong> If it doesn't, it belongs in code
+        &mdash; where it is cheaper, faster, deterministic, and testable. If it does, it belongs
+        with the model &mdash; and the model should arrive at it with the irrelevant 87% already
+        gone.</p>
+      </div>
+
+      <p>Put concrete numbers on it. <code>entitlements.csv</code> is
+      <strong>1.16&nbsp;MB</strong>, on the order of <strong>320,000 tokens</strong>. You could
+      feed the whole thing to a model. It would be slow, it would cost real money every run, and
+      &mdash; the part people miss &mdash; it would be <em>worse</em>, because the twelve
+      genuinely difficult accounts would be buried under fifteen thousand rows of Zoom
+      memberships that no reviewer would look at twice.</p>
+
+      <p><strong>The test for which side a decision belongs on</strong> is whether two competent
+      reviewers with the same data would give the same answer:</p>
+
+      <div class="blocks">
+        <div class="row">
+          <div class="n">&#8801;</div>
+          <div>
+            <div class="b-name">Code &mdash; determined by the data</div>
+            <p class="b-desc">Is this employee terminated? Was this grant dated before their
+            hire date? Does this account hold two roles the SoD matrix names as conflicting?
+            Is this role on the application's privileged list?</p>
+            <p class="b-when">Same answer every time. No model needed, and a model would only add
+            variance.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">?</div>
+          <div>
+            <div class="b-name">Judgment &mdash; requires reading, weighing, deciding</div>
+            <p class="b-desc">Is this contractor's access still <em>justified</em> given the
+            ticket they filed? Does the compensating control in the policy actually cover this
+            case? Is this orphan a leaver nobody offboarded, or a rename nobody recorded?</p>
+            <p class="b-when">Reasonable reviewers can disagree. This is what the model is
+            for.</p>
+          </div>
+        </div>
+      </div>
+
+      <p>Mechanical triage is how you get from one to the other: a set of deterministic rules,
+      each cheap and each testable, that partition the ledger into <em>needs a human-or-model
+      look</em> and <em>provably clean</em>. The second pile is the valuable one, because you can
+      say something precise about it: not &quot;we didn't check those&quot;, but &quot;we checked
+      every one of those with a rule, and here is the rule.&quot;</p>
+
+      <div class="whatis">
+        <span class="tag">Why this generalizes</span>
+        <p>Log triage, document review, alert handling, code review, claims processing &mdash;
+        the shape is identical every time. Deterministic filter, then judgment on the residue.
+        When you take this back to your own problem, the first question is always: what fraction
+        of my volume can a rule dispose of, and what exactly is the rule?</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Build the Ledger</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Join the normalized entitlements to <code>identities.csv</code>
+          and write <code>ledger.csv</code> at the repository root.</div>
+          <p class="step-why">Why: the <strong>Ledger</strong> is the one table the rest of the
+          course reads. One row per distinct grant &mdash; per
+          <code>(account_id, app, role)</code> &mdash; with ISO dates, the resolved
+          <code>employee_id</code> where there is one, and the match status where there isn't.</p>
+          <p class="step-why">Two things it must not do. It must not drop unmatched accounts:
+          an orphan with production access is the finding, and a left join that quietly discards
+          it produces a clean-looking report that is wrong. And it must not fan out: joining
+          1,200 accounts on name against 1,190 people can produce <em>more</em> than 1,200 rows
+          if a name matches twice. Check your row count after the join, every time.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ledger.csv
+  rows                              15158
+  distinct (account_id, app, role)  15158     <- must be equal
+  distinct account_id                1200     <- nothing dropped
+  granted_date non-ISO values            0</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s11-ledger"> <code>ledger.csv</code> written, 15158 rows</label>
+        </li>
+        <li>
+          <div class="step-do">Run the tests. The ledger tests should now pass.</div>
+          <p class="step-why">Why: the failure messages are written to diagnose you.
+          <strong>15,188</strong> means nothing was de-duplicated. <strong>15,178</strong> means
+          you de-duplicated before normalizing and twenty format-twins survived &mdash; go back
+          to sub-task 10. Anything else means the join changed your row count.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+# 4 failed, 42 passed, 10 skipped, 1 deselected</pre>
+          </div>
+          <p class="step-why">Four failures left, all in the findings group. Those are
+          sub-task 12.</p>
+          <label class="done"><input type="checkbox" data-task="s11-tests"> Only the four findings tests still fail</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My ledger has more than 15,158 rows and I did de-duplicate.</strong>
+          The join fanned out. Join on <code>account_id</code> against a table with exactly one
+          row per account &mdash; which is what <code>identities.csv</code> is for. Never join
+          entitlements to HR on name directly.</p>
+          <p><strong>My ledger has fewer than 15,158 rows.</strong> An inner join dropped the
+          unmatched accounts. Those 1,544 grants on 122 unresolved accounts are among the most
+          interesting rows in the file.</p>
+          <p><strong>Which columns should the ledger have?</strong> Your call, but at minimum
+          enough to answer a finding without re-reading the source: account, name, resolved
+          person, match status, app, role, normalized grant date, granted-by, last login.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Write the mechanical triage rules</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Implement each rule as a deterministic filter over the ledger, and
+          count what it catches.</div>
+          <p class="step-why">Why: one rule at a time, each independently countable. A rule you
+          can't count is a rule you can't defend. These counts assume the baseline
+          exact-match identity table from sub-task 9; if you widened the matcher, your orphan and
+          ambiguous rows will be lower.</p>
+          <div class="code labeled">
+            <span class="kind">expected output &mdash; baseline matcher</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>rule                     grants   accounts   source of truth
+-------------------------------------------------------------------
+terminated employee         134         10   hr_roster.status
+orphan account             1544        122   identities.csv match_status
+ambiguous identity          221         18   identities.csv match_status
+granted before hire           2          2   granted_date < hire_date
+privileged role             105        105   applications.json
+sod conflict                 10          5   sod_matrix.json
+privileged, no ticket        23         23   access_tickets.json (85 tickets)
+dormant 90+ days           1283        771   last_login
+contractor on crown app     219        105   employment_type + app tier</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s11-rules"> My rule counts match</label>
+        </li>
+        <li>
+          <div class="step-do">Notice which rules are cheap and which are lethal.</div>
+          <p class="step-why">Why: <strong>granted before hire</strong> catches 2 rows out of
+          15,158 &mdash; and each one is an account that existed before its owner did. Two rows,
+          essentially free to compute, and among the most serious things in the file. Meanwhile
+          <strong>dormant 90+ days</strong> catches 1,283 rows and most of them are somebody who
+          hasn't opened Zoom since June.</p>
+          <p class="step-why">Rule volume is uncorrelated with rule value. This is why you count
+          each rule separately instead of jumping straight to a combined filter &mdash; a rule
+          you can't see the size of is one you can't reason about.</p>
+          <label class="done"><input type="checkbox" data-task="s11-value"> I can name my highest-value and lowest-value rule</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My privileged count isn't 105.</strong> Privileged roles are named per
+          application in <code>applications.json</code> under <code>privileged_roles</code>.
+          It's not a global list of role names &mdash; <code>Admin</code> is privileged in one
+          app and not defined in another.</p>
+          <p><strong>My terminated count is higher.</strong> Ten employees have
+          <code>status == "terminated"</code>. If you're using a non-empty <code>term_date</code>
+          instead you'll pick up 13 people, three of whom have a future-dated departure and are
+          still employed today. Those are different questions; know which you asked.</p>
+          <p><strong>My dormant count differs.</strong> The window's start point is a choice.
+          The number above uses 90 days before <strong>2026-09-30</strong>, the export date, and
+          counts a blank <code>last_login</code> as dormant. Both of those are decisions; state
+          yours.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Produce the candidate set and defend the remainder</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Union the high-signal rules into one candidate set.</div>
+          <p class="step-why">Why: a grant is a candidate if <em>any</em> high-signal rule fires
+          on it. Which rules count as high-signal is your decision &mdash; the reference numbers
+          below take terminated, orphan, ambiguous, granted-before-hire, SoD, privileged-and-dormant,
+          and privileged-without-a-ticket, and deliberately leave out bare dormancy and bare
+          contractor status, which are too broad to be worth a model's attention on their own.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ledger                     15158 grants   1200 accounts
+candidates                  1919 grants    166 accounts
+provably clean             13239 grants                  87.3%
+
+model calls made so far: 0</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s11-cand"> Candidate set produced with 0 model calls</label>
+        </li>
+        <li>
+          <div class="step-do">Re-run the triage with your widened matcher from sub-task 9, and
+          watch the number fall.</div>
+          <p class="step-why">Why: this is the payoff for the work you did in sub-task 9, and it
+          is the most quietly important number in Theme B.</p>
+          <div class="code labeled">
+            <span class="kind">expected output &mdash; widened matcher</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>baseline matcher   (1055 resolved)    1919 candidate grants    166 accounts
+widened matcher    (1118 resolved)    1125 candidate grants    104 accounts</pre>
+          </div>
+          <p class="step-why">Sixty-three better identity matches removed <strong>794
+          candidate grants</strong> &mdash; 41% of the judgment workload &mdash; because an
+          account you can attribute to a real, currently-employed person stops being suspicious.
+          Better reconciliation is not tidiness. It is directly less work for the expensive part
+          of the system, and it is why reconciliation comes before agents rather than after.</p>
+          <label class="done"><input type="checkbox" data-task="s11-payoff"> I ran both and saw the drop</label>
+        </li>
+        <li>
+          <div class="step-do">Write the sentence that defends the 87%.</div>
+          <p class="step-why">Why: this is the sentence a client or an auditor will challenge,
+          and it has to be a claim about rules rather than a claim about effort. Not &quot;we
+          reviewed a sample.&quot; Something closer to: <em>every grant in the ledger was
+          evaluated against nine deterministic rules; 1,919 matched at least one and went to
+          review; the remaining 13,239 matched none, and the rules are listed in appendix
+          A.</em></p>
+          <p class="step-why">That claim is falsifiable, reproducible, and re-runnable next
+          quarter. It is also the honest version &mdash; it says exactly what was checked, which
+          means it also says exactly what wasn't.</p>
+          <label class="done"><input type="checkbox" data-task="s11-defend"> My defence sentence is written down</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <p class="step-why"><code>ledger.csv</code> is gitignored as a learner artifact &mdash;
+          commit the code that builds it.</p>
+          <label class="done"><input type="checkbox" data-task="s11-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My candidate count isn't 1,919.</strong> Expected, if you chose a different
+          set of high-signal rules &mdash; and that's a legitimate design decision rather than an
+          error. What matters is that you can name every rule in your union and count each one.
+          If you want to reproduce 1,919 exactly, use the seven rules listed above with the
+          baseline matcher.</p>
+          <p><strong>Isn't 1,919 still too many to hand a model?</strong> Yes, and noticing that
+          is the right instinct. Two things fix it, and you'll meet both later: triaging at the
+          account level rather than the grant level (166 accounts, not 1,919 rows), and splitting
+          the work across narrow subagents instead of one generalist. Note the concern now.</p>
+          <p><strong>Should I just let a model decide which rules to use?</strong> Ask what you'd
+          do when it picks differently on the next run. Rule <em>selection</em> is a judgment call
+          and you've just made it; rule <em>application</em> is mechanical and belongs in code.
+          Keeping those separate is the whole principle.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><code>ledger.csv</code> exists with <strong>15,158 rows</strong> &mdash; and the ledger
+      tests in <code>test_ledger.py</code> pass. Plus:</p>
+      <ul>
+        <li>Distinct <code>(account_id, app, role)</code> equals the row count, and all
+            <strong>1,200</strong> accounts survive</li>
+        <li>Every <code>granted_date</code> is ISO</li>
+        <li>Each triage rule is implemented separately and counted separately</li>
+        <li>A candidate set &mdash; <strong>1,919</strong> grants on <strong>166</strong>
+            accounts at baseline &mdash; produced with <strong>zero</strong> model calls</li>
+        <li>You ran it with the widened matcher too, and saw candidates fall to
+            <strong>1,125</strong></li>
+        <li>You can say the defence sentence out loud without hedging</li>
+      </ul>
+      <p style="margin-top:14px"><strong>The principle, in the form worth keeping:</strong>
+      context is expensive, so move bulk to code and move judgment to the model. Everything
+      remaining in this course is the judgment half &mdash; and it only works because you just
+      made it 87% smaller.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building effective agents</a>
+        &mdash; you bookmarked this in sub-task 1. Now is the moment to read it properly. The
+        argument that most problems want a deterministic workflow rather than an agent is the
+        same argument you just implemented.</li>
+        <li>Open <code>data/2026-Q3/applications.json</code> and read the
+        <code>tier</code> and <code>privileged_roles</code> fields for all 22 apps. Which
+        applications would you have guessed were crown-tier before reading?</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-10.html"><span class="arr">&larr;</span> Sub-task 10</a>
+    <a class="navbtn next" href="subtask-12.html">Sub-task 12 &middot; Emit a schema-valid finding <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 4 of 5
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask11-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask11-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

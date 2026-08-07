@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 27 &mdash; Make every write leave an audit trail &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>27</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-26.html"><span class="arr">&larr;</span> Sub-task 26 &middot; Deny a write that leaks a secret</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme G &middot; Hooks &amp; injection defense &middot; Sub-task 2 of 3</div>
+    <h1>Make every write leave an audit trail</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-26.html">Sub-task 26</a>&nbsp;&mdash; you need hooks wired and firing</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;hooks &middot; audit</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term"><code>PostToolUse</code></span>
+        <span class="term">audit log</span>
+        <span class="term">append-only</span>
+      </div>
+      <p class="note">The other half of the lifecycle. It can't stop anything, which is exactly why it's honest.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Your pipeline produced nine findings for 2026-Q3. Which component wrote
+      them, when, to which paths, and in which session?</p>
+      <p>You don't know. You can infer it from the architecture &mdash; only
+      <code>findings-writer</code> has <code>Write</code>, so it must have been that one &mdash; but
+      inference is not a record, and an auditor asking "how do you know nothing else touched this
+      file" deserves better than an argument from design.</p>
+      <p><code>PostToolUse</code> is the honest place for that record, precisely because it can't
+      do anything else.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain why <code>PostToolUse</code> cannot prevent and what it can do instead</li>
+        <li>Wire <code>audit_write.py</code> and produce a JSONL trail</li>
+        <li>Read the log and reconstruct what a run actually did</li>
+        <li>Notice the quarter environment variable, before Theme I does</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A hook that runs after the fact should record, not pretend to protect.</h3>
+
+      <p><code>PostToolUse</code> fires once the tool has already completed. The file exists. The
+      bytes are on disk. Whatever the write was going to do, it did.</p>
+
+      <div class="whatis">
+        <span class="tag">What PostToolUse can and cannot do</span>
+        <p><strong>Cannot:</strong> stop the tool call. It's over. There is no mechanism, and any
+        design that assumes otherwise is broken in a way that will only show up when it matters.</p>
+        <p><strong>Can:</strong> observe the completed call, including <code>tool_response</code>,
+        which <code>PreToolUse</code> never sees. And it can return
+        <code>{"decision": "block"}</code> to stop the agent loop from continuing &mdash; useful
+        when a completed write reveals a problem worth halting on, though it doesn't undo the
+        write.</p>
+      </div>
+
+      <p>Which makes audit its natural job, and a better one than it sounds. An audit trail written
+      pre-execution records <em>attempts</em> &mdash; including ones that were denied, failed, or
+      errored. An audit trail written post-execution records <em>what happened</em>. For a
+      compliance artifact, the second is the one you want, and the distinction is exactly the sort
+      of thing an auditor will ask you to be precise about.</p>
+
+      <div class="whatis">
+        <span class="tag">Why JSONL, and why append-only</span>
+        <p>One JSON object per line, appended, never rewritten. Cheap to write during a run, cheap
+        to <code>grep</code>, cheap to stream, and impossible to accidentally truncate by rewriting
+        the file.</p>
+        <p><strong>Append-only is the property that makes it evidence.</strong> A log a process can
+        rewrite is a log that can be made to say anything. A log that only grows is one where the
+        absence of an entry is itself informative.</p>
+      </div>
+
+      <p>The shipped hook records four fields: <code>ts</code>, <code>tool</code>,
+      <code>path</code>, <code>session_id</code>. That's a deliberate minimum &mdash; enough to
+      answer <em>what changed, when, by which tool, in which run</em>, with no content and therefore
+      no risk of the audit log itself becoming the leak. It's worth noticing that
+      <code>session_id</code> is what lets you separate today's run from last week's in a single
+      file.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Wire the audit hook</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Read <code>.claude/hooks/examples/audit_write.py</code>, then copy
+          it into <code>.claude/hooks/</code>.</div>
+          <p class="step-why">Why: shorter than the guard. It builds a four-field record, makes an
+          <code>audit/</code> directory if needed, appends one line, and exits 0. It never blocks
+          &mdash; that's stated in the source and it's the honest design.</p>
+          <label class="done"><input type="checkbox" data-task="s27-copy"> Audit hook in place</label>
+        </li>
+        <li>
+          <div class="step-do">Look at where it decides to write, and note it.</div>
+          <p class="step-why">Why: two environment variables shape the path.
+          <code>CLAUDE_PROJECT_DIR</code> anchors the <code>audit/</code> directory, which is fine.
+          <code>MERIDIAN_QUARTER</code> names the file &mdash; and it <strong>defaults to
+          <code>2026-Q3</code></strong>.</p>
+          <p class="step-why">Sit with that for a second. A default that is correct today and
+          silently wrong the moment there is a second quarter. Nothing errors; the Q4 audit trail
+          simply lands in <code>audit/2026-Q3.jsonl</code>, interleaved with Q3's, and you find out
+          when someone asks for evidence. Write it down now &mdash; sub-task 38 goes hunting for
+          exactly this shape of assumption, and arriving with it already on your list is the
+          difference between an hour and a morning.</p>
+          <label class="done"><input type="checkbox" data-task="s27-env"> <code>MERIDIAN_QUARTER</code> default noted as a transfer risk</label>
+        </li>
+        <li>
+          <div class="step-do">Add a <code>PostToolUse</code> hook on <code>Write|Edit</code>
+          alongside the guard.</div>
+          <p class="step-why">Why: same settings file, same matcher, different event. Both hooks
+          now fire on every write &mdash; the guard before, the audit after. Restart.</p>
+          <label class="done"><input type="checkbox" data-task="s27-wire"> Both hooks wired</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Run the pipeline and read the trail</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run at <code>limit=20</code> with both hooks live.</div>
+          <p class="step-why">Why: no reason to pay for a full run here. What you want is a trail
+          with several entries in it.</p>
+          <label class="done"><input type="checkbox" data-task="s27-run"> Run complete with hooks active</label>
+        </li>
+        <li>
+          <div class="step-do">Read <code>audit/2026-Q3.jsonl</code>.</div>
+          <p class="step-why">Why: one line per completed write. Check the shape, then check the
+          content tells you something.</p>
+          <div class="code labeled">
+            <span class="kind">what a line looks like</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>{"ts":"2026-08-07T14:22:31Z","tool":"Write",
+ "path":"/Users/.../findings.json","session_id":"..."}</pre>
+          </div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>wc -l audit/2026-Q3.jsonl
+python3 -c "
+import json,collections
+rows=[json.loads(l) for l in open('audit/2026-Q3.jsonl') if l.strip()]
+print(collections.Counter(r['path'] for r in rows))
+print(collections.Counter(r['session_id'] for r in rows))
+"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s27-read"> Log read; paths and sessions counted</label>
+        </li>
+        <li>
+          <div class="step-do">Answer the auditor's questions from the log alone.</div>
+          <p class="step-why">Why: this is the test of whether the record is worth keeping. Which
+          files did this run write? How many times was <code>findings.json</code> written &mdash; and
+          if it's more than once, is that a rewrite you intended? Did anything write outside the
+          paths <code>findings-writer</code>'s prompt names?</p>
+          <p class="step-why">That last question is the interesting one. Your architecture says only
+          one component can write and its prompt says where. The log is the first thing in this
+          course capable of showing you whether that's true.</p>
+          <label class="done"><input type="checkbox" data-task="s27-answer"> All three answered from the log</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm append-only across runs.</div>
+          <p class="step-why">Why: run again and check the line count grew rather than reset. Then
+          confirm you can separate the two runs by <code>session_id</code>. A log that can't
+          distinguish runs is a log that can't answer "what did the run I'm asking about do".</p>
+          <label class="done"><input type="checkbox" data-task="s27-append"> Log grew; runs separable by session</label>
+        </li>
+        <li>
+          <div class="step-do">Write down what the trail proves and what it doesn't.</div>
+          <div class="worksheet" id="ws-audit">
+            <div class="label">My audit trail</div>
+            <p class="hint">Sub-task 39 checks that this travels to a second quarter. The
+            <code>MERIDIAN_QUARTER</code> line below is the one that matters there.</p>
+            <div class="field">
+              <label>What one run wrote, from the log alone
+                <span class="eg">N writes, to which paths, in one session</span>
+              </label>
+              <textarea data-ws="g27-run" rows="3" placeholder="N lines: findings.json ×…, exemptions.json ×…, all one session_id"></textarea>
+            </div>
+            <div class="field">
+              <label>Anything surprising &mdash; unexpected paths, repeated writes</label>
+              <textarea data-ws="g27-odd" rows="3" placeholder="findings.json was written twice, which suggests…"></textarea>
+            </div>
+            <div class="field">
+              <label>What this proves, and what it can't</label>
+              <textarea data-ws="g27-limits" rows="3" placeholder="Proves what was written and when. Can't show content, can't show reads, can't prove nothing bypassed the hook because…"></textarea>
+            </div>
+            <div class="field">
+              <label>What <code>MERIDIAN_QUARTER</code> will do to me on a second quarter</label>
+              <textarea data-ws="g27-quarter" rows="3" placeholder="It defaults to 2026-Q3, so unless I set it, Q4 writes land in the Q3 log and…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-audit">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-audit">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s27-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Run the offline suite, then commit.</div>
+          <p class="step-why">Why: <code>test_hooks.py</code> exercises both shipped hooks
+          functionally &mdash; that the guard denies and allows correctly, and that the audit log is
+          well-formed and append-only. Commit the hook and the settings; <code>audit/</code> is a
+          run artifact, not source.</p>
+          <label class="done"><input type="checkbox" data-task="s27-test"> <code>test_hooks.py</code> passes; committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The log is empty.</strong> Nothing wrote. Either the run produced no writes, or
+          the guard denied them, or the hook isn't wired. Check the guard didn't fire on something
+          innocuous &mdash; <code>password:</code> is broad enough to catch a rationale.</p>
+          <p><strong>There are more lines than I expected.</strong> Interesting rather than wrong.
+          Every <code>Write</code> and <code>Edit</code> in the session is logged, including ones you
+          made yourself while editing code. If <code>findings.json</code> appears repeatedly within
+          one run, the writer is doing incremental writes rather than one atomic one, which is worth
+          knowing.</p>
+          <p><strong>Should the audit log record content?</strong> Deliberately not. An audit log
+          containing the findings duplicates the findings and creates a second copy of whatever was
+          sensitive about them. Path, time, tool and session answer the compliance question without
+          becoming a liability.</p>
+          <p><strong>Can I trust a log written by the thing being audited?</strong> Sharp question,
+          and the honest answer is: less than you'd like. The hook runs in the same environment as
+          the agent. In a real engagement the log ships to somewhere the agent can't reach. Worth
+          saying out loud rather than overclaiming.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li><code>audit_write.py</code> wired as a <code>PostToolUse</code> hook on
+            <code>Write|Edit</code></li>
+        <li><code>audit/2026-Q3.jsonl</code> with one well-formed line per completed write</li>
+        <li>The auditor's three questions answered from the log alone</li>
+        <li>Append-only confirmed across two runs, separable by <code>session_id</code></li>
+        <li><code>MERIDIAN_QUARTER</code>'s default recorded as a transfer risk</li>
+      </ul>
+      <p style="margin-top:14px">Both halves of the lifecycle are covered: prevention before,
+      record after. Every claim in that sentence is literally true, which was the point of the
+      arrangement.</p>
+      <p>Sub-task 28 attacks all of it &mdash; tool restriction, the guard, and the audit trail
+      &mdash; with hostile text hidden in Meridian's own data.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li>Add a second <code>PostToolUse</code> hook that returns
+        <code>{"decision": "block"}</code> when a write lands outside your expected paths. It can't
+        undo the write, but halting the loop before the next one is a real control &mdash; and
+        implementing it makes the pre/post distinction permanent.</li>
+        <li><a href="https://jsonlines.org/">JSON Lines</a> &mdash; the format, and why streaming
+        one object per line beats a JSON array for anything append-only.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-26.html"><span class="arr">&larr;</span> Sub-task 26</a>
+    <a class="navbtn next" href="subtask-28.html">Sub-task 28 &middot; Defend against prompt injection <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme G &middot; Sub-task 2 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask27-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask27-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

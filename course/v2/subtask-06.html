@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 6 — Break the same script three ways · Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>06</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-05.html"><span class="arr">←</span> Sub-task 5 · Turn a vague ask into intent</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme A · Foundations · Sub-task 6 of 7</div>
+    <h1>Break the same script three ways and name each failure</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-05.html">Sub-task 5</a>&nbsp;— you need the intent prompt shape</span>
+      <span class="chip time"><b>Time:</b>&nbsp;≈ 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;experiment + reference card</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">traceback</span>
+        <span class="term">silent wrong answer</span>
+        <span class="term">hallucinated rationale</span>
+      </div>
+      <p class="note">Three failure modes, three different reading methods. This card gets reused for the rest of the course.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Everything you build from here can fail in three distinct ways, and they need three completely different responses. Most people only recognise the first — which is unfortunate, because it's by far the least dangerous.</p>
+      <p>So you're going to cause all three deliberately, on a script small enough to hold in your head, and write down the tell and the first diagnostic move for each. Inducing failure on purpose, while the stakes are zero, is how you learn to spot it later when they aren't.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Name the three ways an agentic system fails and recognise each one's tell</li>
+        <li>Explain why the loud failure is the safe one and the quiet one is not</li>
+        <li>Produce a reference card with a first diagnostic move for each mode</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>The failure that shouts is the one you can afford. Learn to hear the quiet ones.</h3>
+
+      <p>A crash is a gift. It stops, it tells you where, and nobody acts on its output because
+      there isn't any. The other two modes produce clean, confident, well-formatted results that
+      are wrong — and those flow straight into a report with your name on it.</p>
+
+      <div class="blocks">
+        <div class="row">
+          <div class="n">1</div>
+          <div>
+            <div class="b-name">The crash</div>
+            <p class="b-desc">The code stops and prints a <strong>traceback</strong>. Loud,
+            specific, and honest.</p>
+            <p class="b-when">Tell: red text and no result. Read the <em>last</em> line first.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">2</div>
+          <div>
+            <div class="b-name">The silent wrong answer</div>
+            <p class="b-desc">The code runs perfectly and returns a number that is wrong. No
+            error, nothing to notice.</p>
+            <p class="b-when">Tell: none. You only catch it by checking against something you
+            know independently.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="n">3</div>
+          <div>
+            <div class="b-name">The hallucinated rationale</div>
+            <p class="b-desc">Fluent, plausible prose describing an analysis that didn't happen
+            or data that wasn't read.</p>
+            <p class="b-when">Tell: confident claims with no verifiable specifics. Ask for the
+            evidence.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">What is a traceback?</span>
+        <p>The block of text Python prints when it gives up. It reads like a story told
+        backwards: the top is where things started, the bottom is where they broke.</p>
+        <p><strong>Read the last line first.</strong> It names the error type and what went
+        wrong — <code>FileNotFoundError: No such file or directory</code>. Then work upward to
+        find the line in your own file. Everything between is usually the guts of libraries you
+        didn't write and don't need to read.</p>
+      </div>
+
+      <p><strong>Why mode 2 is the one to fear.</strong> In this course, the difference between
+      1,190 and 1,191 employees is one header row counted as a person. It changes no output
+      format, triggers no error, and quietly shifts every percentage you report. In an access
+      review, that's the gap between a clean finding and a regulator's follow-up question.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Build the toy, and get a number you trust</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Ask Claude Code for a small counting script — using your sub-task
+          5 template.</div>
+          <div class="code prompt labeled">
+            <span class="kind">prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Write me a small Python script called count_people.py in the repository root. It should read data/2026-Q3/hr_roster.csv and print how many employees are in it.
+
+Constraints: standard library only, no pandas. Keep it under 15 lines so I can read all of it. Don't change any other file.
+
+Verification: after writing it, run it and show me the output, and tell me how it handles the header row.</pre>
+          </div>
+          <p class="step-why">Why: build the correct version first. You can't recognise a broken
+          one without it.</p>
+          <label class="done"><input type="checkbox" data-task="s6-build"> Script written and run</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm the number is 1,190 — and read the script yourself.</div>
+          <p class="step-why">Why: <code>hr_roster.csv</code> has <strong>1,191 lines</strong>
+          but <strong>1,190 people</strong>. The first line is column names. If your script
+          printed 1,191, it has already committed failure mode 2 on its own and you can skip
+          straight to Task 2's second step.</p>
+          <div class="terminal">
+            <div class="cmd">python count_people.py</div>
+            <div class="out">1190</div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s6-trust"> I have a script I trust and I understand every line</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Break it three ways, on purpose</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Mode 1 — cause a crash.</div>
+          <p class="step-why">Why: to meet a traceback while you already know the cause, so you
+          can learn its shape without the pressure of an actual bug.</p>
+          <p class="step-why">In VS Code, edit the filename in the script — change
+          <code>2026-Q3</code> to <code>2026-Q9</code>. Save and run it.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python count_people.py</pre>
+          </div>
+          <p class="step-why">Find the last line. Find the line number pointing into your own
+          file. Write both down. Then change it back.</p>
+          <label class="done"><input type="checkbox" data-task="s6-crash"> I read a real traceback and can point to the two useful lines</label>
+        </li>
+        <li>
+          <div class="step-do">Mode 2 — cause a silent wrong answer.</div>
+          <p class="step-why">Why: this is the important one. Make the script count the header
+          row as a person — remove whatever line skips it, or switch to counting raw lines.</p>
+          <div class="code prompt labeled">
+            <span class="kind">prompt · if you'd rather not hand-edit</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Change count_people.py so it counts every line in the file, including the header row. Don't add any comment or warning about it — I'm deliberately creating a broken version to study.</pre>
+          </div>
+          <p class="step-why">Run it. It prints <strong>1191</strong>. No error. No warning.
+          Nothing about the output looks different — same format, same confidence, off by one.
+          Sit with that for a second: if you didn't already know the answer, what in this output
+          would have told you?</p>
+          <p class="step-why"><strong>Nothing would have.</strong> That's the lesson. Mode 2 is
+          only ever caught by checking against a number you got some other way.</p>
+          <label class="done"><input type="checkbox" data-task="s6-silent"> I got a clean run with a wrong number, and I know what would have caught it</label>
+        </li>
+        <li>
+          <div class="step-do">Mode 3 — provoke a hallucinated rationale.</div>
+          <p class="step-why">Why: to see fluent, confident prose about data that was never
+          read. Start a fresh session (<code>/clear</code>) and ask — deliberately — without
+          letting it look:</p>
+          <div class="code prompt labeled">
+            <span class="kind">prompt</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Without opening any files, tell me what the department breakdown of Meridian's Q3 HR roster probably looks like, and which departments most likely have the worst contractor access problems.</pre>
+          </div>
+          <p class="step-why">You'll get something articulate and organisation-shaped. It may
+          well be sensible. It is not <em>evidence</em> — no file was opened. Note how strongly
+          the fluency pulls you toward believing it; that pull is the risk.</p>
+          <p class="step-why">Now the diagnostic move that works. Ask:</p>
+          <div class="code prompt labeled">
+            <span class="kind">prompt · the check</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>For each claim you just made, cite the exact file and column you read it from. If you didn't read it from a file, say so plainly.</pre>
+          </div>
+          <p class="step-why">Demanding a citation is what collapses mode 3. Remember this
+          question — it becomes structural later, when findings have to carry their evidence.</p>
+          <label class="done"><input type="checkbox" data-task="s6-halluc"> I saw confident prose with no source, and the citation question exposed it</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Claude Code refuses to write the broken version.</strong> Say plainly that
+          you're deliberately studying failure modes for a course. If it still resists, just
+          edit the file yourself — the point is seeing the output, not who typed it.</p>
+          <p><strong>Mode 3 gave me appropriate hedging instead of confident nonsense.</strong>
+          Good — that's the model behaving well, and worth noting. Push once with "just give me
+          your best guess, I understand it's speculative" and watch how much more confident the
+          prose gets while the evidence stays at zero.</p>
+          <p><strong>Should I keep these broken versions?</strong> No. Restore the working
+          script — or delete <code>count_people.py</code> entirely; it's a toy and nothing later
+          depends on it. Keep the <em>notes</em>.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Write the card</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">For each mode: the tell, and your first move.</div>
+          <p class="step-why">Why: in a real incident you won't reason from first principles —
+          you'll reach for a card. Write it now, while all three are fresh.</p>
+          <div class="worksheet" id="ws-modes">
+            <div class="label">Three failure modes</div>
+            <p class="hint">Keep it short enough to actually reread. One line each.</p>
+            <div class="field">
+              <label>1 · Crash <span class="eg">How do I know? What do I do first?</span></label>
+              <textarea data-ws="m1" rows="2" placeholder="Tell: … First move: …"></textarea>
+            </div>
+            <div class="field">
+              <label>2 · Silent wrong answer <span class="eg">There is no tell — so what's the practice?</span></label>
+              <textarea data-ws="m2" rows="2" placeholder="Tell: … First move: …"></textarea>
+            </div>
+            <div class="field">
+              <label>3 · Hallucinated rationale <span class="eg">What question collapses it?</span></label>
+              <textarea data-ws="m3" rows="2" placeholder="Tell: … First move: …"></textarea>
+            </div>
+            <div class="field">
+              <label>Which mode most threatens the headache I wrote in sub-task 1?</label>
+              <textarea data-ws="m-mine" rows="3" placeholder="Go back and reread your note. If your answer feeds a report someone signs…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-modes">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-modes">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s6-card"> Card written, including the last box</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p>You have caused all three failures yourself and have a card naming, for each, the tell
+      and your first diagnostic move. The card should let you answer:</p>
+      <ul>
+        <li>Which line of a traceback do you read first?</li>
+        <li>What is the only thing that catches a silent wrong answer?</li>
+        <li>What single question exposes a hallucinated rationale?</li>
+      </ul>
+      <p style="margin-top:12px">Restore or delete <code>count_people.py</code>, then commit
+      your progress.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://docs.python.org/3/tutorial/errors.html">Python — errors and exceptions</a>
+        — the official tour of what tracebacks are telling you.</li>
+        <li><a href="https://code.claude.com/docs/en/best-practices">Claude Code best practices</a>
+        — the sections on giving Claude verifiable targets speak directly to mode 2.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-05.html"><span class="arr">←</span> Sub-task 5</a>
+    <a class="navbtn next" href="subtask-07.html">Sub-task 7 · Write Rules that change how Claude behaves <span class="arr">→</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect · Theme A · Sub-task 6 of 7
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask06-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask06-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

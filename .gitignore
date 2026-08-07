@@ -15,7 +15,9 @@ dist/
 # Both quarters are committed course data: Q3 is the quarter students review,
 # Q4 ships pre-generated for the Day 5 transfer lesson. Do NOT ignore /data.
 
-# Learner-produced artifacts (Day 4/5 outputs)
+# Learner-produced artifacts (reconciliation + review outputs)
+/identities.csv
+/ledger.csv
 /findings*.json
 /exemptions*.json
 /audit/

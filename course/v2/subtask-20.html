@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 20 &mdash; Inventory Claude Code's own tools and rank them by blast radius &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>20</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-19.html"><span class="arr">&larr;</span> Sub-task 19 &middot; Re-run with Skills loaded</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme E &middot; Tools &middot; Sub-task 1 of 3</div>
+    <h1>Inventory Claude Code's own tools and rank them by blast radius</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-19.html">Sub-task 19</a>&nbsp;&mdash; you need a grounded agent to start restricting</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;building block #3</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">tools</span>
+        <span class="term">blast radius</span>
+        <span class="term">read-only vs mutating</span>
+      </div>
+      <p class="note">Building block three of six. The table you build here is what you'll apply in sub-task 23 to restrict a subagent.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Your agent has knowledge now. What it doesn't have is reach: it knows
+      only what you decided to put in the dossier, and if the dossier is missing something, the
+      agent has no way to go and get it.</p>
+      <p>Tools are the fix, and before you hand any out it is worth being precise about what one
+      <em>is</em>. A tool is a capability you grant. Every capability you grant is something that
+      can go wrong, and the set of things that can go wrong is the blast radius.</p>
+      <p>You have been working alongside a heavily-tooled agent for nineteen sub-tasks. Start by
+      taking its inventory.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Define a tool precisely enough to reason about what granting one costs</li>
+        <li>List the tools Claude Code actually has in your install</li>
+        <li>Sort them read-only versus mutating and rank by blast radius</li>
+        <li>Produce the table you'll apply when restricting subagents in Theme F</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>Every tool you grant is a thing that can go wrong. Grant fewer.</h3>
+
+      <p>A tool is a function the model may choose to call, described to it in enough detail that
+      it can decide when calling it is appropriate. The model does not execute anything &mdash; it
+      emits a request to call a tool with particular arguments, and something on your side runs it
+      and hands back the result.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a tool?</span>
+        <p>A name, a description, and a schema for its inputs. The description is what the model
+        reads when deciding whether this tool is the right one, which makes it the same kind of
+        high-leverage text as a Skill's description.</p>
+        <p><strong>The model never runs anything.</strong> It asks. Your harness decides whether to
+        comply. That gap is where every safety control in Themes F and G lives &mdash; tool
+        restriction, hooks, permissions. If the model executed things directly there would be
+        nowhere to stand.</p>
+      </div>
+
+      <p><strong>Blast radius</strong> is the question you ask about each tool: if the model calls
+      this with the worst plausible arguments, what is the damage, and can I undo it? It is not
+      about the model being adversarial. It is about the model being confidently wrong, which you
+      have already watched it be twice.</p>
+
+      <p>The primary split is <strong>read-only versus mutating</strong>. A read-only tool called
+      wrongly wastes tokens and may mislead the reasoning. A mutating tool called wrongly changes
+      the world. Those are not the same category of problem and should not carry the same level of
+      caution.</p>
+
+      <div class="whatis">
+        <span class="tag">Why this matters more here than in most projects</span>
+        <p>An access review is an <strong>observational</strong> exercise. You look at what access
+        exists and write down what you think about it. Nothing in the job description involves
+        changing anything in Meridian's systems &mdash; not revoking a grant, not closing a ticket,
+        not updating a record.</p>
+        <p>So the honest tool surface for most of this system is read-only, and the one component
+        that needs to write should write exactly one thing: your findings. Sub-task 24 makes that
+        structural. This sub-task is where you work out what "read-only" actually means in tools.</p>
+      </div>
+
+      <p>One more distinction worth having now, because it shapes the whole of Theme F.
+      <strong>Omitting the tool list inherits everything.</strong> A subagent defined without a
+      <code>tools:</code> field gets the full set, including every mutating tool and every MCP
+      server you have configured. Restriction is opt-in, which means an unrestricted agent is the
+      default and you have to choose otherwise.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Take the inventory</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Ask Claude Code to list the tools it currently has, and what each
+          one does.</div>
+          <p class="step-why">Why: ask the agent rather than reading a doc, for two reasons. The
+          set changes between versions, so a list in a course page goes stale. And it depends on
+          your configuration &mdash; MCP servers you've added appear here too, which is exactly the
+          point you're about to make.</p>
+          <p class="step-why">Intent: <em>"list every tool available to you in this session, with
+          one line on what it does and whether it can change anything on disk or over the
+          network."</em> Have it distinguish built-ins from anything configured.</p>
+          <label class="done"><input type="checkbox" data-task="s20-list"> Full tool list captured</label>
+        </li>
+        <li>
+          <div class="step-do">Sanity-check the list against what you've watched it do.</div>
+          <p class="step-why">Why: you have nineteen sub-tasks of evidence. It has read files,
+          searched them, run shell commands, edited code, and written new files. Every one of those
+          was a tool call. If something in the list surprises you, that's the interesting entry
+          &mdash; ask about it.</p>
+          <div class="code labeled">
+            <span class="kind">the shape of what you'll see</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>reading      Read, Glob, Grep            filesystem, no writes
+network      WebFetch, WebSearch          reads the outside world
+executing    Bash                         runs arbitrary commands
+mutating     Write, Edit                  changes files on disk
+delegating   Task / subagents             spawns another agent
+configured   any MCP server tools         depends on .mcp.json</pre>
+          </div>
+          <p class="step-why">Names and groupings vary by version. The categories don't, and the
+          categories are what you're building.</p>
+          <label class="done"><input type="checkbox" data-task="s20-sanity"> List reconciled with observed behaviour</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Rank them by blast radius</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">For each tool, answer three questions: can it change anything, how
+          far does the change reach, and can you undo it?</div>
+          <p class="step-why">Why: those three answers are the ranking. "Can it change anything"
+          separates read-only from mutating. "How far does it reach" separates a single file from
+          the whole filesystem from the public internet. "Can you undo it" is what turns an
+          annoyance into an incident.</p>
+          <div class="code labeled">
+            <span class="kind">the axes &mdash; fill in for your own list</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>tool     mutates?   reach                      reversible?
+Read     no         one file                   n/a
+Grep     no         many files, read only      n/a
+Glob     no         filesystem metadata        n/a
+Edit     YES        one existing file          yes, in git
+Write    YES        any path, creates files    mostly, if committed
+Bash     YES        anything the user can do   NO
+WebFetch no*        outbound network           * sends data out</pre>
+          </div>
+          <p class="step-why">Two entries deserve argument. <strong>Bash is not one tool</strong>
+          &mdash; it is the ability to run anything you could run, which makes its blast radius the
+          union of every other tool's plus everything you never thought of. And
+          <strong>WebFetch is only read-only from the model's side</strong>: it reads a remote page,
+          but the request itself carries data out of your environment, which for a client's access
+          data is a real consideration even though nothing local changed.</p>
+          <label class="done"><input type="checkbox" data-task="s20-rank"> Every tool scored on all three axes</label>
+        </li>
+        <li>
+          <div class="step-do">Pick the minimum set for each job in the system you're about to
+          build.</div>
+          <p class="step-why">Why: this is the deliverable. Three roles are coming in sub-tasks 23
+          and 24 &mdash; something that gathers facts about accounts, something that applies policy,
+          and something that writes findings. Decide now what each genuinely needs, and be strict:
+          the test of a good answer is that removing any one tool breaks the job.</p>
+          <div class="worksheet" id="ws-blast">
+            <div class="label">My blast-radius table</div>
+            <p class="hint">Sub-tasks 23 and 24 turn these three rows into <code>tools:</code>
+            lines in agent files. Getting them right now saves rewriting them then.</p>
+            <div class="field">
+              <label>Highest blast radius in my list, and why
+                <span class="eg">and what would actually happen in the worst plausible case</span>
+              </label>
+              <textarea data-ws="e20-worst" rows="3" placeholder="Bash, because… The worst plausible failure is…"></textarea>
+            </div>
+            <div class="field">
+              <label>Reads Meridian's systems &mdash; minimum tools</label>
+              <textarea data-ws="e20-reader" rows="2" placeholder="MCP lookups + Read. Nothing else, because…"></textarea>
+            </div>
+            <div class="field">
+              <label>Applies policy to a dossier &mdash; minimum tools</label>
+              <textarea data-ws="e20-policy" rows="2" placeholder="Read (for Skills). Does it need the network? Does it need Bash?"></textarea>
+            </div>
+            <div class="field">
+              <label>Writes findings &mdash; minimum tools, and what stops it writing elsewhere</label>
+              <textarea data-ws="e20-writer" rows="3" placeholder="Write, and only Write. What constrains the path it writes to?"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-blast">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-blast">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s20-min"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Notice the gap in that last answer.</div>
+          <p class="step-why">Why: "what stops it writing elsewhere" almost certainly has no good
+          answer yet. Granting <code>Write</code> grants writing to any path &mdash; the tool list
+          restricts <em>which capabilities</em>, not <em>which arguments</em>. That gap is real and
+          tool restriction cannot close it. Building block five closes it, in sub-task 26. Write
+          down that you noticed.</p>
+          <label class="done"><input type="checkbox" data-task="s20-gap"> Gap between capability and argument noted</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Doesn't restricting tools just make it worse at the job?</strong> Sometimes,
+          and that's the trade you're pricing. The question isn't "fewest tools" but "fewest tools
+          that still do the job" &mdash; and the honest way to find the line is to remove one and
+          see what breaks, which is sub-task 23.</p>
+          <p><strong>Bash could do everything. Why not just grant Bash?</strong> It could, and it's
+          a real design position &mdash; broad capability, minimal tool surface. The cost is that
+          your harness sees an opaque command string instead of a typed call, so it can't gate,
+          audit, or parallelise anything. Granting <code>Bash</code> to the component that writes
+          findings means every hook you write in Theme G has to parse shell to know what happened.</p>
+          <p><strong>My list doesn't match the example.</strong> Expected. Versions differ and your
+          configuration differs. Your list is the correct one for your system; the categories are
+          what transfer.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>A complete list of the tools available in <em>your</em> Claude Code install</li>
+        <li>Each one scored: mutating or not, how far it reaches, whether it's reversible</li>
+        <li>A minimum tool set chosen for each of the three roles coming in Theme F</li>
+        <li>The capability-versus-argument gap noted, with sub-task 26 as its answer</li>
+      </ul>
+      <p style="margin-top:14px">Building block three is under way. You know what a tool is and
+      what granting one costs.</p>
+      <p>Next: Meridian's own systems, exposed as seven read-only tools over MCP. You'll call every
+      one of them by hand before letting an agent anywhere near them.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://code.claude.com/docs/en/settings">Claude Code settings</a> &mdash;
+        the permissions system is the other half of this. Tool restriction says <em>which
+        capabilities</em>; permission rules can constrain <em>which arguments</em>, which is the
+        gap you just found.</li>
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building
+        effective agents</a> &mdash; the section on tool design argues for promoting an action to a
+        dedicated tool precisely when you need to gate, render, or audit it. That is the argument
+        against granting Bash.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-19.html"><span class="arr">&larr;</span> Sub-task 19</a>
+    <a class="navbtn next" href="subtask-21.html">Sub-task 21 &middot; Call Meridian's systems by hand <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme E &middot; Sub-task 1 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask20-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask20-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

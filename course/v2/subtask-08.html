@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 8 &mdash; Load the raw data and prove it has three planted messes &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>08</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-07.html"><span class="arr">&larr;</span> Sub-task 7 &middot; Write Rules that change behaviour</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme B &middot; Reconciliation &middot; Sub-task 1 of 5</div>
+    <h1>Load the raw data and prove it has three planted messes</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-07.html">Sub-task 7</a>&nbsp;&mdash; your rules are in <code>CLAUDE.md</code>, and the bench is green</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;reconciliation &middot; foundations</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">pandas</span>
+        <span class="term">DataFrame</span>
+        <span class="term">seed lock</span>
+      </div>
+      <p class="note">Theme A was about the tool. Theme B is about the data underneath it. Nothing here involves an agent &mdash; that's the point.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Before you can review Meridian's access, you have to be able to read
+      Meridian's exports. That sounds trivial. It is not, and the ten minutes you spend proving
+      it is the cheapest ten minutes in this course.</p>
+      <p>Both files here are real-shaped: the sort of thing a client actually sends when you ask
+      for &quot;the HR roster and the entitlements dump&quot;. They came out of two different
+      systems, maintained by two different teams, with two different ideas about how to write a
+      date. Three specific messes are planted in them. Your job in this sub-task is not to fix
+      any of them &mdash; it's to <em>measure</em> all three, so that later, when a number looks
+      wrong, you know whether the data or your code is lying.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Load a CSV into a <code>DataFrame</code> and report its shape without printing it</li>
+        <li>Measure the three data-quality defects in the Q3 export, exactly</li>
+        <li>Explain why the export is <em>seed-locked</em>, and what that lets you assert</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>Every number you report later is bounded by the data you didn't look at.</h3>
+
+      <p>A user access review ends with a sentence like &quot;we found 14 accounts that should
+      be revoked.&quot; That sentence is only as good as the join underneath it. If 12% of
+      accounts never matched a person, your 14 is really &quot;14, plus whatever is hiding in
+      the 12% I silently dropped.&quot;</p>
+
+      <p>Auditors do not accept that, and they are right not to. So the discipline is: measure
+      the defects first, in the open, with numbers. Then every later claim can be stated with its
+      own error bars attached.</p>
+
+      <div class="whatis">
+        <span class="tag">What is pandas, and what is a DataFrame?</span>
+        <p><strong>pandas</strong> is the standard Python library for tabular data.
+        A <strong>DataFrame</strong> is its table type &mdash; rows, named columns, and a large
+        set of operations that work on whole columns at once instead of one row at a time.</p>
+        <p>You will use perhaps eight of its features in this whole theme:
+        <code>read_csv</code>, <code>.shape</code>, <code>.columns</code>,
+        <code>.nunique()</code>, <code>.value_counts()</code>, <code>.duplicated()</code>,
+        <code>.merge()</code>, and <code>.to_csv()</code>. You do not need to learn pandas.
+        You need to be able to read what Claude writes with it and tell whether it's right.</p>
+      </div>
+
+      <p><strong>The seed lock.</strong> The export in <code>data/2026-Q3/</code> was generated
+      from a fixed random seed. That means every number on this page is <em>exact</em>, not
+      approximate, and it will be exact on your machine too. If your count differs by one, one of
+      us is wrong &mdash; and the whole point of a seed lock is that you get to find out which.</p>
+
+      <div class="whatis">
+        <span class="tag">Why this sub-task bans agents</span>
+        <p>You could ask Claude &quot;what's wrong with this data?&quot; and get a plausible
+        essay. You would have no way to check it. Counting rows is not a judgment call, and
+        anything that isn't a judgment call belongs in code &mdash; a principle you'll name
+        explicitly in sub-task 11.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Get the two files into memory and report their shape</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Confirm pandas is available in your virtual environment.</div>
+          <p class="step-why">Why: it's a dependency of the kit, so it should already be there
+          from sub-task 2. Check rather than assume.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -c "import pandas; print(pandas.__version__)"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s8-pandas"> pandas imports</label>
+        </li>
+        <li>
+          <div class="step-do">Direct Claude to write <code>explore.py</code> &mdash; a script that
+          loads both files and reports their shape.</div>
+          <p class="step-why">Why: a script, not a chat answer. You want to be able to re-run this
+          after every change you make in this theme, and you want the numbers on screen rather
+          than in a transcript you'll lose.</p>
+          <p class="step-why">State the intent yourself. What it has to do: read
+          <code>data/2026-Q3/hr_roster.csv</code> and
+          <code>data/2026-Q3/entitlements.csv</code> with pandas, and print row and column counts
+          for each, the column names, and a handful of distinct-value counts. What it must
+          <em>not</em> do: print the tables. Your <code>CLAUDE.md</code> rule from sub-task 7
+          already says this &mdash; watch whether it's honoured.</p>
+          <label class="done"><input type="checkbox" data-task="s8-script"> <code>explore.py</code> exists and runs</label>
+        </li>
+        <li>
+          <div class="step-do">Check the shape against these numbers.</div>
+          <p class="step-why">Why: these are exact. The export is seed-locked.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>hr_roster.csv       1190 rows x 9 columns
+entitlements.csv   15188 rows x 7 columns
+
+entitlements: 1200 distinct account_id
+              1188 distinct account_name
+                22 distinct app
+                31 distinct role
+
+hr_roster:    1190 distinct employee_id
+              1176 active / 10 terminated / 4 on_leave
+              1073 FTE / 117 Contractor</pre>
+          </div>
+          <p class="step-why">Two of those lines should already bother you.
+          <strong>1,200 accounts but only 1,188 distinct account names</strong> &mdash; so some
+          name owns more than one account. And <strong>1,190 people but 1,200 accounts</strong>
+          &mdash; there are more accounts than humans. Both are sub-task 9's problem. Note them
+          and move on.</p>
+          <label class="done"><input type="checkbox" data-task="s8-shape"> My shapes match exactly</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>ModuleNotFoundError: pandas.</strong> The venv isn't active, or the editable
+          install from sub-task 2 didn't finish. Reactivate it &mdash; you should see the
+          environment name in your shell prompt &mdash; and reinstall.</p>
+          <p><strong>FileNotFoundError.</strong> The paths above are relative to the repository
+          root, the folder that contains <code>pyproject.toml</code>. Run the script from there,
+          or have it resolve paths relative to its own location.</p>
+          <p><strong>Claude printed the whole table anyway.</strong> Worth pausing on. You wrote
+          a rule against exactly this in sub-task 7. Did it get followed? Rules are guidance, not
+          enforcement &mdash; this is that lesson arriving with a concrete cost attached.</p>
+          <p><strong>My numbers are close but not equal.</strong> Then something is wrong and it's
+          worth finding. The most common cause is reading <code>data/2026-Q4/</code>, which also
+          ships in this repo for a much later sub-task.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Mess one &mdash; two date formats in a single column</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Measure how many <code>granted_date</code> values are ISO
+          (<code>YYYY-MM-DD</code>) and how many are US (<code>MM/DD/YYYY</code>).</div>
+          <p class="step-why">Why: this column is roughly half and half, which is the worst
+          possible case. A column that's 100% wrong gets noticed immediately. A column that's 50%
+          wrong sorts, compares, and aggregates without ever raising an error &mdash; it just
+          gives you the wrong answer quietly.</p>
+          <p class="step-why">Have your script classify each value by pattern and count both
+          buckets. Don't parse yet; just classify.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>granted_date formats
+  ISO  (YYYY-MM-DD)   7538
+  US   (MM/DD/YYYY)   7650
+  other                  0
+  total              15188
+
+hire_date formats
+  ISO  (YYYY-MM-DD)   1190
+  US   (MM/DD/YYYY)      0</pre>
+          </div>
+          <p class="step-why">The contrast is the finding. <code>hire_date</code> in the HR export
+          is perfectly clean; <code>granted_date</code> in the entitlements export is not. The
+          mess is not &quot;Meridian&quot; &mdash; it's <em>one system at Meridian</em>. In a real
+          engagement that sentence is what you put in the email.</p>
+          <label class="done"><input type="checkbox" data-task="s8-dates"> 7538 / 7650 / 0 confirmed</label>
+        </li>
+        <li>
+          <div class="step-do">Write down, in one line, why <code>04/07/2025</code> is dangerous.</div>
+          <p class="step-why">Why: that value appears in row 2 of the file. It is
+          <strong>April 7th</strong>, because this export is US-formatted. Read as
+          day-first it becomes <strong>July 4th</strong> &mdash; a three-month error, in the
+          direction that decides whether a grant predates someone's hire date. You will make this
+          exact mistake in sub-task 10 if you don't decide the convention now.</p>
+          <label class="done"><input type="checkbox" data-task="s8-ambig"> Convention noted: <code>MM/DD/YYYY</code></label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Mess two &mdash; one department, many spellings</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Count the distinct raw values in HR's <code>department</code>
+          column, then count them again after trimming whitespace and lowercasing.</div>
+          <p class="step-why">Why: this is the cheapest possible demonstration that
+          &quot;distinct&quot; is a claim about your comparison function, not about the world.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>department
+  raw distinct values             32
+  after strip + lowercase         12</pre>
+          </div>
+          <p class="step-why">Twelve real departments, wearing thirty-two costumes. Operations
+          alone appears as <code>Operations</code>, <code>operations</code>,
+          <code>OPERATIONS</code>, and <code>&quot; Operations &quot;</code> with padding
+          spaces.</p>
+          <label class="done"><input type="checkbox" data-task="s8-dept"> 32 &rarr; 12 confirmed</label>
+        </li>
+        <li>
+          <div class="step-do">Print the twelve canonical departments and keep the list.</div>
+          <p class="step-why">Why: you'll need it in sub-task 12, where a policy exemption
+          applies only to people in <em>Finance &amp; Accounting</em>. An exact string comparison
+          against a column with 32 spellings is a bug waiting for the right row to land on.</p>
+          <label class="done"><input type="checkbox" data-task="s8-canon"> Twelve canonical names listed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>I get 31, or 33.</strong> Check whether you're trimming before counting the
+          raw values &mdash; you shouldn't be. The raw count includes the padded variants like
+          <code>&quot; Engineering &quot;</code>; that's the whole point of the number.</p>
+          <p><strong>Should I fix these now?</strong> No. Measure in this sub-task, normalize in
+          sub-task 10. Separating the two is what lets you show a before and an after.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 4</div>
+      <h3>Mess three &mdash; rows that are byte-for-byte identical</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Count entitlement rows that duplicate an earlier row exactly, across
+          all seven columns.</div>
+          <p class="step-why">Why: exact duplicates are the easy half of a problem you'll meet
+          properly in sub-task 10. Getting the easy number now makes the hard number legible
+          later.</p>
+          <div class="code labeled">
+            <span class="kind">expected output</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>entitlements exact duplicate rows: 10
+                  unique rows: 15178</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s8-dupes"> Exactly 10 duplicate rows found</label>
+        </li>
+        <li>
+          <div class="step-do">Ask yourself the question that matters, and don't answer it yet.</div>
+          <p class="step-why">Why: ten looks like a small, tidy problem. Hold on to that
+          impression. In sub-task 10 you'll normalize the dates and count again, and the number
+          will change in a way that reframes what &quot;duplicate&quot; means. Guess now, in your
+          notes, what it will change to. Being wrong is more instructive than being right.</p>
+          <label class="done"><input type="checkbox" data-task="s8-guess"> My guess is written down</label>
+        </li>
+        <li>
+          <div class="step-do">Commit your progress.</div>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"
+git add explore.py
+git commit -m "Add explore.py: measure the three defects in the Q3 export"</pre>
+          </div>
+          <p class="step-why">Still <strong>33 passed, 11 skipped, 1 deselected</strong>. You
+          haven't produced any artifact the tests are waiting for &mdash; that starts in
+          sub-task 9.</p>
+          <label class="done"><input type="checkbox" data-task="s8-commit"> Committed</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><code>explore.py</code> runs and prints numbers that match these exactly:</p>
+      <ul>
+        <li><code>hr_roster.csv</code> <strong>1190 &times; 9</strong>;
+            <code>entitlements.csv</code> <strong>15188 &times; 7</strong></li>
+        <li><strong>1200</strong> distinct <code>account_id</code> but only
+            <strong>1188</strong> distinct <code>account_name</code></li>
+        <li><code>granted_date</code>: <strong>7538</strong> ISO + <strong>7650</strong> US =
+            15188, with <strong>0</strong> unclassified</li>
+        <li><code>department</code>: <strong>32</strong> raw spellings &rarr;
+            <strong>12</strong> real departments</li>
+        <li><strong>10</strong> exact duplicate rows</li>
+      </ul>
+      <p style="margin-top:14px">You now know three things that are wrong with this data, with
+      exact counts for each. Every claim you make for the rest of the course inherits those
+      numbers &mdash; which is precisely why you measured them before touching anything.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://pandas.pydata.org/docs/user_guide/10min.html">10 minutes to pandas</a>
+        &mdash; the official quick tour. Skim it; you need recognition, not fluency.</li>
+        <li><a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> &mdash; why
+        <code>YYYY-MM-DD</code> is the only date format that sorts correctly as text, and why
+        every system that doesn't use it eventually causes an incident.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-07.html"><span class="arr">&larr;</span> Sub-task 7</a>
+    <a class="navbtn next" href="subtask-09.html">Sub-task 9 &middot; Match accounts to people <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme B &middot; Sub-task 1 of 5
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask08-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask08-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
