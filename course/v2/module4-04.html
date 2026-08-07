@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 4 &middot; 4 &mdash; Close the loop — and see why you wouldn't ship it &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+
+  /* ---------- Elective chrome (Module 4 only) ---------- */
+  header.site { border-bottom-color: var(--task-br); }
+  .site .badge {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: #2b2107; background: #e6c14b;
+    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  }
+  .opener .kicker { color: #8a6d10; }
+  .navbtn.next { background: #8a6d10; border-color: #8a6d10; }
+  .navbtn.next:hover { background: #6f5709; border-color: #6f5709; }
+  .concept > .label { color: #8a6d10; }
+  .worksheet > .label { color: #8a6d10; }
+  .electivenote {
+    background: var(--task-bg); border: 1px solid #ece3c2;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 20px 0 0; font-size: 15px; color: #4a412a;
+  }
+  .electivenote strong { color: #6f5709; }
+  .electivenote p { margin: 0 0 8px; }
+  .electivenote p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Reviewer <em>UI</em></span>
+    <span class="badge">Elective</span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="module4-03.html"><span class="arr">&larr;</span> Module 4 &middot; 3 &middot; Export something the client can act on</a>
+  </div>
+
+
+  <section class="opener">
+    <div class="kicker">Elective Module 4 &middot; Reviewer UI &middot; Sub-task 4 of 4</div>
+    <h1>Close the loop &mdash; and see why you wouldn't ship it</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="module4-03.html">Module 4 &middot; 3</a>&nbsp;&mdash; you need a working export</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;elective &mdash; not a building block</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">local control plane</span>
+        <span class="term">append-only decision record</span>
+        <span class="term">trust boundary</span>
+      </div>
+      <p class="note">The most useful thing in this sub-task is the list of reasons not to deploy
+      what you build in it.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">A browser cannot run your pipeline. It has no shell, no Python, and that is a
+      deliberate property of the platform rather than a gap to work around. If a page could start
+      processes on the machine that opened it, the web would be unusable.</p>
+      <p>So closing the loop means putting something between them: a small local process that owns
+      the dangerous capabilities and exposes exactly two of them. Building it takes forty lines.
+      Understanding why those forty lines must never leave <code>127.0.0.1</code> is the actual
+      lesson.</p>
+    </div>
+
+    <div class="electivenote">
+      <p><strong>This one is genuinely optional.</strong> If you stop after sub-task 3 you have a
+      complete, defensible deliverable: findings in, decisions out, CSV and PDF. Nothing below
+      improves the artifact.</p>
+      <p>What it does is show you the shape of the production version &mdash; and the shape of the
+      trust boundary you'd be taking on. If you'd rather read this one and not build it, read the
+      concept section and the last task, and skip the middle.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Put a stdlib-only local server between the page and the pipeline</li>
+        <li>Run a review from the UI and reload findings without touching a terminal</li>
+        <li>Append reviewer decisions to the audit trail your hooks maintain &mdash; as their own record type</li>
+        <li>Name every reason this design stays on localhost</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>The moment your UI can start a process, you own a trust boundary you didn't have before.</h3>
+
+      <p>Everything through sub-task 3 was inert. A static page that reads a file it was handed
+      cannot do damage: worst case it renders something wrong. Add one endpoint that runs
+      <code>subprocess</code> and the page is now a control plane for a program that reads client
+      data and spends API budget.</p>
+
+      <p>That's a fine thing to have on your own laptop while iterating. It is not a fine thing to
+      leave running, and the difference between the two is one string in one call.</p>
+
+      <div class="whatis">
+        <span class="tag">Bind to 127.0.0.1, never 0.0.0.0</span>
+        <p><code>("", 8000)</code> and <code>("0.0.0.0", 8000)</code> both listen on <em>every</em>
+        interface. On café wifi, on a client's guest network, on a VPN, that is an unauthenticated
+        endpoint that runs your pipeline and appends to your audit log, offered to everyone on the
+        segment.</p>
+        <p><code>("127.0.0.1", 8000)</code> is reachable only from the machine itself. Type it
+        explicitly. It's the same instinct as sub-task 23's specialist that can't write &mdash;
+        capability granted deliberately, at the smallest scope that works.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">Why the decision record is <em>not</em> shaped like the hook's</span>
+        <p>Your <code>PostToolUse</code> hook writes <code>ts</code>, <code>tool</code>,
+        <code>path</code>, <code>session_id</code> &mdash; a record of a tool call, written by
+        machinery, about machinery.</p>
+        <p>A reviewer decision is a different kind of fact. It has a human author, a verdict, and a
+        reason. Forcing it into the hook's four fields would mean lying in the <code>tool</code>
+        field, and an audit log where one record type lies about its shape is one nobody can parse
+        confidently later.</p>
+        <p>Same file, same append-only discipline, explicit <code>kind</code> field so a reader can
+        tell them apart. That's the honest design, and it's why sub-task 27 had you notice the
+        four-field minimum in the first place.</p>
+      </div>
+
+      <p><strong>What the real version looks like.</strong> At a client this is a small web service
+      with SSO, a database instead of <code>localStorage</code>, reviewers assigned to applications
+      they own, a sign-off step that freezes the quarter, and decisions flowing into whatever
+      actually revokes access. None of that changes the architecture you've built &mdash; findings
+      in, decisions out, both recorded. It changes who is allowed to do it and where the state
+      lives.</p>
+
+      <p>Worth being blunt about: that service is a normal enterprise application, not an agentic
+      system. The agentic part finished at sub-task 39. Knowing where that line falls is part of the
+      job &mdash; a lot of AI project budget gets spent building conventional software with an
+      unconventional label on it.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>The local control plane</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Write <code>reviewer/serve.py</code> &mdash; stdlib only, localhost
+          only.</div>
+          <p class="step-why">Why: it subclasses the same
+          <code>SimpleHTTPRequestHandler</code> you've been using since sub-task 1, so static files
+          keep working exactly as they did and you're only adding two POST routes. Run it from the
+          repo root; the handler serves the current working directory.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/serve.py</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>#!/usr/bin/env python3
+"""Local-only reviewer control plane. A development convenience — NOT a deliverable.
+
+Run from the repo root:  python reviewer/serve.py
+Then open:               http://127.0.0.1:8000/reviewer/
+"""
+import json
+import subprocess
+import sys
+import time
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+QUARTER = "2026-Q3"
+
+
+class Reviewer(SimpleHTTPRequestHandler):
+    def do_POST(self):
+        if self.path == "/api/run":
+            return self._json(self._run_review())
+        if self.path == "/api/decision":
+            return self._json(self._append(self._body()))
+        self.send_error(404)
+
+    # ---- helpers ------------------------------------------------------
+    def _body(self):
+        n = int(self.headers.get("Content-Length", 0))
+        return json.loads(self.rfile.read(n) or b"{}")
+
+    def _json(self, payload, status=200):
+        blob = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(blob)))
+        self.end_headers()
+        self.wfile.write(blob)
+
+    # ---- the two capabilities ----------------------------------------
+    def _run_review(self):
+        proc = subprocess.run(
+            [sys.executable, "-m", "meridian_capstone.contract.run_review",
+             f"data/{QUARTER}"],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+        if proc.returncode != 0:
+            return {"ok": False, "stderr": proc.stderr[-2000:]}
+        (ROOT / "findings.json").write_text(proc.stdout, encoding="utf-8")
+        return {"ok": True, "count": len(json.loads(proc.stdout))}
+
+    def _append(self, d):
+        log = ROOT / "audit" / f"{QUARTER}.jsonl"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        record = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "kind": "reviewer_decision",          # not a tool call — say so
+            "finding_key": d["key"],
+            "model_recommendation": d["model_recommendation"],
+            "human_verdict": d["verdict"],
+            "reason": d.get("note", ""),
+            "reviewer": d.get("reviewer", "unattributed"),
+        }
+        with log.open("a", encoding="utf-8") as fh:   # append-only, one line
+            fh.write(json.dumps(record) + "\n")
+        return {"ok": True, "appended": record}
+
+
+if __name__ == "__main__":
+    # 127.0.0.1 — not "" and not "0.0.0.0". See the concept section.
+    ThreadingHTTPServer(("127.0.0.1", 8000), Reviewer).serve_forever()</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m44-serve"> Server runs; the page still loads as before</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm it is not reachable from anywhere else.</div>
+          <p class="step-why">Why: don't take the binding on faith. Find your machine's LAN address
+          and try it &mdash; connection refused is the answer you want. Thirty seconds, and it's the
+          check you'll want to have run habitually before you ever do this on a client network.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python reviewer/serve.py &amp;                 # from the repo root
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8000/reviewer/
+ipconfig getifaddr en0                     # macOS; your LAN address
+curl --max-time 3 http://&lt;that-address&gt;:8000/reviewer/   # want: refused</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m44-bind"> Localhost yes, LAN address refused</label>
+        </li>
+        <li>
+          <div class="step-do">Add a <em>Run review</em> button that posts to <code>/api/run</code>.
+          </div>
+          <p class="step-why">Why: disable it while the run is in flight and say what's happening.
+          A full quarter takes real time and real money &mdash; a button a reviewer can click four
+          times because nothing visibly changed is a genuine cost bug, not a polish issue.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>var runBtn = document.getElementById("run");
+
+runBtn.addEventListener("click", function () {
+  runBtn.disabled = true;
+  status("Running the pipeline — this costs money and takes a few minutes…");
+
+  fetch("/api/run", { method: "POST" })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.stderr || "pipeline failed");
+      status("Fresh findings: " + res.count + ". Reloading…");
+      return reloadFindings();          // re-fetch and re-render; decisions persist by key
+    })
+    .catch(function (e) { status("Run failed — " + e.message); })
+    .finally(function () { runBtn.disabled = false; });
+});</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m44-run"> Run works; button disabled while in flight; failures readable</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm decisions survived the run you just triggered.</div>
+          <p class="step-why">Why: this is sub-task 2's stable key doing its job under the harshest
+          version of the test &mdash; the findings were replaced underneath a live page. Same rows
+          decided, same accounts, no shifting.</p>
+          <label class="done"><input type="checkbox" data-task="m44-survive"> Decisions still on the right findings after a live re-run</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Decisions into the audit trail</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Post each decision to <code>/api/decision</code> as it's made,
+          keeping the <code>localStorage</code> write.</div>
+          <p class="step-why">Why: <code>localStorage</code> stays the source of truth for the UI so
+          the page still works with the server down. The audit append is additive &mdash; if it
+          fails, warn and carry on rather than losing the reviewer's decision to a network error.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>function decide(f, verdict, note) {
+  var entry = {
+    key: keyOf(f),
+    verdict: verdict,
+    model_recommendation: f.recommendation,
+    note: note || "",
+    reviewer: document.getElementById("reviewer").value || "unattributed",
+    decided_at: new Date().toISOString()
+  };
+
+  decisions[entry.key] = entry;
+  saveDecisions(decisions);            // local first — always succeeds, always the UI's truth
+
+  fetch("/api/decision", {             // audit append — best effort, never blocking
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry)
+  }).catch(function () {
+    status("Decision saved locally but not appended to the audit log.");
+  });
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m44-post"> Decisions appended; UI unaffected when the server is down</label>
+        </li>
+        <li>
+          <div class="step-do">Read the audit log and separate the two record types.</div>
+          <p class="step-why">Why: this is the payoff for the <code>kind</code> field. One
+          append-only file now holds what the machinery did and what the humans concluded, and a
+          reader can tell them apart without guessing.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python - &lt;&lt;'PY'
+import json, collections
+rows = [json.loads(l) for l in open('audit/2026-Q3.jsonl') if l.strip()]
+print(collections.Counter(r.get('kind', 'tool_write') for r in rows))
+for r in rows:
+    if r.get('kind') == 'reviewer_decision':
+        print(r['human_verdict'], r['model_recommendation'], r['finding_key'])
+PY</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m44-read"> Both record types present and distinguishable</label>
+        </li>
+        <li>
+          <div class="step-do">Check the log is still append-only, and that the guard still
+          holds.</div>
+          <p class="step-why">Why: you added a second writer to a compliance artifact. Confirm line
+          count only grows across a session, that earlier lines are byte-identical, and that the
+          secret guard from sub-task 26 still denies &mdash; your new endpoint writes outside the
+          hook path, and that's exactly the kind of gap worth checking rather than assuming.</p>
+          <label class="done"><input type="checkbox" data-task="m44-append"> Append-only confirmed; guard still denying</label>
+        </li>
+        <li>
+          <div class="step-do">Write down what would have to change before this touched a client
+          machine.</div>
+          <p class="step-why">Why: last worksheet of the elective, and the one worth keeping. You've
+          just built something with an obvious next step and a non-obvious set of reasons to be
+          careful about it. Write both down while they're fresh.</p>
+          <div class="worksheet" id="ws-m44">
+            <div class="label">From laptop to client</div>
+            <p class="hint">Assume someone reads this and decides whether to fund the production
+            version.</p>
+            <div class="field">
+              <label>Every reason <code>serve.py</code> stays on <code>127.0.0.1</code>
+                <span class="eg">name at least three, concretely</span>
+              </label>
+              <textarea data-ws="m44-bind" rows="4" placeholder="No authentication. It runs a subprocess. It appends to a compliance log. It spends API budget…"></textarea>
+            </div>
+            <div class="field">
+              <label>What replaces <code>localStorage</code>, and what that forces you to add</label>
+              <textarea data-ws="m44-state" rows="3" placeholder="A database, which forces identity, which forces SSO, which forces…"></textarea>
+            </div>
+            <div class="field">
+              <label>Where the boundary falls between the agentic system and ordinary software</label>
+              <textarea data-ws="m44-line" rows="3" placeholder="Everything up to findings.json is the agentic system. Everything after it is a CRUD app that…"></textarea>
+            </div>
+            <div class="field">
+              <label>What I'd build first if a client asked for the production version tomorrow</label>
+              <textarea data-ws="m44-first" rows="3" placeholder="Not the UI. The decisions schema and who's allowed to sign, because everything else follows from…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-m44">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-m44">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m44-note"> All four answered</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>404 on <code>/api/run</code>.</strong> You're on the plain
+          <code>python -m http.server</code> from sub-task 1, which knows nothing about POST. Stop
+          it and start <code>python reviewer/serve.py</code> instead &mdash; and check nothing else
+          is holding port 8000.</p>
+          <p><strong>The subprocess can't find the module.</strong> <code>cwd=ROOT</code> sets the
+          working directory but not the environment. Run the server from the same virtualenv you run
+          the pipeline in; <code>sys.executable</code> then points at the right interpreter and the
+          package resolves.</p>
+          <p><strong>The run succeeds but the page shows stale findings.</strong> The browser cached
+          <code>findings.json</code>. Re-fetch with a cache-buster
+          (<code>"../findings.json?t=" + Date.now()</code>) or send a no-store header.</p>
+          <p><strong>Decisions are duplicated in the log.</strong> Correct, and intended. Append-only
+          means a changed mind is a second record, not an edit. Reduce to latest-per-key when you
+          read, and keep the history &mdash; a reviewer who reversed a decision is exactly what an
+          auditor wants to see.</p>
+          <p><strong>Is a browser posting to a local Python server safe?</strong> On your own machine
+          for your own review, yes. Understand that any page open in that browser can also post to
+          <code>127.0.0.1:8000</code> &mdash; which is the honest answer to why this never ships as
+          it stands, and why the production version starts with authentication.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li><code>reviewer/serve.py</code> runs on <code>127.0.0.1</code> only, using nothing outside
+            the standard library</li>
+        <li>A <em>Run review</em> button produces fresh findings and reloads them in place</li>
+        <li>Decisions survive a live re-run, still attached to the right accounts</li>
+        <li>Decisions append to <code>audit/2026-Q3.jsonl</code> as
+            <code>kind: "reviewer_decision"</code>, distinguishable from the hook's tool records</li>
+        <li>The log is still append-only and the sub-task 26 guard still denies</li>
+        <li>A written account of what would change before this touches a client machine</li>
+      </ul>
+      <p style="margin-top:14px"><strong>End to end.</strong> The pipeline runs, findings appear, a
+      named human decides, and both the machine's judgment and the human's are recorded in one
+      append-only log.</p>
+      <p>The elective is done, and so is everything else. What you built here isn't part of the six
+      blocks and shouldn't be &mdash; but it's the part your client sees, and the part that decides
+      whether the other six ever get used.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://docs.python.org/3/library/http.server.html">Python's
+        <code>http.server</code> docs</a> &mdash; read the security warning at the top. It says
+        plainly what this sub-task spent a concept section on.</li>
+        <li>Add a sign-off step: a button that freezes the quarter, stamps a completion record into
+        the audit log, and refuses further decisions. That single feature is most of the distance
+        between a review tool and a compliance system.</li>
+        <li>Point the whole thing at Q4 by changing <code>QUARTER</code> in two places &mdash; and
+        then ask why it's two places. Theme I's question applies to everything you build, including
+        the forty lines you just wrote.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="module4-03.html"><span class="arr">&larr;</span> Module 4 &middot; 3</a>
+    <span class="navbtn disabled next">End of the elective</span>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Elective Module 4 &middot; Reviewer UI &middot; Sub-task 4 of 4
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-module4-04-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-module4-04-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

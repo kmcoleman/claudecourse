@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 4 &middot; 3 &mdash; Export something the client can act on &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+
+  /* ---------- Elective chrome (Module 4 only) ---------- */
+  header.site { border-bottom-color: var(--task-br); }
+  .site .badge {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: #2b2107; background: #e6c14b;
+    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  }
+  .opener .kicker { color: #8a6d10; }
+  .navbtn.next { background: #8a6d10; border-color: #8a6d10; }
+  .navbtn.next:hover { background: #6f5709; border-color: #6f5709; }
+  .concept > .label { color: #8a6d10; }
+  .worksheet > .label { color: #8a6d10; }
+  .electivenote {
+    background: var(--task-bg); border: 1px solid #ece3c2;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 20px 0 0; font-size: 15px; color: #4a412a;
+  }
+  .electivenote strong { color: #6f5709; }
+  .electivenote p { margin: 0 0 8px; }
+  .electivenote p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Reviewer <em>UI</em></span>
+    <span class="badge">Elective</span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="module4-02.html"><span class="arr">&larr;</span> Module 4 &middot; 2 &middot; Let a human disagree with the model</a>
+  </div>
+
+
+  <section class="opener">
+    <div class="kicker">Elective Module 4 &middot; Reviewer UI &middot; Sub-task 3 of 4</div>
+    <h1>Export something the client can act on</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="module4-02.html">Module 4 &middot; 2</a>&nbsp;&mdash; you need recorded decisions to export</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;elective &mdash; not a building block</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">decisions log</span>
+        <span class="term">CSV injection</span>
+        <span class="term">Blob download</span>
+        <span class="term">print stylesheet</span>
+      </div>
+      <p class="note">Two of these are formatting. One of them is a vulnerability you will ship to
+      a client if nobody tells you about it.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">The deliverable at the end of an access review is not a dashboard. It is a
+      file: one row per finding, the model's recommendation, the human's decision, the reason, who
+      decided and when. Somebody downstream has to revoke access based on it, and somebody else has
+      to still be able to read it in an audit two years from now.</p>
+      <p>Which means it has to leave the browser.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Emit a CSV that survives quoting, commas in prose, and Excel</li>
+        <li>Neutralize formula injection before it reaches a spreadsheet</li>
+        <li>Trigger a download from a static page with no server and no library</li>
+        <li>Produce a printable report with a print stylesheet instead of a PDF dependency</li>
+        <li>Stamp the export with the provenance an auditor will ask for</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A review artifact is evidence. Evidence needs provenance, not just content.</h3>
+
+      <p>Two files with identical rows are not equally useful. The one that also states which
+      quarter, which export directory, which commit produced the findings, when the review was
+      completed and who completed it can be defended. The other one is a spreadsheet somebody
+      emailed.</p>
+
+      <p>You already have every one of those facts. Sub-task 39 had you record the commit hash for
+      exactly this reason. Putting them in a header block costs six lines and is the difference
+      between an artifact and a screenshot.</p>
+
+      <div class="whatis">
+        <span class="tag">CSV injection &mdash; the one genuine vulnerability in this module</span>
+        <p>A cell beginning <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> is
+        interpreted by Excel, Sheets and LibreOffice as a <em>formula</em>, not text. A rationale or
+        a reviewer note starting with one of those characters can execute when your client opens
+        the file &mdash; that's the whole attack, and it has a CVE history.</p>
+        <p>Your findings contain model-authored prose derived from client data, and your notes
+        contain free text typed by a human. Both are untrusted by the standard sub-task 28
+        established. Prefix any cell starting with those characters with a single quote, which every
+        spreadsheet reads as "this is text".</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">RFC 4180 in one paragraph</span>
+        <p>Quote every field. Double any quote inside a field. Use <code>\r\n</code> between rows.
+        Do that unconditionally and you never have to reason about whether a particular rationale
+        happens to contain a comma &mdash; and a rationale will, on your client's data, in the
+        finding that matters.</p>
+        <p>Prepend a UTF-8 BOM (<code>\ufeff</code>) so Excel on Windows doesn't mangle non-ASCII
+        names. Ugly, universally necessary, one character.</p>
+      </div>
+
+      <p><strong>Why print instead of PDF.</strong> Generating a PDF in the browser means a library,
+      which means a dependency, a bundle step and a supply chain. <code>@media print</code> plus the
+      browser's own "Save as PDF" produces a perfectly good document, ships as forty lines of CSS,
+      and works offline in three years. The constraint that there be no new dependencies isn't
+      arbitrary &mdash; it's what keeps the deliverable openable.</p>
+
+      <div class="whatis">
+        <span class="tag">What goes in the export that isn't on screen</span>
+        <p><strong>Undecided findings.</strong> Export them with an empty verdict rather than
+        dropping them. A row that says "nobody looked at this" is one of the most important rows in
+        a compliance artifact, and silently omitting it turns an incomplete review into one that
+        looks complete.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>The CSV</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Write the cell encoder, injection guard first.</div>
+          <p class="step-why">Why: one function, applied to every cell including the headers, so
+          there is no path through your code that emits an unescaped value. Guard before quote
+          &mdash; the leading apostrophe has to be inside the quoted field.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>function csvCell(value) {
+  var s = (value === null || value === undefined) ? "" : String(value);
+  // Excel, Sheets and LibreOffice execute cells starting with these. Neutralize.
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+function toCsv(rows, columns) {
+  var lines = [columns.map(csvCell).join(",")];
+  rows.forEach(function (r) {
+    lines.push(columns.map(function (c) { return csvCell(r[c]); }).join(","));
+  });
+  return lines.join("\r\n");
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-cell"> Encoder handles quotes, commas, newlines and formulas</label>
+        </li>
+        <li>
+          <div class="step-do">Build the row set from findings joined to decisions, keeping the
+          undecided ones.</div>
+          <p class="step-why">Why: iterate the findings, not the decisions. Iterate the decisions
+          and a finding nobody touched disappears from the deliverable &mdash; which is the exact
+          failure mode that makes an incomplete review indistinguishable from a complete one.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>var COLUMNS = [
+  "account_id", "employee_id", "app", "entitlement", "category", "severity",
+  "model_recommendation", "human_verdict", "reason", "reviewer", "decided_at",
+  "policy_citations", "confidence", "rationale"
+];
+
+function exportRows(findings) {
+  return findings.map(function (f) {
+    var d = decisions[keyOf(f)] || {};
+    return {
+      account_id: f.account_id, employee_id: f.employee_id,
+      app: f.app, entitlement: f.entitlement,
+      category: f.category, severity: f.severity,
+      model_recommendation: f.recommendation,
+      human_verdict: d.verdict || "",            // empty === nobody looked
+      reason: d.note || "",
+      reviewer: d.reviewer || "",
+      decided_at: d.decided_at || "",
+      policy_citations: (f.policy_citations || []).join("; "),
+      confidence: f.confidence,
+      rationale: f.rationale
+    };
+  });
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-rows"> Every finding present, decided or not</label>
+        </li>
+        <li>
+          <div class="step-do">Trigger the download with a Blob and a synthetic click.</div>
+          <p class="step-why">Why: no server involved &mdash; the file is constructed in memory and
+          handed to the browser's download machinery. Revoke the object URL afterwards; a page a
+          reviewer keeps open for an hour shouldn't leak a blob per export.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>function download(filename, text, mime) {
+  var blob = new Blob(["\ufeff" + text],       // BOM so Excel reads UTF-8
+                      { type: mime + ";charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("exportCsv").addEventListener("click", function () {
+  var csv = toCsv(exportRows(findings), COLUMNS);
+  download("meridian-uar-" + QUARTER + "-decisions.csv", csv, "text/csv");
+});</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-dl"> CSV downloads with a quarter-stamped filename</label>
+        </li>
+        <li>
+          <div class="step-do">Open it in a spreadsheet and try to break it.</div>
+          <p class="step-why">Why: type a note containing a comma, a double quote, a newline and
+          <code>=1+1</code>, then export and open. All four should come back as literal text in one
+          cell. This takes ninety seconds and is the only proof that any of the above works.</p>
+          <label class="done"><input type="checkbox" data-task="m43-break"> Adversarial note survives the round trip as text</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>The printable report</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Add the provenance header.</div>
+          <p class="step-why">Why: quarter, export directory, commit hash, generated-at, reviewer,
+          and the four counts. Everything except the commit is derivable in the page; type the
+          commit into a field and store it, or read it from a <code>meta.json</code> your pipeline
+          writes. The second is better and takes ten lines.</p>
+          <div class="code labeled">
+            <span class="kind">what the header states</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>Meridian Regional Energy — user access review
+Quarter        2026-Q3
+Export         data/2026-Q3
+Pipeline       commit a1b2c3d
+Reviewed by    <name>
+Completed      2026-08-07T14:22:10Z
+Findings       9    approved 6   denied 1   deferred 1   undecided 1</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-prov"> Header states quarter, commit, reviewer, counts</label>
+        </li>
+        <li>
+          <div class="step-do">Write the print stylesheet.</div>
+          <p class="step-why">Why: hide the controls, repeat the table header on every page, and
+          stop rows splitting across a page break. Those three rules are most of what separates a
+          printed web page from a document.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; style</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>@media print {
+  .controls, .exportbar, button, input { display: none !important; }
+  body    { font: 10.5pt/1.45 Georgia, serif; color: #000; background: #fff; }
+  table   { width: 100%; border-collapse: collapse; }
+  th, td  { border: 1px solid #999; padding: 4px 6px; }
+  thead   { display: table-header-group; }   /* repeat header on every page */
+  tr      { break-inside: avoid; }
+  details { break-inside: avoid; }
+  details[open] summary { display: none; }   /* expanded rationale, no toggle */
+  a::after { content: " (" attr(href) ")"; font-size: 8pt; }
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-print"> Print preview looks like a document</label>
+        </li>
+        <li>
+          <div class="step-do">Expand every rationale before printing, and say so.</div>
+          <p class="step-why">Why: a <code>&lt;details&gt;</code> that's closed on screen prints
+          closed, so your reasoning vanishes from the PDF. One line &mdash; open them all in a
+          <code>beforeprint</code> handler &mdash; and the printed artifact carries the justification
+          that makes it defensible.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-expand"> Rationales present in the printed output</label>
+        </li>
+        <li>
+          <div class="step-do">Print to PDF and read the whole thing as if you didn't build it.</div>
+          <p class="step-why">Why: this is the artifact. If page three is a table header floating
+          alone, or the rationale column ran off the right edge, you'd rather know before it's
+          attached to an email.</p>
+          <label class="done"><input type="checkbox" data-task="m43-pdf"> PDF reads cleanly end to end</label>
+        </li>
+        <li>
+          <div class="step-do">Write down who this goes to and what happens next.</div>
+          <p class="step-why">Why: a deliverable with no downstream action is a report, and reports
+          are where access reviews go to die. Somebody has to actually revoke the accounts.</p>
+          <div class="worksheet" id="ws-m43">
+            <div class="label">The deliverable</div>
+            <p class="hint">Write it as the cover note that goes with the file.</p>
+            <div class="field">
+              <label>Who receives the CSV, and what system consumes it
+                <span class="eg">a person, a ticket queue, an IGA tool</span>
+              </label>
+              <textarea data-ws="m43-who" rows="3" placeholder="The identity team, as a ServiceNow bulk-revoke import. The application owners get the PDF…"></textarea>
+            </div>
+            <div class="field">
+              <label>What the CSV must contain for that system to act on it without a human retyping anything</label>
+              <textarea data-ws="m43-fields" rows="3" placeholder="account_id has to match their directory's key, not our normalized one…"></textarea>
+            </div>
+            <div class="field">
+              <label>How an auditor two years from now reconstructs this review from the file alone</label>
+              <textarea data-ws="m43-audit" rows="3" placeholder="Commit hash pins the pipeline, the export directory pins the data, the reviewer name and timestamps…"></textarea>
+            </div>
+            <div class="field">
+              <label>What I'd have to change before this is safe to hand to a client</label>
+              <textarea data-ws="m43-safe" rows="3" placeholder="Decisions live in one browser. Two reviewers can't split a quarter. There's no sign-off step…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-m43">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-m43">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m43-note"> All four answered</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Excel splits one rationale across three columns.</strong> An unescaped comma.
+          Every field goes through <code>csvCell</code>, headers included &mdash; check for a
+          <code>join(",")</code> somewhere that skipped it.</p>
+          <p><strong>Accented names show as mojibake.</strong> Missing BOM. The
+          <code>"\ufeff"</code> prefix in the <code>Blob</code> constructor fixes it; Excel on
+          Windows will not otherwise assume UTF-8.</p>
+          <p><strong>Nothing downloads and there's no error.</strong> Some browsers ignore a
+          synthetic click on an anchor that isn't in the document. Append it to
+          <code>document.body</code> before <code>click()</code>, as in the snippet.</p>
+          <p><strong>The print preview is one enormous page.</strong> Almost always a container with
+          <code>height</code> or <code>overflow: hidden</code>. Print layout ignores your viewport;
+          let the table be as tall as it is.</p>
+          <p><strong>Do undecided findings belong in the export?</strong> Yes, with an empty verdict.
+          Omitting them makes an incomplete review look complete, which is the single worst thing a
+          compliance artifact can do.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>An <strong>Export decisions</strong> button produces a quarter-stamped CSV with one row
+            per finding &mdash; including undecided ones</li>
+        <li>Commas, quotes, newlines and leading <code>=</code> survive as literal text in a
+            spreadsheet</li>
+        <li>Both the model's recommendation and the human's verdict appear as separate columns</li>
+        <li>The printed report carries quarter, commit, reviewer, timestamp and counts</li>
+        <li>Rationales are visible in the printed output</li>
+        <li>Still no dependencies</li>
+      </ul>
+      <p style="margin-top:14px">You have a shareable review artifact. The loop back to the
+      pipeline is the last thing left, and it's optional.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://owasp.org/www-community/attacks/CSV_Injection">OWASP on CSV
+        injection</a> &mdash; short, and the examples are worth seeing once because they're more
+        capable than the <code>=1+1</code> demo suggests.</li>
+        <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Printing">MDN
+        on printing</a> &mdash; <code>break-inside</code>, <code>table-header-group</code> and
+        <code>@page</code> margins cover almost every layout complaint you'll have.</li>
+        <li>Diff your export against <code>findings.json</code> with a script and confirm every
+        finding appears exactly once. That check belongs in your eval suite next to the schema
+        validator from sub-task 12 &mdash; a deliverable that drops rows is a correctness bug, not a
+        UI bug.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="module4-02.html"><span class="arr">&larr;</span> Module 4 &middot; 2</a>
+    <a class="navbtn next" href="module4-04.html">Module 4 &middot; 4 &middot; Close the loop <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Elective Module 4 &middot; Reviewer UI &middot; Sub-task 3 of 4
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-module4-03-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-module4-03-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

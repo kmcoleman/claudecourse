@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 4 &middot; 2 &mdash; Let a human disagree with the model &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+
+  /* ---------- Elective chrome (Module 4 only) ---------- */
+  header.site { border-bottom-color: var(--task-br); }
+  .site .badge {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: #2b2107; background: #e6c14b;
+    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  }
+  .opener .kicker { color: #8a6d10; }
+  .navbtn.next { background: #8a6d10; border-color: #8a6d10; }
+  .navbtn.next:hover { background: #6f5709; border-color: #6f5709; }
+  .concept > .label { color: #8a6d10; }
+  .worksheet > .label { color: #8a6d10; }
+  .electivenote {
+    background: var(--task-bg); border: 1px solid #ece3c2;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 20px 0 0; font-size: 15px; color: #4a412a;
+  }
+  .electivenote strong { color: #6f5709; }
+  .electivenote p { margin: 0 0 8px; }
+  .electivenote p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Reviewer <em>UI</em></span>
+    <span class="badge">Elective</span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="module4-01.html"><span class="arr">&larr;</span> Module 4 &middot; 1 &middot; Put your findings in front of a human</a>
+  </div>
+
+
+  <section class="opener">
+    <div class="kicker">Elective Module 4 &middot; Reviewer UI &middot; Sub-task 2 of 4</div>
+    <h1>Let a human disagree with the model</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="module4-01.html">Module 4 &middot; 1</a>&nbsp;&mdash; you need findings rendering in a table</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;elective &mdash; not a building block</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">recommendation vs decision</span>
+        <span class="term">stable finding key</span>
+        <span class="term">localStorage</span>
+        <span class="term">attestation</span>
+      </div>
+      <p class="note">The distinction in the first term is the whole sub-task. The other three are
+      how you keep it intact.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Your system says <code>revoke</code>. The reviewer says no &mdash; that
+      account belongs to a contractor whose SOW was extended last week and the export predates it.
+      Both of those facts are now true, and a UI that stores one of them has destroyed evidence.</p>
+      <p>An access review is an <em>attestation</em>. Its output is not a list of what should
+      happen; it's a record of who looked at what and what they concluded. The model's judgment is
+      an input to that record, not the record itself.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Keep the model's recommendation and the human's decision as two separate fields, always</li>
+        <li>Give each finding an identity that survives a re-run</li>
+        <li>Persist decisions in <code>localStorage</code> and understand exactly what that promises</li>
+        <li>Require a reason when the human overrides the model</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>Never let the human's decision overwrite the model's recommendation. Store both.</h3>
+
+      <p>It's a tempting simplification &mdash; one <code>status</code> field, updated in place,
+      obviously cleaner. It also erases the only measurement that tells you whether the system is
+      any good.</p>
+
+      <p>With both fields you can answer the question every second engagement opens with: <em>how
+      often does the human disagree, and on what?</em> A 4% override rate concentrated in one
+      category is a policy Skill that needs a clause added. A 40% override rate is a system that
+      isn't ready and a conversation you want to have from data rather than from vibes. Sub-task 31
+      had you hand-label twelve dossiers to get a number like this. Once the UI exists you get it
+      continuously, for free, from real reviewers on the whole quarter.</p>
+
+      <div class="whatis">
+        <span class="tag">Approve, deny, defer &mdash; and what each one means</span>
+        <p><strong>Approve</strong> &mdash; the reviewer agrees with <code>recommendation</code>,
+        whatever it was. Approving a <code>retain</code> is a decision, not a no-op.</p>
+        <p><strong>Deny</strong> &mdash; the reviewer rejects the recommendation. This is the one
+        that needs a reason, and the one your eval pipeline should be reading.</p>
+        <p><strong>Defer</strong> &mdash; the reviewer can't decide with what's on screen. Usually
+        it means they need to ask the account owner. Defer is not an unanswered finding; it's an
+        answered one whose answer is "escalate", which is exactly the human-in-the-loop path you
+        specified in sub-task 32.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">Why the array index is the wrong key</span>
+        <p>Store decisions as <code>decisions[3]</code> and everything works until the pipeline runs
+        again. A finding is resolved, the array shortens, and every decision after index 3 now
+        points at a different account &mdash; silently, with no error, in a compliance artifact.</p>
+        <p>Key on what the finding is <em>about</em>:
+        <code>scope</code>&nbsp;+&nbsp;<code>account_id</code>&nbsp;+&nbsp;<code>app</code>&nbsp;+&nbsp;<code>entitlement</code>&nbsp;+&nbsp;<code>category</code>.
+        Stable across runs, distinct between the same account's two conflicting entitlements, and
+        it survives the findings being reordered by severity the moment they load &mdash; which
+        sub-task 1 already does.</p>
+      </div>
+
+      <p><strong>What <code>localStorage</code> actually promises.</strong> Roughly 5&nbsp;MB of
+      strings, scoped to one origin, on one browser profile, on one machine, cleared by "clear
+      browsing data" without warning. It is the right tool for a single reviewer working through a
+      quarter in one sitting on their own laptop &mdash; which is genuinely the common case &mdash;
+      and the wrong one for anything two people touch.</p>
+
+      <div class="whatis">
+        <span class="tag">The origin gotcha that will bite you</span>
+        <p><code>file:///Users/you/repo/reviewer/index.html</code> and
+        <code>http://localhost:8000/reviewer/</code> are different origins. So are
+        <code>localhost:8000</code> and <code>localhost:8001</code>.</p>
+        <p>Decisions saved under one are invisible under another. Not corrupted &mdash; invisible,
+        which is worse, because the page loads clean and empty and looks like data loss. Pick one
+        URL and put it in your runbook.</p>
+      </div>
+
+      <p>Sub-task 3 makes the decisions exportable, which is the real answer to all of this.
+      <code>localStorage</code> is a working buffer between "the reviewer starts" and "the reviewer
+      exports". Treating it as a database is where this design fails.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Identity and storage</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Write the key function and prove it's unique across your quarter.</div>
+          <p class="step-why">Why: if two findings collide on a key, one reviewer decision silently
+          covers both. Nine findings is small enough to check exhaustively, and the check is two
+          lines &mdash; run it now rather than discovering the collision in Q4.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>// A finding's identity is what it is about — never where it sits in the array.
+function keyOf(f) {
+  return [f.scope, f.account_id || "", f.app, f.entitlement || "", f.category].join("|");
+}
+
+// Prove it: distinct keys must equal finding count.
+var keys = findings.map(keyOf);
+console.assert(new Set(keys).size === findings.length, "key collision", keys);</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-key"> Keys unique across all findings</label>
+        </li>
+        <li>
+          <div class="step-do">Load and save decisions under a quarter-scoped storage key.</div>
+          <p class="step-why">Why: <code>meridian-decisions-2026-Q3</code>, not
+          <code>decisions</code>. When you point the page at Q4 &mdash; and Theme I says you will
+          &mdash; the two sets stay separate instead of merging into one bucket where the keys
+          happen not to collide and the provenance is gone.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>var QUARTER = "2026-Q3";
+var STORE = "meridian-decisions-" + QUARTER;
+
+function loadDecisions() {
+  try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+  catch (e) { return {}; }        // corrupt value must not blank the page
+}
+function saveDecisions(d) {
+  try { localStorage.setItem(STORE, JSON.stringify(d)); }
+  catch (e) { alert("Could not save — storage may be full or disabled."); }
+}
+
+var decisions = loadDecisions();</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-store"> Decisions survive a reload</label>
+        </li>
+        <li>
+          <div class="step-do">Record both verdicts in every entry.</div>
+          <p class="step-why">Why: <code>model_recommendation</code> is copied in at decision time,
+          not looked up later. A re-run can change what the model says; the record has to preserve
+          what it said <em>when the human decided</em>, or the override rate you compute next
+          quarter is measuring the wrong thing.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>function decide(f, verdict, note) {
+  decisions[keyOf(f)] = {
+    verdict: verdict,                          // approve | deny | defer  — the human
+    model_recommendation: f.recommendation,    // revoke | review | retain — the model
+    note: note || "",
+    reviewer: document.getElementById("reviewer").value || "unattributed",
+    decided_at: new Date().toISOString()
+  };
+  saveDecisions(decisions);
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-both"> Both fields stored, never merged</label>
+        </li>
+        <li>
+          <div class="step-do">Add a reviewer-name field at the top of the page.</div>
+          <p class="step-why">Why: an attestation with no attester is not an attestation. One text
+          input, persisted alongside the decisions, stamped into every entry. It takes two minutes
+          and it's the difference between a decisions log and a list of opinions.</p>
+          <label class="done"><input type="checkbox" data-task="m42-who"> Every decision carries a name</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>The controls</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Add three buttons and a note field per row.</div>
+          <p class="step-why">Why: build them from the verdict list rather than writing three
+          near-identical handlers &mdash; the fourth verdict someone asks for should be a one-word
+          change. Repaint the row from state after every click so what's on screen is what's
+          stored, always.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>var VERDICTS = ["approve", "deny", "defer"];
+
+function controls(f, tr) {
+  var td = document.createElement("td");
+  var note = document.createElement("input");
+  note.type = "text";
+  note.placeholder = "reason (required to deny)";
+
+  VERDICTS.forEach(function (verdict) {
+    var b = document.createElement("button");
+    b.textContent = verdict;
+    b.addEventListener("click", function () {
+      if (verdict === "deny" && !note.value.trim()) {
+        note.focus();
+        return;                                  // a denial with no reason is not a record
+      }
+      decide(f, verdict, note.value.trim());
+      paint(tr, f);
+      updateProgress();
+    });
+    td.appendChild(b);
+  });
+
+  td.appendChild(note);
+  tr.appendChild(td);
+  return note;
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-buttons"> Three buttons per row; deny demands a reason</label>
+        </li>
+        <li>
+          <div class="step-do">Paint decided rows so state is visible without clicking.</div>
+          <p class="step-why">Why: a reviewer coming back after lunch needs to see what's left in
+          one glance. Colour the row by verdict, and mark the disagreements specially &mdash;
+          <em>deny</em> against a <code>revoke</code> is the row you'll want to find again when
+          someone asks why that account is still open.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>function paint(tr, f) {
+  var d = decisions[keyOf(f)];
+  tr.className = d ? "decided " + d.verdict : "";
+  // The model said revoke, the human said no. Worth seeing from across the room.
+  if (d && d.verdict === "deny" && f.recommendation === "revoke") {
+    tr.classList.add("override");
+  }
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-paint"> Decided rows visibly distinct; overrides stand out</label>
+        </li>
+        <li>
+          <div class="step-do">Add a progress counter and a filter for what's left.</div>
+          <p class="step-why">Why: "7 of 9 decided" is the number a reviewer is working toward, and
+          a show-undecided-only toggle is what makes a hundred-finding quarter finishable. Both are
+          derived from state you already have.</p>
+          <label class="done"><input type="checkbox" data-task="m42-progress"> Counter and filter working</label>
+        </li>
+        <li>
+          <div class="step-do">Re-run the pipeline and confirm your decisions are still attached to
+          the right findings.</div>
+          <p class="step-why">Why: this is the test the whole sub-task is built around. Decide three
+          findings, re-run <code>run_review</code>, reload the page. Same three rows decided, same
+          accounts. If anything shifted, the key isn't stable &mdash; and you've just reproduced the
+          bug this design exists to prevent.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json
+# reload the page — the same three rows should still be decided</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-rerun"> Decisions survive a re-run</label>
+        </li>
+        <li>
+          <div class="step-do">Walk the whole quarter and write down what you learned doing it.</div>
+          <p class="step-why">Why: you are now the reviewer, which is a different seat from the one
+          you've occupied for thirty-nine sub-tasks. Where did you disagree with your own system?
+          Where did you need something the page didn't show you? That's the sub-task 3 backlog.</p>
+          <div class="worksheet" id="ws-m42">
+            <div class="label">Reviewing your own system</div>
+            <p class="hint">Decide all nine findings before answering. The answers change once
+            you've actually done it.</p>
+            <div class="field">
+              <label>My override rate, and which category the overrides clustered in
+                <span class="eg">denies ÷ decisions, and where they landed</span>
+              </label>
+              <textarea data-ws="m42-rate" rows="3" placeholder="1 of 9. It was a contractor finding where the SOW extension wasn't in the export…"></textarea>
+            </div>
+            <div class="field">
+              <label>What I needed on screen to decide, that wasn't there</label>
+              <textarea data-ws="m42-need" rows="3" placeholder="The prior review's decision on the same account. Whether a ticket exists…"></textarea>
+            </div>
+            <div class="field">
+              <label>What an override rate above 30% would tell me about the system</label>
+              <textarea data-ws="m42-signal" rows="3" placeholder="That a policy Skill is missing a clause, or that the severity thresholds are…"></textarea>
+            </div>
+            <div class="field">
+              <label>Who signs this review at a real client, and what they'd need before signing</label>
+              <textarea data-ws="m42-sign" rows="3" placeholder="The application owner, not IT. They'd need their name on it and a date…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-m42">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-m42">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m42-note"> All four answered</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My decisions vanished.</strong> Check the address bar first. Almost every
+          instance of this is <code>file://</code> versus <code>http://localhost:8000</code>, or a
+          port that changed because 8000 was busy. Different origin, different storage, no error.</p>
+          <p><strong>They vanished and the URL is the same.</strong> Private browsing, or a browser
+          set to clear site data on close. Open the console and run
+          <code>localStorage.getItem("meridian-decisions-2026-Q3")</code> &mdash; that tells you in
+          one line whether the write ever landed.</p>
+          <p><strong>All my buttons decide the last row.</strong> A loop variable captured by
+          reference. The <code>forEach</code> callback in the snippet gives each iteration its own
+          scope; a <code>for (var i&hellip;)</code> loop does not.</p>
+          <p><strong>The key collides on two findings.</strong> Same account, same app, same
+          category, different entitlement &mdash; and one of the entitlements is <code>null</code>.
+          Include <code>scope</code> in the key, which is what distinguishes the account-scoped from
+          the application-scoped row.</p>
+          <p><strong>Should defer count as decided?</strong> Yes. It's a conclusion with a follow-up
+          attached, and treating it as undecided means your reviewer can never reach zero. Give it
+          its own colour and export it as its own verdict.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>Every row has approve / deny / defer, and denying without a reason is refused</li>
+        <li>Each stored decision carries <strong>both</strong> the human verdict and the model's
+            recommendation as it stood at decision time</li>
+        <li>The storage key is derived from the finding's content, not its position</li>
+        <li>Decisions survive a reload <em>and</em> a pipeline re-run</li>
+        <li>Every decision carries a reviewer name and a timestamp</li>
+        <li>A counter shows how many findings are left</li>
+      </ul>
+      <p style="margin-top:14px">A reviewer can now walk a quarter and record what they concluded.
+      It's still trapped in one browser on one laptop &mdash; that's next.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li>Every sub-task page in this course &mdash; including this one &mdash; uses the same
+        <code>localStorage</code> pattern for its checkboxes and worksheets. Open your browser's
+        dev tools, look at <code>Application &rarr; Local Storage</code>, and read the entries
+        under <code>cca-v2-</code>. Same design, same limits.</li>
+        <li>Compare your override rate against the hand-labelled agreement number from sub-task 31.
+        They're measuring closely related things from different directions, and a large gap between
+        them is worth understanding.</li>
+        <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">MDN on
+        localStorage</a> &mdash; particularly the quota and the synchronous-blocking note, both of
+        which matter the moment a quarter has a thousand findings rather than nine.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="module4-01.html"><span class="arr">&larr;</span> Module 4 &middot; 1</a>
+    <a class="navbtn next" href="module4-03.html">Module 4 &middot; 3 &middot; Export the deliverable <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Elective Module 4 &middot; Reviewer UI &middot; Sub-task 2 of 4
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-module4-02-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-module4-02-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

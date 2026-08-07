@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 4 &middot; 1 &mdash; Put your findings in front of a human &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+
+  /* ---------- Elective chrome (Module 4 only) ---------- */
+  header.site { border-bottom-color: var(--task-br); }
+  .site .badge {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: #2b2107; background: #e6c14b;
+    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  }
+  .opener .kicker { color: #8a6d10; }
+  .navbtn.next { background: #8a6d10; border-color: #8a6d10; }
+  .navbtn.next:hover { background: #6f5709; border-color: #6f5709; }
+  .concept > .label { color: #8a6d10; }
+  .worksheet > .label { color: #8a6d10; }
+  .electivenote {
+    background: var(--task-bg); border: 1px solid #ece3c2;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 20px 0 0; font-size: 15px; color: #4a412a;
+  }
+  .electivenote strong { color: #6f5709; }
+  .electivenote p { margin: 0 0 8px; }
+  .electivenote p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Reviewer <em>UI</em></span>
+    <span class="badge">Elective</span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-39.html"><span class="arr">&larr;</span> Sub-task 39 &middot; Prove transfer &mdash; the course ends here</a>
+  </div>
+
+
+  <section class="opener">
+    <div class="kicker">Elective Module 4 &middot; Reviewer UI &middot; Sub-task 1 of 4</div>
+    <h1>Put your findings in front of a human</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-39.html">Sub-task 39</a>&nbsp;&mdash; you need a course-complete system and a real <code>findings.json</code></span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 45 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;elective &mdash; not a building block</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">static page</span>
+        <span class="term">fetch</span>
+        <span class="term">same-origin</span>
+        <span class="term">textContent vs innerHTML</span>
+      </div>
+      <p class="note">The first four sub-tasks of the course's only elective. Nothing here is a
+      building block &mdash; the system was finished at sub-task 39. This is about what the client
+      receives.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Your system produces a JSON array. That is exactly right as an interface
+      between programs, and exactly wrong as a thing to hand a compliance manager who has forty
+      minutes and no terminal.</p>
+      <p>Everything in this module sits <em>outside</em> the frozen contract. <code>run_review</code>
+      keeps its signature, keeps emitting schema-valid findings, and never learns that a UI exists.
+      What you build here reads its output and nothing more.</p>
+    </div>
+
+    <div class="electivenote">
+      <p><strong>Why this is optional.</strong> The six building blocks are the course. A reviewer
+      UI is not a seventh block &mdash; it's the thin, boring layer between a correct system and a
+      client who can act on it. It's optional because plenty of engagements deliver a CSV and stop
+      there.</p>
+      <p>It's here because the ones that don't are usually the ones that get renewed.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Render <code>findings.json</code> as a table a non-technical reviewer can read</li>
+        <li>Understand why a browser refuses to read your file over <code>file://</code></li>
+        <li>Handle the two finding shapes the schema allows &mdash; account-scoped and application-scoped</li>
+        <li>Render model-authored text without opening an injection hole</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>The deliverable is not the artifact your program emits. It's the one your client can act on.</h3>
+
+      <p>A finding in <code>findings.json</code> carries twelve fields. A reviewer working through a
+      quarter needs about six of them at a glance and the rest on demand. Choosing which six is a
+      judgment call about your client's job, not a formatting problem &mdash; and getting it wrong
+      is how a technically correct review becomes one nobody finishes reading.</p>
+
+      <div class="whatis">
+        <span class="tag">What a static page is, and why it's enough</span>
+        <p>One HTML file, no build step, no framework, no <code>npm install</code>. The browser
+        parses it, runs the script inside it, and that's the whole stack.</p>
+        <p>For a review artifact this is a feature rather than a compromise. It opens on a machine
+        that has never heard of your project, it still opens in three years, and there is no
+        dependency tree for a security team to audit before your client is allowed to look at their
+        own results.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">Why <code>fetch</code> fails when you double-click the file</span>
+        <p>Open <code>reviewer/index.html</code> straight from Finder and its address is
+        <code>file:///Users/&hellip;</code>. Browsers treat every <code>file://</code> document as
+        its own opaque origin, so a <code>fetch</code> for <code>../findings.json</code> is a
+        cross-origin request and gets blocked. The console says CORS; the cause is that there is no
+        origin to be same as.</p>
+        <p>The fix is the one the course portal already tells you about: serve the directory.
+        <code>python -m http.server 8000</code> from the repo root gives every file one origin, and
+        the fetch succeeds.</p>
+      </div>
+
+      <p><strong>Two finding shapes, one table.</strong> Your schema allows
+      <code>scope: "account"</code> &mdash; a specific person holding a specific entitlement &mdash;
+      and <code>scope: "application"</code>, where <code>account_id</code>,
+      <code>employee_id</code> and <code>entitlement</code> are all <code>null</code> by
+      construction. A coverage gap is a fact about an application, not about anyone in particular.
+      A renderer that assumes every row has an account prints <code>null</code> across a column and
+      quietly teaches your reviewer to distrust the table.</p>
+
+      <div class="whatis">
+        <span class="tag"><code>textContent</code>, never <code>innerHTML</code></span>
+        <p>The <code>rationale</code> field is model-authored prose derived from client data. Client
+        data is exactly the surface sub-task 28 had you defend: text that arrives from somewhere
+        else and would very much like to be interpreted.</p>
+        <p><code>el.innerHTML = f.rationale</code> parses that prose as markup.
+        <code>el.textContent = f.rationale</code> displays it. There is no case in this module where
+        the first is the right call, and the habit is worth more than the specific bug it
+        prevents.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Serve the repo and load the file</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Produce a fresh <code>findings.json</code> and look at its shape.</div>
+          <p class="step-why">Why: build the UI against the real thing. Nine findings for Q3, and
+          you want to see at least one <code>null</code> <code>account_id</code> before you write
+          the renderer rather than after.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json
+python -c "import json;d=json.load(open('findings.json'));print(len(d));print(sorted({f['scope'] for f in d}))"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m41-json"> Findings on disk; scopes known</label>
+        </li>
+        <li>
+          <div class="step-do">Make a <code>reviewer/</code> directory with an empty
+          <code>index.html</code>, and serve the repo root.</div>
+          <p class="step-why">Why: serving from the <em>root</em> rather than from
+          <code>reviewer/</code> is what puts the page and <code>findings.json</code> on the same
+          origin. Serve the subdirectory and you're back to a cross-origin fetch for a file one
+          level up.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>mkdir -p reviewer
+python -m http.server 8000          # from the repo root
+# then open http://localhost:8000/reviewer/</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m41-serve"> Page loads at <code>localhost:8000/reviewer/</code></label>
+        </li>
+        <li>
+          <div class="step-do">Add <code>reviewer/</code> to <code>.gitignore</code>, or don't
+          &mdash; decide deliberately.</div>
+          <p class="step-why">Why: this is a deliverable, so it probably belongs in the repo.
+          <code>findings.json</code> is a run output and probably doesn't. Whatever you choose,
+          choose it now, because "the reviewer UI works but only on my laptop" is a discovery best
+          made before a client call.</p>
+          <label class="done"><input type="checkbox" data-task="m41-git"> Decided what's committed</label>
+        </li>
+      </ol>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Render the table</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Fetch the findings and fail loudly if you can't.</div>
+          <p class="step-why">Why: <code>fetch</code> only rejects on network failure &mdash; a 404
+          resolves happily with <code>ok: false</code>, and calling <code>.json()</code> on it
+          throws something unhelpful about unexpected tokens. Check <code>r.ok</code> and put the
+          real reason on the page, where the person who needs it will see it.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>fetch("../findings.json")
+  .then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status + " for findings.json");
+    return r.json();
+  })
+  .then(render)
+  .catch(function (e) {
+    document.getElementById("status").textContent =
+      "Could not load findings.json — " + e.message;
+  });</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m41-fetch"> Fetch works; a bad path shows a readable error</label>
+        </li>
+        <li>
+          <div class="step-do">Build one row per finding, most severe first.</div>
+          <p class="step-why">Why: seven columns, every cell set with <code>textContent</code>, and
+          <code>null</code> rendered as an em dash rather than the word "null". Severity is an enum,
+          not a sortable string &mdash; <code>"critical" &lt; "high"</code> is alphabetically false
+          and exactly backwards, so rank it explicitly.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>var RANK = { critical: 0, high: 1, medium: 2, low: 3 };
+
+function render(findings) {
+  findings.sort(function (a, b) { return RANK[a.severity] - RANK[b.severity]; });
+
+  var body = document.querySelector("#findings tbody");
+  findings.forEach(function (f) {
+    var tr = document.createElement("tr");
+    [
+      f.account_id || "—",                          // null on application-scoped rows
+      f.app,
+      f.entitlement || "—",
+      f.category,
+      f.severity,
+      f.recommendation,
+      (f.policy_citations || []).join(", ") || "—"
+    ].forEach(function (value) {
+      var td = document.createElement("td");
+      td.textContent = value;                       // never innerHTML
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+  document.getElementById("status").textContent =
+    findings.length + " findings · 2026-Q3";
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m41-table"> Nine rows, sorted, no stray <code>null</code></label>
+        </li>
+        <li>
+          <div class="step-do">Put the rationale and evidence behind a disclosure, not in a
+          column.</div>
+          <p class="step-why">Why: rationale is a paragraph and evidence is a list of
+          source/detail pairs. Both are what a reviewer reads to <em>decide</em>, and neither
+          survives being a table cell. A <code>&lt;details&gt;</code> in a full-width row underneath
+          each finding costs you four lines and keeps the table scannable.</p>
+          <div class="code labeled">
+            <span class="kind">reviewer/index.html &mdash; script</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>function detailRow(f, columns) {
+  var tr = document.createElement("tr");
+  var td = document.createElement("td");
+  td.colSpan = columns;
+
+  var d = document.createElement("details");
+  var s = document.createElement("summary");
+  s.textContent = "Why — confidence " + f.confidence;
+  d.appendChild(s);
+
+  var p = document.createElement("p");
+  p.textContent = f.rationale;
+  d.appendChild(p);
+
+  var ul = document.createElement("ul");
+  (f.evidence || []).forEach(function (e) {
+    var li = document.createElement("li");
+    li.textContent = e.source + " — " + e.detail;
+    ul.appendChild(li);
+  });
+  d.appendChild(ul);
+
+  td.appendChild(d);
+  tr.appendChild(td);
+  return tr;
+}</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m41-detail"> Rationale and evidence readable per finding</label>
+        </li>
+        <li>
+          <div class="step-do">Style it badly on purpose, then stop.</div>
+          <p class="step-why">Why: a bordered table, a readable font, severity in colour, and
+          nothing else. The next two sub-tasks add behaviour, and behaviour is where the remaining
+          time should go. A reviewer UI that looks polished and can't record a decision is worse
+          than an ugly one that can.</p>
+          <label class="done"><input type="checkbox" data-task="m41-style"> Legible; not gold-plated</label>
+        </li>
+        <li>
+          <div class="step-do">Show it to someone who hasn't taken this course.</div>
+          <p class="step-why">Why: you know what <code>sod_conflict</code> means and what
+          <code>ACC-4.2</code> refers to. Your client does not. Watch where they hesitate &mdash;
+          that hesitation is the copy you have to write, and it's cheaper to find now than in a
+          readout.</p>
+          <div class="worksheet" id="ws-m41">
+            <div class="label">What the reviewer actually needs</div>
+            <p class="hint">Answer from your sub-task 1 worksheet &mdash; the access-review headache
+            you named before any of this existed.</p>
+            <div class="field">
+              <label>The six fields a reviewer needs at a glance, and the one you cut
+                <span class="eg">and why that one is safe to hide</span>
+              </label>
+              <textarea data-ws="m41-fields" rows="4" placeholder="Account, app, entitlement, category, severity, recommendation. I cut confidence because…"></textarea>
+            </div>
+            <div class="field">
+              <label>Where a non-technical reader hesitated</label>
+              <textarea data-ws="m41-hesitate" rows="3" placeholder="They didn't know whether 'revoke' was already done or a request…"></textarea>
+            </div>
+            <div class="field">
+              <label>What the table is still missing before it could go to a client</label>
+              <textarea data-ws="m41-missing" rows="3" placeholder="No way to say 'I disagree'. No quarter stamp. No count of what's left…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-m41">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-m41">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="m41-note"> All three answered</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The console says CORS and I'm confused, because it's my own file.</strong>
+          That's the <code>file://</code> opaque-origin rule. You're not double-clicking the HTML
+          file &mdash; you're opening <code>http://localhost:8000/reviewer/</code> with
+          <code>python -m http.server 8000</code> running <em>from the repo root</em>. Check the
+          address bar; it's almost always still showing a path starting with
+          <code>file:///</code>.</p>
+          <p><strong>404 on <code>../findings.json</code>.</strong> The server is rooted where you
+          started it. Started in <code>reviewer/</code>, the parent directory is outside the served
+          tree and can't be reached at all. Restart it from the repo root.</p>
+          <p><strong>A column is full of <code>null</code>.</strong> Application-scoped findings
+          have no account, employee or entitlement &mdash; that's the schema, not a bug in your
+          pipeline. <code>f.account_id || "&mdash;"</code> handles it.</p>
+          <p><strong>Sorting puts critical last.</strong> You're comparing the strings. Map the enum
+          to a rank first; there is no ordering in the JSON to lean on.</p>
+          <p><strong>The page is blank and the console is clean.</strong> Your script ran before the
+          table existed. Put the <code>&lt;script&gt;</code> at the end of <code>&lt;body&gt;</code>
+          &mdash; the same reason every page in this course does.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>A single <code>reviewer/index.html</code> with no dependencies renders every finding
+            in <code>findings.json</code></li>
+        <li>Rows are sorted by severity and both scopes render without stray <code>null</code></li>
+        <li>Rationale and evidence are reachable per finding without leaving the page</li>
+        <li>A bad path produces a readable error rather than a blank screen</li>
+        <li>Every cell is set with <code>textContent</code></li>
+      </ul>
+      <p style="margin-top:14px">Your findings are visible. Nobody can do anything with them
+      yet &mdash; that's next.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS">MDN on CORS</a> &mdash;
+        specifically the section on opaque origins, which is the part that explains
+        <code>file://</code> rather than the part everyone reads about servers.</li>
+        <li>Open <code>index.html</code> at the root of this repo and read its
+        <code>server-note</code> block. The course portal solves the exact problem you just hit, and
+        says so in one paragraph aimed at students &mdash; a decent model for the note you'll write
+        for your client.</li>
+        <li>Render <code>findings.2026-Q4.json</code> in the same page by changing one string. If
+        anything breaks, the UI memorized a quarter &mdash; Theme I applies to the presentation
+        layer too.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-39.html"><span class="arr">&larr;</span> Sub-task 39</a>
+    <a class="navbtn next" href="module4-02.html">Module 4 &middot; 2 &middot; Approve, deny, defer <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Elective Module 4 &middot; Reviewer UI &middot; Sub-task 1 of 4
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-module4-01-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-module4-01-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
