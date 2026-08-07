@@ -15,20 +15,21 @@ agentic user-access-review system for Meridian Regional Energy.
 macOS/Linux: use `scripts/bootstrap.sh` (secondary; Windows is supported).
 
 ## Start here
-Open `index.html` — a browsable portal that links to all five days and lets you
+Open `index.html` — a browsable portal that links all 39 sub-tasks and lets you
 explore Meridian's world (policies, roster, entitlements, tickets, and a user
 lookup). It works by double-clicking; for the two large tables, serve it with
 `python -m http.server 8000` and open http://localhost:8000/index.html.
 
 ## What's here
 - `index.html` — the course portal + world-data browser (above).
+- `course/v2/` — the 39 sub-tasks, plus optional pre-work and skill survey.
 - `data/2026-Q3/` — the access data + reference files you review.
 - `src/meridian_capstone/contract/` — the frozen `run_review` contract and the findings JSON Schema.
 - `src/meridian_capstone/mcp_server/server.py` — Meridian's systems as a read-only MCP server.
 - `examples/sample_findings.json` — a valid finding, for shape reference.
 
 ## What you do
-Implement `run_review` across Modules 1–6, run it to produce `findings.json`
+Implement `run_review` across the 39 sub-tasks, run it to produce `findings.json`
 (`python -m meridian_capstone.contract.run_review data/2026-Q3 > findings.json`), and submit that
 for grading. You will not receive an answer key — your submitted output is graded.
 

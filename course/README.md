@@ -1,29 +1,31 @@
 # Course
 
-These are the day-by-day student HTML files — one self-contained file per bootcamp day
-of the Claude Certified Architect course. Each file works offline (inline CSS/JS, no build
-step, no server): open it directly in a browser.
+The student-facing HTML for Claude Certified Architect. Every file here is
+self-contained (inline CSS/JS, no build step, no server) — open it directly in a
+browser. The entry point is `index.html` at the repo root, not this directory.
 
 ## Files
 
-- `day-1.html` — Day 1, Module 0: Setup — foundations, dev environment, Claude Code, the Meridian kit *(prototype skeleton — placeholder content)*
-- `day-2.html` — Day 2, Module 1: The Ledger *(prototype skeleton — placeholder content)*
-- `day-3.html` — Day 3, Module 2: Policies as Skills *(prototype skeleton — placeholder content)*
-- `day-4.html` — Day 4, Module 3: Subagent decomposition *(prototype skeleton — placeholder content)*
-- `day-5.html` — Day 5, Module 6: Generalization *(prototype skeleton — placeholder content)*
+- `v2/subtask-01.html` … `v2/subtask-39.html` — the 39 linear sub-tasks, in order.
+  Each states an outcome you can check before moving on.
+- `pre-work.html` — optional pre-course setup: toolchain, API key, kit running green.
+- `skill-survey.html` — optional pre-course readiness survey.
 
-## The week at a glance
+## The nine themes
 
-The course runs Meridian Life Sciences as the client all week, then proves transfer to a
-second company (Northwind Biotech) on Day 5.
+The sub-tasks run in one straight line; the themes are signposts, not gates.
 
-1. **Day 1 — Setup** *(8 hours, 5 cycles)*: install and verify the toolchain (git, Python,
-   Claude Code), store an API key safely, and clone + smoke-test the `meridian-capstone` kit.
-2. **Day 2 — The Ledger** *(6 hours, 3 cycles)*: reconcile fragmented HR/AD/entitlement data
-   into one trustworthy record and generate a first automated finding.
-3. **Day 3 — Skills** *(6 hours, 4 cycles)*: turn Meridian's compliance policies into Skills
-   so findings cite the exact policy clause they came from.
-4. **Day 4 — Subagents** *(6 hours, 4 cycles)*: decompose the pipeline into an orchestrator
-   plus specialists over MCP, and run it end-to-end against Q3.
-5. **Day 5 — Transfer** *(6 hours, 4 cycles)*: generalize the system and prove it runs against
-   a brand-new client without code changes.
+| | Theme | Sub-tasks | Time |
+|---|---|---|---|
+| A | Foundations | 1–7 | ~6.75 h |
+| B | Reconciliation is code | 8–12 | ~5.5 h |
+| C | First agent | 13–15 | ~2.25 h |
+| D | Skills | 16–19 | ~4.75 h |
+| E | Tools | 20–22 | ~2.75 h |
+| F | Subagents | 23–25 | ~4.25 h |
+| G | Hooks + injection defense | 26–28 | ~2.75 h |
+| H | Evals, HITL & tiering | 29–36 | ~8.75 h |
+| I | Generalization | 37–39 | ~4 h |
+
+Total: ~42 hours. The six building blocks complete at sub-tasks 7 (Rules), 17
+(Skills), 20 (Tools), 23 (Subagents), 26 (Hooks) and 39 (Generalization).
