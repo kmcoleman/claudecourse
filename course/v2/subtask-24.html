@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 24 &mdash; Stand up the orchestrator and give exactly one agent the pen &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>24</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-23.html"><span class="arr">&larr;</span> Sub-task 23 &middot; One specialist that can't write</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme F &middot; Subagents &middot; Sub-task 2 of 3</div>
+    <h1>Stand up the orchestrator and give exactly one agent the pen</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-23.html">Sub-task 23</a>&nbsp;&mdash; you need a working restricted subagent</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;subagents &middot; orchestrator-workers</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">orchestrator</span>
+        <span class="term">fan-out</span>
+        <span class="term">single writer</span>
+      </div>
+      <p class="note">Three agent files, one of which holds Write. That asymmetry is the safety property.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">You have one specialist. Two more complete the pipeline: something that
+      applies policy to the facts, and something that writes the result.</p>
+      <p>The interesting decision is not how to split the work &mdash; gather, judge, record is
+      fairly obvious once you see it. It is what happens to the tool lists when you do. Two of the
+      three components need no ability to change anything at all, and the third needs it for exactly
+      one file.</p>
+      <p>That is not a rule you enforce by discipline. It's a property of how the files are
+      written, and it stays true whether or not anyone is watching.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain the orchestrator-workers pattern and why it fits this problem</li>
+        <li>Author <code>policy-applier</code> (read-only) and <code>findings-writer</code> (the only writer)</li>
+        <li>Orchestrate all three end to end on a handful of accounts</li>
+        <li>Write the decomposition rationale you'd defend in a design review</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>If only one component can write, only one component can corrupt the output.</h3>
+
+      <p>Orchestrator-workers is a plain pattern: a coordinator decomposes the task, delegates
+      pieces to specialists, and assembles what comes back. The coordinator holds the plan; the
+      workers hold the context for their own piece and nothing else.</p>
+
+      <div class="whatis">
+        <span class="tag">The three roles</span>
+        <p><strong><code>ledger-reader</code></strong> &mdash; MCP lookups plus <code>Read</code>.
+        Answers "what is true about this account?" Read-only. Built in sub-task 23.</p>
+        <p><strong><code>policy-applier</code></strong> &mdash; <code>Read</code>, so it can load
+        the Skills. Answers "given these facts, what does policy say?" Read-only.</p>
+        <p><strong><code>findings-writer</code></strong> &mdash; <code>Write</code> and
+        <code>Edit</code>. Turns adjudications into schema-valid records on disk.
+        <strong>The only component in the system that can change anything.</strong></p>
+      </div>
+
+      <p><strong>Single-writer is a structural property, not a convention.</strong> The distinction
+      matters because conventions decay. A convention says "we agreed the reader shouldn't write";
+      it holds until someone adds a tool for a good reason on a Tuesday. A structural property says
+      the reader has no write capability, and if you want to break it you have to edit a
+      frontmatter line and commit it, where a reviewer sees it.</p>
+
+      <p>Three concrete things you get from it. <strong>Auditability</strong>: exactly one
+      component's actions need logging to reconstruct what changed &mdash; which is what makes
+      sub-task 27's audit trail a small file rather than a firehose. <strong>Attribution</strong>:
+      a malformed <code>findings.json</code> came from <code>findings-writer</code>, full stop; you
+      don't investigate three components. <strong>Injection containment</strong>: sub-task 28 puts
+      hostile text into a ticket description, and the component that reads it is the one that
+      cannot write.</p>
+
+      <div class="whatis">
+        <span class="tag">Fan-out, and why not yet</span>
+        <p>Each account is independent. Nothing about A000012's adjudication depends on A001185's,
+        which means they can run concurrently &mdash; a fan-out. The orchestrator dispatches many,
+        collects results, writes once.</p>
+        <p>Get it correct on a handful first. Concurrency turns a deterministic bug into an
+        intermittent one, and debugging an intermittent bug across three agents is a bad way to
+        spend an afternoon. Sub-task 25 scales it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>The two remaining specialists</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Author <code>.claude/agents/policy-applier.md</code>, read-only.</div>
+          <p class="step-why">Why: it takes an account picture and returns an adjudication &mdash;
+          finding, exemption, or nothing &mdash; with the clause cited. It needs <code>Read</code>
+          so the Skills load. It does not need MCP: <code>ledger-reader</code> already gathered the
+          facts, and letting this one go back to the source blurs the split you just made.</p>
+          <p class="step-why">Its body should say which policies apply here, that citations must be
+          real, and &mdash; this is the one people forget &mdash; that <strong>"exempt" and "no
+          finding" are results it must return explicitly</strong>. Silence is not an output. That
+          was sub-task 17's lesson, and it belongs in this file.</p>
+          <label class="done"><input type="checkbox" data-task="s24-policy"> <code>policy-applier</code> authored, read-only</label>
+        </li>
+        <li>
+          <div class="step-do">Author <code>.claude/agents/findings-writer.md</code> &mdash; the
+          only writer.</div>
+          <p class="step-why">Why: it takes adjudications and produces <code>findings.json</code>
+          and <code>exemptions.json</code>. It needs <code>Write</code>, plausibly
+          <code>Edit</code>, and <code>Read</code> so it can validate against the schema. It needs
+          nothing else, and it must not have MCP &mdash; a writer that can also go and look things
+          up is a writer that can decide things, and then you have two components forming
+          judgments.</p>
+          <p class="step-why">Its body should state the contract: twelve required fields,
+          <code>additionalProperties</code> false, exemptions to the sidecar file, and validation
+          before writing. Say the paths explicitly. It cannot enforce them &mdash; that's sub-task
+          26 &mdash; but stating them is what makes a violation detectable.</p>
+          <label class="done"><input type="checkbox" data-task="s24-writer"> <code>findings-writer</code> authored, the only agent with Write</label>
+        </li>
+        <li>
+          <div class="step-do">Verify the tool lists across all three.</div>
+          <p class="step-why">Why: read the three frontmatter blocks side by side and check the
+          asymmetry is real. Exactly one <code>Write</code> in the whole set. No <code>Bash</code>
+          anywhere &mdash; <code>Bash</code> in any of them silently grants all three the ability to
+          write. And no <code>tools:</code> field missing, because a missing field inherits
+          everything.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>grep -A1 "^tools:" .claude/agents/*.md
+grep -l "Bash" .claude/agents/*.md      # should print nothing</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s24-verify"> One writer, no Bash, no missing tools field</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>Shouldn't policy-applier get MCP so it can check something?</strong> Tempting,
+          and it's the decision most people revisit. If it needs a fact it didn't get, the right fix
+          is usually that <code>ledger-reader</code> should have gathered it &mdash; which is a
+          fixable, testable problem. Granting MCP here trades a clean boundary for a convenience,
+          and you'll want the boundary back in sub-task 28.</p>
+          <p><strong>Why three and not two?</strong> Because gathering and judging fail differently.
+          A gathering failure is a missing fact; a judgment failure is a wrong conclusion from
+          complete facts. Splitting them means a bad finding tells you which half to look at. Two
+          components would work; three make failures attributable.</p>
+          <p><strong>Can the orchestrator write directly?</strong> It could, and it would collapse
+          the property you just built. If the orchestrator holds <code>Write</code> then the number
+          of components that can corrupt the output is two, and the audit story gets more
+          complicated for no gain.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Orchestrate</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Wire the three together and run five accounts end to end.</div>
+          <p class="step-why">Why: the orchestrator's job is to take the candidate set, delegate
+          each account through gather &rarr; adjudicate, collect the results, and hand the batch to
+          the writer once. Start with five accounts you know the answer to &mdash;
+          <strong>A000012</strong>, <strong>A000384</strong>, <strong>A001115</strong>,
+          <strong>A000387</strong> and <strong>A001185</strong> give you a dormant admin, two SoD
+          cases, an exempt Controller and a contractor overstay.</p>
+          <div class="code labeled">
+            <span class="kind">expected on those five</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>A000012  dormant_privileged   finding    Privileged Access Standard
+A000384  sod_conflict         finding    ACP-4.1
+A001115  sod_conflict         finding    ACP-4.1
+A000387  &mdash;                    EXEMPT     ACP-4.2
+A001185  contractor_overstay  finding    Contractor Access Standard</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s24-five"> 4 findings, 1 exemption, all cited</label>
+        </li>
+        <li>
+          <div class="step-do">Check the handoffs, not just the output.</div>
+          <p class="step-why">Why: the output being right doesn't mean the decomposition is
+          working. Confirm that <code>ledger-reader</code> returned facts and no verdict, that
+          <code>policy-applier</code> reasoned from those facts rather than going back to the
+          source, and that <code>findings-writer</code> wrote what it was handed rather than
+          re-deciding anything. A writer that improves a rationale on the way past is a fourth
+          judgment step you didn't design.</p>
+          <label class="done"><input type="checkbox" data-task="s24-handoff"> Each component stayed in its lane</label>
+        </li>
+        <li>
+          <div class="step-do">Wire it into <code>run_review()</code> without touching the
+          signature.</div>
+          <p class="step-why">Why: the contract has been frozen since sub-task 12 and this is the
+          moment it earns its keep. The function still takes <code>export_dir</code> and
+          <code>limit</code> and still returns a list of dicts. What changed underneath is the
+          entire architecture, and the grader neither knows nor cares.</p>
+          <p class="step-why">Make <code>limit</code> real now if it isn't &mdash; it caps how many
+          candidates reach the agent layer, and sub-task 25 depends on it working.</p>
+          <label class="done"><input type="checkbox" data-task="s24-contract"> <code>run_review()</code> drives the pipeline, signature unchanged</label>
+        </li>
+        <li>
+          <div class="step-do">Write the decomposition rationale.</div>
+          <p class="step-why">Why: this is the artifact a client's architect asks for, and "we
+          split it into three agents" is not an answer. The answer explains what each boundary buys
+          and what it costs.</p>
+          <div class="worksheet" id="ws-decomp">
+            <div class="label">Decomposition rationale</div>
+            <p class="hint">Write it as if for a design review where someone will push back on
+            every boundary.</p>
+            <div class="field">
+              <label>What each component is responsible for, in one line each</label>
+              <textarea data-ws="f24-roles" rows="3" placeholder="ledger-reader: … policy-applier: … findings-writer: …"></textarea>
+            </div>
+            <div class="field">
+              <label>What single-writer buys me &mdash; three concrete things</label>
+              <textarea data-ws="f24-writer" rows="3" placeholder="Auditability: … Attribution: … Injection containment: …"></textarea>
+            </div>
+            <div class="field">
+              <label>The cost of this split, honestly</label>
+              <textarea data-ws="f24-cost" rows="3" placeholder="More model calls per account, handoff serialization loss, more files to maintain…"></textarea>
+            </div>
+            <div class="field">
+              <label>What I'd merge if I had to cut to two, and what I'd lose</label>
+              <textarea data-ws="f24-merge" rows="3" placeholder="I'd merge … because … and I'd lose the ability to tell whether a bad finding was a gathering or a judgment failure"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-decomp">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-decomp">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s24-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Commit all three agent files.</div>
+          <p class="step-why">The tool lists are the security control. They belong in review.</p>
+          <label class="done"><input type="checkbox" data-task="s24-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The orchestrator does the work itself instead of delegating.</strong> Usually
+          the descriptions. If they don't clearly signal what each specialist is for, the
+          orchestrator concludes it's faster to do it directly &mdash; which it often is, for one
+          account. Make the descriptions concrete about the input and output of each.</p>
+          <p><strong>The findings are worse than the single agent's.</strong> Look at the handoff.
+          The most common cause is <code>ledger-reader</code> summarising instead of reporting, so
+          <code>policy-applier</code> adjudicates from a lossy digest. Have the reader return the
+          facts, not its impression of them.</p>
+          <p><strong>Where does the orchestrator live?</strong> Your call. A Claude Code session
+          delegating via the agent files, or code that drives them explicitly. Code gives you
+          deterministic control flow and easier cost accounting, and sub-task 25 is easier if you
+          have it.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>Three agent files, and <code>grep</code> confirms exactly one holds <code>Write</code></li>
+        <li>No <code>Bash</code> anywhere, and no agent silently inheriting the full tool set</li>
+        <li>Five known accounts adjudicated correctly end to end &mdash; 4 findings, 1 exemption</li>
+        <li><code>run_review()</code> driving the pipeline with its signature untouched, and
+            <code>limit</code> actually capping</li>
+        <li>A decomposition rationale that states the cost as well as the benefit</li>
+      </ul>
+      <p style="margin-top:14px">The architecture is complete. What remains is to run it at full
+      scale and find out what that costs.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://www.anthropic.com/engineering/building-effective-agents">Building
+        effective agents</a> &mdash; orchestrator-workers is one of the named patterns, alongside
+        routing and evaluator-optimizer. The evaluator-optimizer shape is worth remembering; it's
+        what sub-task 33 is.</li>
+        <li>Ask an agent with no <code>tools:</code> restriction to list its tools, then ask
+        <code>findings-writer</code> the same. The difference is the security control, and seeing
+        it stated by the agents themselves makes it concrete.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-23.html"><span class="arr">&larr;</span> Sub-task 23</a>
+    <a class="navbtn next" href="subtask-25.html">Sub-task 25 &middot; Fan out across the full quarter <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme F &middot; Sub-task 2 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask24-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask24-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

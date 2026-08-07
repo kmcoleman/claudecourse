@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 23 &mdash; Build one specialist that can't write anything &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>23</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-22.html"><span class="arr">&larr;</span> Sub-task 22 &middot; Let the agent look things up</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme F &middot; Subagents &middot; Sub-task 1 of 3</div>
+    <h1>Build one specialist that can't write anything</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-22.html">Sub-task 22</a>&nbsp;&mdash; you need the MCP tools and your blast-radius table</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 75 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;building block #4</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">Subagents</span>
+        <span class="term">context isolation</span>
+        <span class="term">tool restriction</span>
+        <span class="term"><code>tools:</code></span>
+      </div>
+      <p class="note">Building block four of six. The deliverable is a refusal &mdash; on purpose.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">One agent has been doing everything: gathering facts, reading policy,
+      forming a verdict, producing structured output. It works on one account. It will not survive
+      166.</p>
+      <p>The reason is context. Every fact gathered, every tool result, every policy quotation
+      accumulates in one conversation, and by account forty the model is reasoning about a
+      contractor's SOW while carrying thirty-nine previous accounts' worth of irrelevant Vault
+      grants. Quality degrades, cost climbs, and the failures are hard to attribute.</p>
+      <p>Subagents fix that, and they bring a second property that is arguably more valuable: each
+      one gets its own tool list.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain what a subagent is and where it lives on disk</li>
+        <li>Author <code>ledger-reader</code> with MCP and Read and nothing else</li>
+        <li>Prove it refuses to write &mdash; and understand exactly what enforced that</li>
+        <li>Say what tool restriction does and does not protect you from</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>A subagent is a specialist with its own context and its own tool list.</h3>
+
+      <p>A subagent is a Markdown file. Frontmatter declares its name, a description that governs
+      when it gets delegated to, and optionally a restricted tool list. Everything after the
+      frontmatter is its system prompt.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a subagent?</span>
+        <p style="font-family:var(--mono);font-size:14px;margin:8px 0">.claude/agents/ledger-reader.md</p>
+        <p><strong>Context isolation.</strong> It runs in its own conversation. What it reads
+        doesn't accumulate in the parent's context; what comes back is its result, not its
+        transcript. That is what makes 166 accounts tractable.</p>
+        <p><strong>Tool restriction.</strong> A <code>tools:</code> field lists what it may use.
+        <strong>Omitting the field inherits everything</strong> &mdash; every built-in tool and
+        every MCP server you have configured. Restriction is opt-in, so the default is an agent
+        with your full blast radius.</p>
+        <p><strong>Description drives delegation.</strong> Same as Skills: that line is what the
+        orchestrator reads when deciding whether this specialist is the right one. Write it in the
+        third person and say when to use it.</p>
+      </div>
+
+      <p><strong>The watcher quirk, one last time.</strong> Creating the top-level
+      <code>.claude/agents/</code> directory mid-session means the first agent file isn't
+      discovered until you restart. You have now hit this with Skills and MCP config; create the
+      directory before you need it.</p>
+
+      <p><strong>Why <code>ledger-reader</code> first.</strong> It is the component with the
+      clearest possible answer to "what does it need?" Its job is to answer questions about one
+      account by consulting Meridian's systems. It needs the MCP lookups. It needs
+      <code>Read</code> for your own reconciled artifacts. It needs nothing else, and every extra
+      tool is pure added blast radius on a component whose entire purpose is observation.</p>
+
+      <div class="whatis">
+        <span class="tag">What tool restriction actually enforces</span>
+        <p>It is a real, harness-level constraint, not an instruction the model is asked to
+        respect. The tool simply isn't in the list the model sees, so there is nothing to call. The
+        model can want to write; there is no mechanism by which it can.</p>
+        <p>Which makes it worth being exact about the limit. Restriction controls <strong>which
+        capabilities</strong>, never <strong>which arguments</strong>. An agent with
+        <code>Write</code> can write anywhere. That gap is what building block five closes, and
+        you found it yourself in sub-task 20.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Author the specialist</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Create <code>.claude/agents/</code> and restart before writing
+          anything into it.</div>
+          <p class="step-why">Why: the watcher. Do it first and the rest of this sub-task is
+          uneventful.</p>
+          <label class="done"><input type="checkbox" data-task="s23-mkdir"> Directory created, session restarted</label>
+        </li>
+        <li>
+          <div class="step-do">Write <code>ledger-reader.md</code> with frontmatter and a restricted
+          tool list.</div>
+          <p class="step-why">Why: the <code>tools:</code> line is the point of the exercise. List
+          the seven <code>meridian-systems</code> tools and <code>Read</code>. Nothing else &mdash;
+          no <code>Write</code>, no <code>Edit</code>, and specifically no <code>Bash</code>, which
+          would silently restore every capability you just removed.</p>
+          <div class="code labeled">
+            <span class="kind">shape &mdash; write your own description and body</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>---
+name: ledger-reader
+description: &lt;what it gathers, and when the orchestrator should use it&gt;
+tools: Read, mcp__meridian-systems__get_account, &hellip;
+---
+
+&lt;system prompt: what a complete account picture contains,
+ and that it reports facts rather than verdicts&gt;</pre>
+          </div>
+          <p class="step-why">Check the exact MCP tool names against what your session reports
+          &mdash; the naming convention is stable but the server name is yours. A typo here doesn't
+          error; it silently removes the tool.</p>
+          <label class="done"><input type="checkbox" data-task="s23-file"> Agent file created with a restricted tools list</label>
+        </li>
+        <li>
+          <div class="step-do">Write the body so it gathers facts and stops.</div>
+          <p class="step-why">Why: the division of labour only holds if each specialist stays in
+          its lane. This one assembles the picture &mdash; grants, person, tickets, prior review,
+          application metadata &mdash; and reports it. It does not decide whether anything is a
+          finding; that's <code>policy-applier</code>'s job in sub-task 24, and it has the Skills
+          for it.</p>
+          <p class="step-why">Two things worth putting in the body. State the facts a complete
+          picture contains, so the output is consistent enough for the next stage to rely on. And
+          tell it to report absence explicitly &mdash; "no approving ticket" rather than silence
+          &mdash; because a missing fact and an absent fact read very differently downstream, and
+          "no ticket" is half of the Privileged Access Standard's test.</p>
+          <label class="done"><input type="checkbox" data-task="s23-body"> Body scoped to gathering, absences reported explicitly</label>
+        </li>
+        <li>
+          <div class="step-do">Delegate a real account to it and check the output.</div>
+          <p class="step-why">Why: run it on <strong>A000012</strong> and compare against the seven
+          responses you collected by hand in sub-task 21. It should find the same things &mdash; 13
+          grants including Vault/Admin, no tickets, five prior reviews none of which is Vault,
+          Vault as crown-tier with Admin privileged, and <code>gabriel.villa</code> not a registered
+          service account.</p>
+          <label class="done"><input type="checkbox" data-task="s23-run"> Output matches the hand-collected facts</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The agent isn't discovered.</strong> Restart. Then check the file is directly
+          in <code>.claude/agents/</code> with a <code>.md</code> extension and valid frontmatter
+          &mdash; a malformed YAML block makes the file unparseable and it's skipped.</p>
+          <p><strong>It says it doesn't have a tool it needs.</strong> Name mismatch in
+          <code>tools:</code>. Have your session list the exact MCP tool names and copy them.</p>
+          <p><strong>It returned a verdict instead of facts.</strong> The body isn't scoped tightly
+          enough, or the description implies judgment. Both are worth fixing &mdash; the
+          orchestrator routes on the description, so a description that sounds like "reviews
+          accounts" will get it the wrong work.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Get it to refuse &mdash; the actual deliverable</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Ask <code>ledger-reader</code> to write its findings to a file.</div>
+          <p class="step-why">Why: an entirely reasonable-sounding request. "Look up A000012 and
+          save what you find to <code>account.json</code>." Nothing about it signals danger, which
+          is the point &mdash; you're testing whether the boundary holds against ordinary requests,
+          not adversarial ones.</p>
+          <label class="done"><input type="checkbox" data-task="s23-askwrite"> Write requested</label>
+        </li>
+        <li>
+          <div class="step-do">Capture what happens, exactly.</div>
+          <p class="step-why">Why: expect it to report that it lacks the capability, or to do the
+          lookup and hand the content back for someone else to write. What you must not see is a
+          file appearing. Check the filesystem &mdash; don't take its word for it.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>ls -la account.json    # should not exist
+git status --short     # nothing new</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s23-refuse"> No file created; refusal captured</label>
+        </li>
+        <li>
+          <div class="step-do">Be precise about what stopped it.</div>
+          <p class="step-why">Why: this distinction is the whole lesson and it is the one people
+          get wrong. It did not decline. It was not persuaded by its system prompt. There was no
+          <code>Write</code> tool in the list it was given, so there was no call it could emit. The
+          constraint is structural.</p>
+          <p class="step-why">Test the distinction directly: take a copy of the agent, delete the
+          <code>tools:</code> line entirely, and ask again. It inherits everything, including
+          <code>Write</code>, and the file appears. Same prompt, same body, same model. The only
+          difference is one line of frontmatter. Delete the copy afterwards.</p>
+          <label class="done"><input type="checkbox" data-task="s23-proof"> Unrestricted copy wrote the file; copy deleted</label>
+        </li>
+        <li>
+          <div class="step-do">Write down what this does and doesn't protect you from.</div>
+          <p class="step-why">Why: overclaiming here is how people build systems that feel safe.
+          Tool restriction is genuinely strong against the failure it addresses and completely blind
+          to the one it doesn't.</p>
+          <div class="worksheet" id="ws-restrict">
+            <div class="label">What tool restriction bought me</div>
+            <p class="hint">Sub-task 26 builds the layer that covers the gap, and sub-task 28
+            attacks both. Be honest here.</p>
+            <div class="field">
+              <label>What happened when I asked it to write, and what I verified
+                <span class="eg">it said &hellip;; I checked the filesystem and &hellip;</span>
+              </label>
+              <textarea data-ws="f23-refuse" rows="3" placeholder="It reported… ls showed… git status showed…"></textarea>
+            </div>
+            <div class="field">
+              <label>Why this is stronger than a system prompt saying &quot;do not write files&quot;</label>
+              <textarea data-ws="f23-why" rows="3" placeholder="A prompt is a request the model can be talked out of. A missing tool is…"></textarea>
+            </div>
+            <div class="field">
+              <label>What tool restriction does <em>not</em> prevent</label>
+              <textarea data-ws="f23-gap" rows="3" placeholder="An agent that does have Write can write anywhere. It also can't stop the content of a write from being…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-restrict">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-restrict">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s23-note"> All three answered</label>
+        </li>
+        <li>
+          <div class="step-do">Commit.</div>
+          <p class="step-why"><code>.claude/agents/</code> is source. Commit the agent, not the
+          unrestricted copy.</p>
+          <label class="done"><input type="checkbox" data-task="s23-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>It wrote the file anyway.</strong> Then the restriction isn't in force. Check
+          the <code>tools:</code> line parses as YAML, that you restarted, and above all that
+          <code>Bash</code> isn't in the list &mdash; <code>Bash</code> can write files, so
+          granting it while withholding <code>Write</code> restricts nothing.</p>
+          <p><strong>It refused but I can't tell why.</strong> Ask it to list the tools it has.
+          If <code>Write</code> is absent, the restriction is real. If it's present and it declined
+          anyway, you're relying on the model's judgment rather than on the harness &mdash; which
+          works until it doesn't.</p>
+          <p><strong>Isn't this over-engineering for a review that only reads data?</strong> The
+          opposite &mdash; a system that only reads is exactly where a read-only guarantee is cheap
+          to make and easy to state. The value shows up in the sentence you can say to a client:
+          <em>this component cannot modify anything, structurally, and here is the file that says
+          so.</em></p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <p><strong>Building block four exists.</strong> Specifically:</p>
+      <ul>
+        <li><code>.claude/agents/ledger-reader.md</code>, with MCP lookups and <code>Read</code>
+            and nothing else</li>
+        <li>It reproduces the facts you gathered by hand in sub-task 21</li>
+        <li>A captured refusal, with the filesystem checked rather than the agent believed</li>
+        <li>The unrestricted-copy experiment run, proving one frontmatter line was the difference</li>
+        <li>An honest note on what tool restriction does and does not cover</li>
+      </ul>
+      <p style="margin-top:14px">One specialist, minimum capability, provably unable to change
+      anything. Sub-task 24 adds two more and gives exactly one of them the pen.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://code.claude.com/docs/en/sub-agents">Subagents</a> &mdash;
+        frontmatter fields, the inheritance rule when <code>tools:</code> is omitted, and how
+        descriptions drive delegation.</li>
+        <li>Try giving <code>ledger-reader</code> a <code>model:</code> in its frontmatter and
+        pointing it at a cheaper tier. Fact-gathering is not the hard part of this system, and
+        sub-task 35 makes that argument with measurements.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-22.html"><span class="arr">&larr;</span> Sub-task 22</a>
+    <a class="navbtn next" href="subtask-24.html">Sub-task 24 &middot; The orchestrator and the single writer <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme F &middot; Sub-task 1 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask23-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask23-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>

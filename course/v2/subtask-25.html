@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 25 &mdash; Fan out across the full candidate set for a complete quarter &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>25</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-24.html"><span class="arr">&larr;</span> Sub-task 24 &middot; The orchestrator and the single writer</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme F &middot; Subagents &middot; Sub-task 3 of 3</div>
+    <h1>Fan out across the full candidate set for a complete quarter</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-24.html">Sub-task 24</a>&nbsp;&mdash; you need all three agents and a working <code>limit</code></span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 90 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;subagents &middot; scale</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">cheap iteration</span>
+        <span class="term"><code>limit=None</code></span>
+      </div>
+      <p class="note">The first complete quarter. Two runs, two very different costs, one findings file.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">Five accounts work. There are <strong>166</strong> in your candidate set,
+      covering 1,919 grants that no rule could settle.</p>
+      <p>Scaling from five to 166 is not a matter of changing a number. Iterating at full scale is
+      slow and expensive enough that you stop iterating, which is how a small bug survives twenty
+      runs. The <code>limit</code> parameter exists to prevent exactly that, and it has been in the
+      frozen contract since before you had anything to limit.</p>
+      <p>Two runs today. One small, to get it right. One complete, to find out what a quarter
+      costs.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Use <code>limit</code> as the iteration lever it was designed to be</li>
+        <li>Tune at 20 until the pipeline is stable, then run the full quarter</li>
+        <li>Produce a complete <code>findings.json</code> for 2026-Q3</li>
+        <li>Record two costs and two wall-clock times, and explain the ratio</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>The cost of iterating is a design parameter. Set it deliberately.</h3>
+
+      <p>Every debugging loop has a cycle time. Under a few seconds you experiment freely. At a
+      minute you think before running. At ten minutes and real money you stop running, start
+      reasoning about what <em>probably</em> went wrong, and ship a fix you didn't test.</p>
+
+      <p>That last state is where agentic systems go to die, and it isn't a discipline problem
+      &mdash; it's an economics problem. The fix is to make the loop cheap by construction.</p>
+
+      <div class="whatis">
+        <span class="tag"><code>limit</code>, in the contract since sub-task 12</span>
+        <p style="font-family:var(--mono);font-size:14px;margin:8px 0">run_review(export_dir: Path, limit: int | None = None) -&gt; list[dict]</p>
+        <p>It caps how many candidates reach the agent layer. At <code>limit=20</code> you get a
+        run in a fraction of the time for a fraction of the cost. Grading calls it with
+        <code>None</code>.</p>
+        <p>It was in the signature before you had an agent layer to limit. That is what a
+        well-designed contract looks like &mdash; the affordance is there before you need it.</p>
+      </div>
+
+      <p><strong>What a limited run does and doesn't tell you.</strong> It tells you the pipeline
+      runs, the handoffs work, the output validates, and roughly what a judgment costs. It does not
+      tell you the findings are complete &mdash; twenty accounts out of 166 will not contain all
+      nine findings, and a run that produces four findings at <code>limit=20</code> is not
+      evidence of anything being wrong.</p>
+
+      <p><strong>Which twenty?</strong> Genuinely a decision. The first twenty in whatever order
+      your candidate set happens to be in is easy and unrepresentative &mdash; it may contain no
+      contractors at all, and you'd never exercise that path. A stratified twenty covering each
+      finding category is more work and much more useful. Take a moment on it; a debug set that
+      doesn't cover your cases is a debug loop that lies.</p>
+
+      <div class="whatis">
+        <span class="tag">Two numbers to have before you scale</span>
+        <p>From sub-task 22 you know roughly what one account costs in a tool-use loop. From this
+        sub-task you'll know what 166 cost. The ratio should be near-linear &mdash; if it isn't,
+        something is accumulating that shouldn't be, and finding out at 166 is much better than
+        finding out at 1,200.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Iterate at twenty</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Choose your twenty deliberately.</div>
+          <p class="step-why">Why: you want at least one of each finding category and at least one
+          exemption, or the limited run can't tell you whether those paths work. Include
+          <strong>A000012</strong>, <strong>A000384</strong>, <strong>A001115</strong>,
+          <strong>A001185</strong> and <strong>A000387</strong> from sub-task 24, plus a spread of
+          ordinary accounts that should produce nothing at all &mdash; the no-finding path is a path
+          too, and a pipeline that flags everything passes a test set of only true positives.</p>
+          <label class="done"><input type="checkbox" data-task="s25-pick"> Debug set covers every category plus clean accounts</label>
+        </li>
+        <li>
+          <div class="step-do">Run at <code>limit=20</code> and record time and cost.</div>
+          <p class="step-why">Why: baseline both. You'll compare against the full run, and you'll
+          want them again in sub-task 34.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>time python -m meridian_capstone.contract.run_review data/2026-Q3 --limit 20</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s25-20"> Limited run complete, time and cost recorded</label>
+        </li>
+        <li>
+          <div class="step-do">Iterate here until it's boring.</div>
+          <p class="step-why">Why: this is where the sub-task's time actually goes, and it should.
+          Fix the schema violations, the handoff losses, the citations that don't resolve, the
+          exemptions that got dropped instead of recorded. Every one of those found at 20 is one you
+          don't pay 166 accounts to find.</p>
+          <p class="step-why">The bar for moving on: two consecutive runs where the output validates,
+          every citation resolves against your sub-task 16 inventory, and the accounts you know
+          about come out right. Not "it worked once".</p>
+          <label class="done"><input type="checkbox" data-task="s25-iter"> Two consecutive clean runs at 20</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>My limited run finds fewer findings than expected.</strong> Check whether the
+          accounts you expected are actually in the twenty. <code>limit</code> caps the candidates,
+          and if your ordering excludes the interesting ones you're testing the boring path.</p>
+          <p><strong>It's still slow at 20.</strong> Look at calls per account. Three agents each
+          running a tool-use loop can be a lot of model calls; twelve per account is 240 for the
+          run. Either tighten what each specialist gathers, or make the fan-out concurrent.</p>
+          <p><strong>Results differ between runs at the same limit.</strong> Expected, and it's the
+          subject of sub-task 30. For now note how much they differ &mdash; if the same account
+          flips between finding and no-finding, that is a much bigger problem than rationale
+          wording changing, and it's worth chasing now.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Run the quarter</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run with <code>limit=None</code> and produce
+          <code>findings.json</code>.</div>
+          <p class="step-why">Why: this is the deliverable the whole course has been building
+          toward &mdash; a complete quarterly access review for Meridian Regional Energy, produced
+          end to end by a system you built. Time it.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>time python -m meridian_capstone.contract.run_review data/2026-Q3 &gt; findings.json</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s25-full"> Full run complete</label>
+        </li>
+        <li>
+          <div class="step-do">Check it against the quarter's ground truth.</div>
+          <p class="step-why">Why: you know what the answer is, category by category and account by
+          account, from Theme D.</p>
+          <div class="code labeled">
+            <span class="kind">2026-Q3 &mdash; 9 findings, 5 exemptions</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>sod_conflict          2   A000384  A001115
+dormant_privileged    3   A000012  A000598  A000742
+contractor_overstay   4   A000686  A000741  A001185  A001195
+
+exemptions            5   A000387  A000674  A001125   (ACP-4.2)
+                          A001159  A001199             (break-glass)</pre>
+          </div>
+          <p class="step-why">Every finding validates against the contract, and every
+          <code>policy_citations</code> entry resolves to one of the five real clause numbers or one
+          of the five document titles. Check that last part &mdash; a full run is where a
+          fabricated citation is most likely to slip through unnoticed.</p>
+          <label class="done"><input type="checkbox" data-task="s25-truth"> 9 findings on the right accounts, 5 exemptions, all citations real</label>
+        </li>
+        <li>
+          <div class="step-do">Compare the two runs.</div>
+          <p class="step-why">Why: the ratio is the interesting number. 166 accounts against 20 is
+          roughly 8&times;, so cost and time should be somewhere near 8&times; too. Meaningfully
+          worse than linear means something accumulates per account &mdash; usually context that
+          isn't being isolated the way you think it is, which is worth finding now.</p>
+          <div class="worksheet" id="ws-scale">
+            <div class="label">Two runs, two costs</div>
+            <p class="hint">Sub-task 34 formalises this and sub-task 36 attacks it. These are your
+            before numbers.</p>
+            <div class="field">
+              <label><code>limit=20</code>: wall clock, total tokens, dollars</label>
+              <textarea data-ws="f25-20" rows="2" placeholder="… minutes, … tokens, $…"></textarea>
+            </div>
+            <div class="field">
+              <label><code>limit=None</code>: wall clock, total tokens, dollars</label>
+              <textarea data-ws="f25-full" rows="2" placeholder="… minutes, … tokens, $…"></textarea>
+            </div>
+            <div class="field">
+              <label>The ratio, and whether it's linear</label>
+              <textarea data-ws="f25-ratio" rows="3" placeholder="166/20 = 8.3×. Cost went up …× and time …×, which suggests…"></textarea>
+            </div>
+            <div class="field">
+              <label>What I would do first to make this cheaper</label>
+              <textarea data-ws="f25-cheap" rows="3" placeholder="Fewer tool calls per account? Caching the frozen prefix? A cheaper model for gathering?"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-scale">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-scale">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s25-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Run the offline suite.</div>
+          <p class="step-why">Why: <code>test_pipeline.py</code> has been skipping since your first
+          clone. It now runs, and it checks the agent files, the frozen signature, and that
+          <code>findings.json</code> holds the right nine findings on the right accounts with five
+          exemptions recorded.</p>
+          <div class="code labeled">
+            <span class="kind">terminal</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>pytest -m "not api"</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s25-test"> <code>test_pipeline.py</code> passes</label>
+        </li>
+        <li>
+          <div class="step-do">Commit.</div>
+          <p class="step-why"><code>findings.json</code> is a gitignored learner artifact. Commit
+          the orchestrator and any agent changes.</p>
+          <label class="done"><input type="checkbox" data-task="s25-commit"> Committed</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The full run found more than 9 findings.</strong> Most likely duplicates
+          &mdash; the same account flagged twice, once per grant. Findings are per account per
+          category. A close second is an exemption that wasn't applied; check the three Controllers
+          first.</p>
+          <p><strong>Fewer than 9.</strong> Which category is short? Missing a contractor is
+          usually <strong>A000686</strong>, Jamie Alvarez's second account, which sub-task 18
+          warned about. Missing a dormant admin usually means the as-of date drifted.</p>
+          <p><strong>It rate-limited partway through.</strong> Real constraint at this scale. Back
+          off and retry, or reduce concurrency. Also worth noting as an operational fact &mdash;
+          sub-task 36's batch run is partly an answer to this.</p>
+          <p><strong>It's expensive and I don't want to run it twice.</strong> Reasonable. You need
+          one clean full run for this sub-task; everything after it should go back to
+          <code>limit=20</code> until sub-task 36 makes the full run cheap.</p>
+        </div>
+      </details>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li>A complete <code>findings.json</code> for 2026-Q3 &mdash; <strong>9 findings</strong>
+            (2 SoD, 3 dormant privileged, 4 contractor overstay) on the right accounts</li>
+        <li><code>exemptions.json</code> holding all <strong>5</strong> &mdash; three ACP-4.2
+            Controllers and two break-glass</li>
+        <li>Every citation resolving to a real clause or document title</li>
+        <li>Two runs measured: <code>limit=20</code> and <code>limit=None</code>, with the ratio
+            examined</li>
+        <li><code>test_pipeline.py</code> passing</li>
+      </ul>
+      <p style="margin-top:14px"><strong>Theme F is complete.</strong> You have a decomposed,
+      tool-restricted, single-writer pipeline that produces a complete quarterly review from raw
+      exports.</p>
+      <p>It is also completely unenforced. Every safety property you have rests on agent files
+      behaving as written, and nothing checks. Theme G adds the layer that does.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li>Try the full run with <code>ledger-reader</code> pointed at a cheaper model tier in
+        its frontmatter, and diff the findings. Fact-gathering may not need the same capability as
+        judgment &mdash; sub-task 35 makes that argument properly, but the experiment is cheap
+        now.</li>
+        <li><a href="https://platform.claude.com/docs/en/api/rate-limits">Rate limits</a> &mdash;
+        if the full run threw 429s, this is why, and it's the constraint that makes sub-task 36's
+        batch run more than a cost optimisation.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-24.html"><span class="arr">&larr;</span> Sub-task 24</a>
+    <a class="navbtn next" href="subtask-26.html">Sub-task 26 &middot; Theme G begins &middot; Hooks <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme F &middot; Sub-task 3 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask25-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask25-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
