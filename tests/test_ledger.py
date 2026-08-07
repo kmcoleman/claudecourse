@@ -1,6 +1,7 @@
-"""Day 2 checkpoint — verifies the learner's ledger and first findings.
+"""Sub-tasks 8-12 checkpoint — the learner's ledger and first findings.
 
-Day 2 asks the learner to produce four artifacts at the repository root:
+Sub-tasks 8-12 (Theme B) ask the learner to produce four artifacts at the
+repository root:
 
     identities.csv   one row per entitlements account_id, resolved to an
                      employee_id where the match is unambiguous
@@ -36,8 +37,8 @@ ARTIFACTS = [IDENTITIES, LEDGER, FINDINGS, EXEMPTIONS]
 
 if not any(p.exists() for p in ARTIFACTS):
     pytest.skip(
-        "No Day 2 artifacts found at the repository root. Work through Day 2 "
-        "first — this module checks identities.csv, ledger.csv, findings.json "
+        "No Theme B artifacts found at the repository root. Work through "
+        "sub-tasks 8-12 first — this module checks identities.csv, ledger.csv, findings.json "
         "and exemptions.json.",
         allow_module_level=True,
     )
@@ -49,14 +50,14 @@ if not any(p.exists() for p in ARTIFACTS):
 
 def _rows(path):
     if not path.exists():
-        pytest.fail(f"{path.name} is missing — Day 2 expects it at the repo root.")
+        pytest.fail(f"{path.name} is missing — sub-tasks 8-12 expect it at the repo root.")
     with open(path, newline="") as f:
         return list(csv.DictReader(f))
 
 
 def _json(path):
     if not path.exists():
-        pytest.fail(f"{path.name} is missing — Day 2 expects it at the repo root.")
+        pytest.fail(f"{path.name} is missing — sub-tasks 8-12 expect it at the repo root.")
     return json.load(open(path))
 
 
@@ -87,7 +88,7 @@ ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 # --------------------------------------------------------------------------
-# Cycle 2 — the canonical identity table
+# Sub-task 9 — the canonical identity table
 # --------------------------------------------------------------------------
 
 def test_identities_has_one_row_per_account():
@@ -146,7 +147,7 @@ def test_colliding_account_names_do_not_silently_merge():
 
 
 # --------------------------------------------------------------------------
-# Cycle 2 — the ledger
+# Sub-task 10 — the ledger
 # --------------------------------------------------------------------------
 
 def test_ledger_is_deduplicated():
@@ -183,7 +184,7 @@ def test_every_ledger_account_appears_in_identities():
 
 
 # --------------------------------------------------------------------------
-# Cycle 3 — findings
+# Sub-tasks 11-12 — findings
 # --------------------------------------------------------------------------
 
 def test_findings_match_the_contract():

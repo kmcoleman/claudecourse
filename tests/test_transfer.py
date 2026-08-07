@@ -37,8 +37,8 @@ AUDIT_Q4 = ROOT / "audit" / "2026-Q4.jsonl"
 GUARD = ROOT / ".claude" / "hooks" / "examples" / "secret_guard.py"
 
 # Q4 ground truth — seed 20261015. A completely different cast from Q3, produced
-# by the same world design. If a learner generated Q4 with a different seed, the
-# account-set assertions below will fail with a hint to regenerate.
+# by the same world design. These assertions line up with the data/2026-Q4/ that
+# ships in the kit; if it has been edited or replaced, they will fail.
 Q4_SOD = ["A000276", "A000523"]                       # Catherine Berry, David Roberts
 Q4_DORMANT = ["A000690", "A000820", "A000879"]        # all Vault / Admin
 Q4_CONTRACTOR = ["A000133", "A000157", "A000749"]     # 3 accounts (no twin this seed)

@@ -1,4 +1,4 @@
-"""Day 4 Cycle 5 checkpoint — the enforcement layer (hooks).
+"""Sub-tasks 26-27 checkpoint — the enforcement layer (hooks).
 
 Two things get checked here:
 
@@ -7,12 +7,13 @@ Two things get checked here:
      PostToolUse audit logger appends a well-formed JSON line. These always run,
      because the stubs always ship.
 
-  2. If the learner has wired hooks into .claude/settings.json (Cycle 5), that
-     configuration is structurally valid and points at scripts that exist. This
-     part self-skips on a fresh clone that hasn't reached Day 4 yet.
+  2. If the learner has wired hooks into .claude/settings.json (sub-tasks
+     26-27), that configuration is structurally valid and points at scripts that
+     exist. This part self-skips on a clone that has not reached sub-task 26.
 
 The stubs are the reference implementation: a learner who copies them and wires
-them the way Cycle 5 describes ends up with exactly the behavior tested below.
+them the way sub-tasks 26-27 describe ends up with exactly the behavior tested
+below.
 """
 import json
 import os
@@ -54,7 +55,7 @@ def _run_hook(script: Path, event: dict, env_extra=None):
 def test_guard_and_audit_stubs_ship():
     assert GUARD.exists(), (
         "The PreToolUse guard stub is missing from .claude/hooks/examples/. "
-        "Day 4 Cycle 5 has learners copy and wire it."
+        "Sub-tasks 26-27 have learners copy and wire it."
     )
     assert AUDIT.exists(), (
         "The PostToolUse audit stub is missing from .claude/hooks/examples/."
@@ -141,7 +142,7 @@ def test_audit_is_append_only(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# The learner's own wiring — self-skips until Day 4 Cycle 5 is done
+# The learner's own wiring — self-skips until sub-tasks 26-27 are done
 # --------------------------------------------------------------------------
 
 def _configured_hooks():
@@ -162,13 +163,13 @@ def test_learner_hook_config_is_valid_if_present():
     if hooks is None:
         pytest.skip(
             "No hooks configured in .claude/settings.json yet. Work through "
-            "Day 4 Cycle 5 to add the PreToolUse guard and PostToolUse audit."
+            "sub-tasks 26-27 to add the PreToolUse guard and PostToolUse audit."
         )
 
     for event in ("PreToolUse", "PostToolUse"):
         assert event in hooks, (
-            f"{path.name} defines hooks but no {event} entry. Cycle 5 wires a "
-            "PreToolUse guard and a PostToolUse audit."
+            f"{path.name} defines hooks but no {event} entry. Sub-tasks 26-27 "
+            "wire a PreToolUse guard and a PostToolUse audit."
         )
         groups = hooks[event]
         assert isinstance(groups, list) and groups, f"{event} must be a non-empty list."

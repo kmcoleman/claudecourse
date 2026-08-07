@@ -1,7 +1,8 @@
-"""Day 3 checkpoint — verifies the learner's policy Skills and cited findings.
+"""Sub-tasks 16-19 checkpoint — the learner's policy Skills and cited findings.
 
-Day 3 asks the learner to turn three of Meridian's written policies into Agent
-Skills, then rewire triage so every finding cites the clause it came from:
+Sub-tasks 16-19 (Theme D) ask the learner to turn three of Meridian's written
+policies into Agent Skills, then rewire triage so every finding cites the
+clause it came from:
 
     .claude/skills/sod-policy/SKILL.md
     .claude/skills/privileged-access-standard/SKILL.md
@@ -36,8 +37,9 @@ CONTRACTOR = "contractor-access-standard"
 
 if not SKILLS_DIR.exists():
     pytest.skip(
-        "No .claude/skills/ directory found. Work through Day 3 first — this "
-        "module checks the three policy Skills and the cited findings.json.",
+        "No .claude/skills/ directory found. Work through sub-tasks 16-19 "
+        "first — this module checks the three policy Skills and the cited "
+        "findings.json.",
         allow_module_level=True,
     )
 
@@ -86,7 +88,7 @@ def _body(slug):
 
 def _json(path):
     if not path.exists():
-        pytest.fail(f"{path.name} is missing — Day 3 expects it at the repo root.")
+        pytest.fail(f"{path.name} is missing — sub-tasks 16-19 expect it at the repo root.")
     return json.load(open(path))
 
 
@@ -95,7 +97,7 @@ def _by_category(cat):
 
 
 # --------------------------------------------------------------------------
-# Cycle 1-3 — the Skill files themselves
+# Sub-tasks 16-18 — the Skill files themselves
 # --------------------------------------------------------------------------
 
 @pytest.mark.parametrize("slug", [SOD, PRIV, CONTRACTOR])
@@ -156,7 +158,7 @@ def test_contractor_skill_encodes_the_sow_rule():
 
 
 # --------------------------------------------------------------------------
-# Cycle 4 — findings now cite their clause
+# Sub-task 19 — findings now cite their clause
 # --------------------------------------------------------------------------
 
 def test_findings_still_match_the_contract():

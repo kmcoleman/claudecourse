@@ -2,10 +2,12 @@
 name = "meridian-capstone"
 version = "0.1.0"
 requires-python = ">=3.11"
-# Student-kit runtime deps. The generator (course-source) deps live in the
-# optional "course-source" group below so a stripped student repo needs none of them.
+# Student-kit runtime deps. `anthropic` backs the first direct-API agent
+# (sub-task 13). The generator (course-source) deps live in the optional
+# "course-source" group below so a stripped student repo needs none of them.
 dependencies = [
     "claude-agent-sdk==0.2.126",
+    "anthropic>=0.35.0",
     "mcp==1.28.1",
     "jsonschema==4.26.0",
 ]

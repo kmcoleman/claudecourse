@@ -374,7 +374,7 @@
     <div class="firstappear">
       <span class="tag">First appearance</span>
       <div class="terms">
-        <span class="term">seeded regeneration</span>
+        <span class="term">held-out quarter</span>
         <span class="term">split-brain config</span>
       </div>
       <p class="note">Failure mode two from sub-task 6, at full scale. Every check passes and every answer is wrong.</p>
@@ -393,7 +393,7 @@
     <div class="panel">
       <h3>What you'll understand and do</h3>
       <ul class="objectives">
-        <li>Generate a second quarter under a new seed</li>
+        <li>Open the second quarter the kit ships and confirm it's a new cast</li>
         <li>Run the pipeline against it and watch every check pass</li>
         <li>Recognize the findings as the wrong quarter's answers</li>
         <li>Diagnose the split-brain configuration that caused it</li>
@@ -451,19 +451,19 @@
     <h2 class="section-title">Do this</h2>
     <div class="task">
       <div class="label">Task 1</div>
-      <h3>Generate a quarter you have never seen</h3>
+      <h3>Open the quarter you have never seen</h3>
       <ol class="steps">
         <li>
-          <div class="step-do">Generate <code>data/2026-Q4</code> with seed
-          <strong>20261015</strong>.</div>
-          <p class="step-why">Why: the seed matters. The kit's transfer tests carry Q4 ground truth
-          for exactly this seed, so a different one produces a valid quarter that no test can check.
-          The generator ships alongside the kit rather than inside it &mdash; if the command below
-          doesn't resolve, ask your instructor for the generator or for the export itself.</p>
+          <div class="step-do">Confirm <code>data/2026-Q4</code> is already in your kit.</div>
+          <p class="step-why">Why: there is nothing to generate. The kit ships a second quarter
+          alongside Q3 &mdash; same company, same world design, a completely different cast. It has
+          been sitting in your repo since sub-task 1, deliberately unmentioned. The kit's transfer
+          tests carry Q4 ground truth that matches this exact export, so use the shipped one rather
+          than a substitute.</p>
           <div class="code labeled">
             <span class="kind">terminal</span>
             <button class="copy" type="button">Copy</button>
-            <pre>python -m meridian.generate --seed 20261015 --quarter 2026-Q4 --out data/2026-Q4</pre>
+            <pre>ls data/2026-Q4</pre>
           </div>
           <label class="done"><input type="checkbox" data-task="s37-gen"> <code>data/2026-Q4</code> exists</label>
         </li>
@@ -489,14 +489,16 @@ head -3 data/2026-Q4/hr_roster.csv        # different people</pre>
       <details class="stuck">
         <summary>Stuck?</summary>
         <div class="body">
-          <p><strong>The generator isn't available.</strong> It lives in the course repository rather
-          than in the kit &mdash; ask your instructor. Failing that, ask for <code>data/2026-Q4</code>
-          generated at seed 20261015 directly; the sub-task works fine with a supplied export.</p>
-          <p><strong>My row counts don't match.</strong> Then the seed differs. Regenerate with
-          exactly <code>20261015</code>, or the transfer tests will fail against ground truth that
-          doesn't describe your data.</p>
-          <p><strong>Should <code>data/2026-Q4</code> be committed?</strong> No &mdash;
-          <code>data/</code> is gitignored. It's regenerable from a seed, which is the point.</p>
+          <p><strong><code>data/2026-Q4</code> isn't there.</strong> It ships with the kit, so it was
+          most likely deleted or never checked out. Restore it from the repo
+          (<code>git checkout -- data/2026-Q4</code>); the transfer tests only line up with that
+          export.</p>
+          <p><strong>My row counts don't match.</strong> Then your copy has been edited or replaced.
+          Restore the shipped one, or the transfer tests will check ground truth that doesn't
+          describe your data.</p>
+          <p><strong>Where did Q4 come from?</strong> The same generator that produced Q3, run once
+          by the instructor under a different seed. You don't run it &mdash; both quarters are
+          committed course data. What matters here is only that you've never looked at this one.</p>
         </div>
       </details>
     </div>
@@ -630,7 +632,7 @@ grep -rn "2026-Q3" .mcp.json .claude/ src/ *.py 2&gt;/dev/null</pre>
     <div class="outcome">
       <div class="label">You're done when</div>
       <ul>
-        <li><code>data/2026-Q4</code> generated at seed <strong>20261015</strong>, same structure,
+        <li><code>data/2026-Q4</code> confirmed present and unedited &mdash; same structure,
             <strong>1,190</strong> HR rows, a completely different cast</li>
         <li>A Q4 run that completed cleanly and passed every evaluation while being entirely wrong</li>
         <li>The split-brain configuration diagnosed by tracing both data paths</li>

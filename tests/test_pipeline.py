@@ -1,14 +1,16 @@
-"""Day 4 checkpoint — the subagent pipeline reproduces the Q3 answer.
+"""Sub-tasks 23-25 checkpoint — the subagent pipeline reproduces the Q3 answer.
 
-Day 4 takes Day 3's single-pass triage apart and rebuilds it as an orchestrator
-delegating to specialist subagents (a ledger-reader over MCP, a policy-applier,
-a findings-writer), each defined under .claude/agents/. Decomposition changes
-HOW the findings are produced — it must not change WHAT they are. So this module
-asserts the full-Q3 findings.json still carries the exact nine findings and five
-exemptions Day 3 established, plus the pieces Day 4 adds: a specialist team and
-the frozen run_review contract.
+Sub-tasks 23-25 (Themes E-F) take the single-pass triage of sub-task 19 apart and
+rebuild it as an orchestrator delegating to specialist subagents (a ledger-reader
+over MCP, a policy-applier, a findings-writer), each defined under
+.claude/agents/. Decomposition changes HOW the findings are produced — it must
+not change WHAT they are. So this module asserts the full-Q3 findings.json still
+carries the exact nine findings and five exemptions sub-task 19 established, plus
+the pieces sub-tasks 23-25 add: a specialist team and the frozen run_review
+contract.
 
-The module self-skips until .claude/agents/ exists, so a Day 3 clone stays green.
+The module self-skips until .claude/agents/ exists, so a clone that has not
+reached sub-task 23 stays green.
 """
 import json
 import re
@@ -29,8 +31,8 @@ EXEMPTIONS = ROOT / "exemptions.json"
 
 if not AGENTS_DIR.exists():
     pytest.skip(
-        "No .claude/agents/ directory found. Work through Day 4 first — this "
-        "module checks the subagent pipeline and its Q3 output.",
+        "No .claude/agents/ directory found. Work through sub-tasks 23-25 "
+        "first — this module checks the subagent pipeline and its Q3 output.",
         allow_module_level=True,
     )
 
@@ -41,7 +43,7 @@ if not AGENTS_DIR.exists():
 
 def _json(path):
     if not path.exists():
-        pytest.fail(f"{path.name} is missing — Day 4 regenerates it at the repo root.")
+        pytest.fail(f"{path.name} is missing — sub-tasks 23-25 regenerate it at the repo root.")
     return json.load(open(path))
 
 
@@ -68,14 +70,15 @@ def _agent_frontmatter():
 
 
 # --------------------------------------------------------------------------
-# Cycles 2-3 — the specialist team
+# Sub-tasks 23-24 — the specialist team
 # --------------------------------------------------------------------------
 
 def test_a_specialist_team_exists():
     agents = _agent_frontmatter()
     assert len(agents) >= 3, (
-        "Day 4 decomposes triage into at least three specialists (a ledger "
-        "reader, a policy applier, a findings writer) as .claude/agents/*.md "
+        "Sub-tasks 23-24 decompose triage into at least three specialists (a "
+        "ledger reader, a policy applier, a findings writer) as "
+        ".claude/agents/*.md "
         f"files. Found {len(agents)}: {sorted(agents) or 'none'}."
     )
 
@@ -97,7 +100,7 @@ def test_every_agent_has_name_and_description():
 
 
 # --------------------------------------------------------------------------
-# Cycle 4 — the frozen contract still holds
+# Sub-task 25 — the frozen contract still holds
 # --------------------------------------------------------------------------
 
 def test_run_review_keeps_the_frozen_signature():
@@ -112,7 +115,7 @@ def test_run_review_keeps_the_frozen_signature():
 
 
 # --------------------------------------------------------------------------
-# Cycle 4 — the decomposed pipeline reproduces Day 3's answer, exactly
+# Sub-task 25 — the decomposed pipeline reproduces sub-task 19's answer, exactly
 # --------------------------------------------------------------------------
 
 def test_findings_match_the_contract():
@@ -124,7 +127,7 @@ def test_nine_findings_across_three_categories():
     counts = {c: len(_by_category(c)) for c in
               ("sod_conflict", "dormant_privileged", "contractor_overstay")}
     assert counts == {"sod_conflict": 2, "dormant_privileged": 3, "contractor_overstay": 4}, (
-        f"Expected the Day 3 breakdown (2 / 3 / 4), got {counts}. Decomposing "
+        f"Expected the sub-task 19 breakdown (2 / 3 / 4), got {counts}. Decomposing "
         "triage into subagents must not change the answer — only how it is "
         "produced."
     )
@@ -153,7 +156,7 @@ def test_account_sets_are_unchanged():
         got = sorted({f["account_id"] for f in _by_category(cat)})
         assert got == want, (
             f"{cat}: expected accounts {want}, got {got}. The subagent pipeline "
-            "produced a different set than Day 3 — a specialist changed the "
+            "produced a different set than sub-task 19 — a specialist changed the "
             "answer rather than just the plumbing."
         )
 
@@ -168,6 +171,7 @@ def test_five_exemptions_survived_the_rewrite():
     expected = {"A000387", "A000674", "A001125", "A001159", "A001199"}
     missing = expected - ids
     assert not missing, (
-        f"{sorted(missing)} were recorded as exemptions in Day 3 but are absent "
-        "now. A dropped exemption is indistinguishable from a missed finding."
+        f"{sorted(missing)} were recorded as exemptions in sub-task 19 but are "
+        "absent now. A dropped exemption is indistinguishable from a missed "
+        "finding."
     )
