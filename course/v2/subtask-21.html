@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-task 21 &mdash; Call Meridian's systems by hand over MCP &middot; Claude Certified Architect</title>
+<style>
+  /* ---------- Design tokens (inherited from Day 2 design language) ---------- */
+  :root {
+    --ink:      #1b2733;
+    --muted:    #5a6673;
+    --faint:    #8b95a1;
+    --bg:       #f5f6f8;
+    --card:     #ffffff;
+    --border:   #e2e7ec;
+    --brand:    #2f4bd0;
+    --brand-dk: #21379e;
+    --info-bg:  #eef3fe;
+    --info-br:  #3f6fd6;
+    --task-bg:  #fbfaf5;
+    --task-br:  #c9a227;
+    --ok:       #1c7a52;
+    --ok-bg:    #edf7f1;
+    --term-bg:  #10161e;
+    --term-fg:  #d7e0ea;
+    --term-dim: #7b8794;
+    --term-pmt: #6ee7a8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --wrap: 760px;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+
+  /* ---------- Sticky site header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--brand);
+  }
+  .site-inner {
+    max-width: var(--wrap); margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .site .course {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #9fb0d8; font-weight: 600;
+  }
+  .site .where { font-family: var(--serif); font-size: 20px; font-weight: 600; color: #fff; }
+  .site .where em { color: #c9a227; font-style: normal; }
+  .counter {
+    margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .counter b { color: #6ee7a8; font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 96px; }
+  section { margin-top: 44px; }
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin: 0 0 20px;
+  }
+
+  /* ---------- Prev / Next nav ---------- */
+  .navrow { display: flex; gap: 12px; align-items: center; margin: 24px 0 0; flex-wrap: wrap; }
+  .navrow.top { margin-top: 22px; }
+  .navrow.bottom { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 24px; }
+  .navbtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--brand); border-radius: 999px; padding: 8px 16px;
+    transition: border-color .12s, background .12s;
+  }
+  .navbtn:hover { border-color: var(--brand); background: #f7f9ff; }
+  .navbtn.next {
+    margin-left: auto; background: var(--brand); color: #fff; border-color: var(--brand);
+  }
+  .navbtn.next:hover { background: var(--brand-dk); border-color: var(--brand-dk); }
+  .navbtn .arr { font-size: 15px; line-height: 1; }
+  .navbtn.disabled {
+    color: var(--faint); pointer-events: none; background: transparent; border-style: dashed;
+  }
+
+  /* ---------- Sub-task opener ---------- */
+  .opener { margin-top: 26px; }
+  .opener .kicker {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px;
+  }
+  .opener h1 {
+    font-family: var(--serif); font-size: 38px; line-height: 1.14;
+    font-weight: 600; margin: 0 0 16px; letter-spacing: -.01em;
+  }
+
+  /* Meta strip: depends-on + time */
+  .metastrip {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+    margin: 0 0 20px; font-size: 13px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 12px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip a { color: var(--brand); text-decoration: none; font-weight: 600; }
+  .chip a:hover { text-decoration: underline; }
+  .chip.time { font-variant-numeric: tabular-nums; }
+
+  /* First-appearance callout */
+  .firstappear {
+    background: #fffdf3; border: 1px solid #eadfae;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 18px 0 0;
+  }
+  .firstappear .tag {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .firstappear .terms { display: flex; flex-wrap: wrap; gap: 6px; }
+  .firstappear .term {
+    background: #fff; border: 1px solid #eadfae; border-radius: 5px;
+    padding: 2px 9px; font-size: 14px; font-weight: 600; color: #6f5709;
+  }
+  .firstappear .note { margin: 8px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .narrative p { margin: 0 0 16px; }
+  .narrative .lede { font-size: 19px; color: #33414f; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin: 20px 0;
+  }
+  .panel h3 {
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 12px;
+  }
+  .panel p { margin: 0; }
+  ul.learn { margin: 6px 0 0; padding-left: 20px; }
+  ul.learn li { margin: 6px 0; }
+
+  /* Objectives get a lighter check-list treatment */
+  ul.objectives { list-style: none; margin: 0; padding: 0; }
+  ul.objectives li { padding: 7px 0 7px 28px; position: relative; }
+  ul.objectives li::before {
+    content: "→"; position: absolute; left: 0; top: 7px;
+    color: var(--brand); font-weight: 700;
+  }
+
+  /* ---------- Concept ---------- */
+  .concept { margin: 26px 0 6px; }
+  .concept > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 8px;
+  }
+  .concept h3 {
+    font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 12px;
+  }
+  .concept p { margin: 0 0 14px; }
+
+  /* "What is X?" info callout */
+  .whatis {
+    background: var(--info-bg); border-left: 3px solid var(--info-br);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 15.5px;
+  }
+  .whatis .tag {
+    font-weight: 700; color: var(--brand-dk); display: block;
+    margin-bottom: 3px; font-size: 14px;
+  }
+  .whatis p { margin: 0 0 8px; color: #2c3a4a; }
+  .whatis p:last-child { margin-bottom: 0; }
+
+  /* ---------- Six blocks table ---------- */
+  .blocks { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .blocks .row { display: flex; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--border); }
+  .blocks .row:first-child { border-top: none; }
+  .blocks .n {
+    flex: 0 0 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .blocks .b-name { font-weight: 700; }
+  .blocks .b-desc { color: var(--muted); font-size: 15px; margin: 2px 0 0; }
+  .blocks .b-when { color: var(--faint); font-size: 13.5px; margin: 4px 0 0; font-style: italic; }
+
+  /* ---------- Task ---------- */
+  .task {
+    background: var(--task-bg); border: 1px solid var(--border);
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 18px 22px 10px; margin: 24px 0;
+  }
+  .task > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d10; font-weight: 700; margin-bottom: 4px;
+  }
+  .task > h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 0 0 8px; }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li {
+    counter-increment: step; padding: 16px 0 16px 44px;
+    position: relative; border-top: 1px solid var(--border);
+  }
+  ol.steps > li:first-child { border-top: none; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-do { font-weight: 600; }
+  .step-why { color: var(--muted); font-size: 15px; margin: 3px 0 0; }
+
+  /* Checkbox row */
+  .done {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    font-size: 14px; color: var(--muted); cursor: pointer;
+    user-select: none; width: fit-content;
+  }
+  .done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+  .done.checked { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { position: relative; background: #f2f4f7; border: 1px solid var(--border); border-radius: 6px; margin: 12px 0; }
+  .code pre {
+    margin: 0; padding: 12px 44px 12px 14px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+    color: #263243; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .code.prompt pre { color: #21379e; }
+  .code .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--muted); background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+  }
+  .code:hover .copy, .code:focus-within .copy { opacity: 1; }
+  .code .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .code .kind {
+    position: absolute; top: 8px; left: 12px;
+    font-family: var(--sans); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); font-weight: 700; pointer-events: none;
+  }
+  .code.labeled pre { padding-top: 26px; }
+
+  /* ---------- Worksheet (persisted notebook) ---------- */
+  .worksheet { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+  .worksheet > .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin-bottom: 4px;
+  }
+  .worksheet .hint { font-size: 14.5px; color: var(--muted); margin: 0 0 14px; }
+  .field { margin: 14px 0 0; }
+  .field label { display: block; font-weight: 600; font-size: 15.5px; margin-bottom: 5px; }
+  .field .eg { display: block; font-weight: 400; color: var(--faint); font-size: 14px; margin-top: 2px; }
+  .field textarea {
+    width: 100%; font-family: var(--sans); font-size: 15.5px; line-height: 1.55;
+    color: var(--ink); background: #fcfdfe; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 62px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--info-br); background: #fff; box-shadow: 0 0 0 3px rgba(63,111,214,.12); }
+  .wsbar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .wsbtn {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff; color: var(--brand);
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: border-color .12s;
+  }
+  .wsbtn:hover { border-color: var(--brand); }
+  .wsbtn.ok { color: var(--ok); border-color: var(--ok); }
+  .wssaved { font-size: 13px; color: var(--faint); margin-left: auto; }
+
+  /* ---------- Stuck ---------- */
+  details.stuck { margin: 12px 0 2px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  details.stuck summary {
+    cursor: pointer; padding: 9px 14px; font-size: 14px;
+    font-weight: 600; color: var(--brand); list-style: none;
+  }
+  details.stuck summary::-webkit-details-marker { display: none; }
+  details.stuck summary::before { content: "▸ "; color: var(--faint); }
+  details.stuck[open] summary::before { content: "▾ "; }
+  details.stuck .body { padding: 2px 16px 14px; font-size: 15px; color: var(--muted); }
+  details.stuck .body p { margin: 0 0 10px; }
+  details.stuck .body p:last-child { margin-bottom: 0; }
+  details.stuck .body strong { color: var(--ink); }
+
+  /* ---------- Outcome ---------- */
+  .outcome {
+    background: var(--ok-bg); border: 1px solid #c5e6d5;
+    border-radius: var(--radius); padding: 18px 20px 18px 48px;
+    margin: 28px 0 0; position: relative;
+  }
+  .outcome::before {
+    content: "✓"; position: absolute; left: 17px; top: 19px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ok); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .outcome .label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ok); font-weight: 700; margin-bottom: 4px;
+  }
+  .outcome p { margin: 0 0 10px; color: #234a37; }
+  .outcome p:last-child { margin-bottom: 0; }
+  .outcome ul { margin: 6px 0 0; padding-left: 20px; color: #234a37; }
+  .outcome ul li { margin: 5px 0; }
+
+  .curious a { color: var(--brand); }
+
+  footer.end {
+    max-width: var(--wrap); margin: 0 auto; padding: 40px 24px;
+    color: var(--faint); font-size: 13px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .opener h1 { font-size: 29px; }
+    .site-inner { padding: 10px 16px; }
+    main { padding: 0 16px 64px; }
+    .counter { margin-left: 0; }
+    .navbtn.next { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <span class="course">Claude Certified Architect</span>
+    <span class="where">Sub-task <em>21</em></span>
+    <span class="counter">Progress: <b id="doneCount">0</b> of <span id="totalCount">0</span> tasks</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="navrow top">
+    <a class="navbtn" href="subtask-20.html"><span class="arr">&larr;</span> Sub-task 20 &middot; Tools and blast radius</a>
+  </div>
+
+  <section class="opener">
+    <div class="kicker">Theme E &middot; Tools &middot; Sub-task 2 of 3</div>
+    <h1>Call Meridian's systems by hand over MCP</h1>
+
+    <div class="metastrip">
+      <span class="chip"><b>Depends on:</b>&nbsp;<a href="subtask-20.html">Sub-task 20</a>&nbsp;&mdash; you need the blast-radius framing</span>
+      <span class="chip time"><b>Time:</b>&nbsp;&asymp; 60 min</span>
+      <span class="chip"><b>Type:</b>&nbsp;tools &middot; MCP</span>
+    </div>
+
+    <div class="firstappear">
+      <span class="tag">First appearance</span>
+      <div class="terms">
+        <span class="term">MCP</span>
+        <span class="term"><code>.mcp.json</code></span>
+        <span class="term">stdio server</span>
+        <span class="term">per-entity lookup</span>
+      </div>
+      <p class="note">Seven read-only tools over Meridian's systems. You call all seven yourself before any agent does.</p>
+    </div>
+
+    <div class="narrative">
+      <p class="lede">The kit ships an MCP server. It exposes Meridian's HR, identity and
+      ticketing systems as seven read-only tools, each answering a question about one entity: this
+      employee, this account, this application.</p>
+      <p>It is deliberately the opposite of the Ledger. The Ledger is bulk &mdash; fifteen thousand
+      rows, joined once, in code. These tools are targeted &mdash; one account, at the moment a
+      judgment needs a fact. Getting that distinction right is most of what separates a system that
+      works from one that costs a fortune and times out.</p>
+      <p>This sub-task is entirely by hand. You call all seven on one account and read what comes
+      back.</p>
+    </div>
+
+    <div class="panel">
+      <h3>What you'll understand and do</h3>
+      <ul class="objectives">
+        <li>Explain what MCP is and what a stdio server actually is</li>
+        <li>Start <code>meridian-systems</code> and confirm all seven tools are visible</li>
+        <li>Call every tool on one account and read the responses</li>
+        <li>State clearly why bulk reconciliation must not go through these tools</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Concept</h2>
+    <div class="concept">
+      <div class="label">The one idea</div>
+      <h3>MCP is how an agent reaches a system it doesn't own.</h3>
+
+      <p>The Model Context Protocol is a standard for exposing tools and data to a model. A server
+      declares what it offers; a client discovers that list and can call it. The value is that
+      neither side needs to know about the other in advance &mdash; you can point Claude Code at a
+      server it has never seen and it will discover the tools.</p>
+
+      <div class="whatis">
+        <span class="tag">What is a stdio server?</span>
+        <p>The simplest MCP transport. The client launches your server as a subprocess and talks to
+        it over standard input and output. No port, no network, no auth, nothing to deploy.</p>
+        <p>Meridian's server is declared in <code>.mcp.json</code> at the repo root:</p>
+        <p style="font-family:var(--mono);font-size:13.5px;margin:8px 0">"meridian-systems": { "type": "stdio",<br>
+        &nbsp;&nbsp;"command": "python", "args": ["-m", "meridian_capstone.mcp_server.server"],<br>
+        &nbsp;&nbsp;"env": { "MERIDIAN_DATA_DIR": "data/2026-Q3" } }</p>
+        <p>Read that <code>env</code> line carefully. The server's idea of which quarter it is
+        living in comes from there &mdash; not from anything your code passes at call time. Note it.
+        Sub-task 37 is built on it.</p>
+      </div>
+
+      <div class="whatis">
+        <span class="tag">A course simplification you should carry into real work</span>
+        <p>One server, seven tools, all of Meridian. In a real engagement these are separate
+        systems with separate owners, separate credentials and separate refusal modes &mdash; a
+        Workday connector, an Okta connector, a ServiceNow connector. Collapsing them into one
+        server keeps the course focused on judgment rather than on integration.</p>
+        <p>What survives the simplification is the shape: read-only, per-entity, called at
+        judgment time. What doesn't is the assumption that they all work, agree, and are up.</p>
+      </div>
+
+      <p><strong>The rule that matters most.</strong> These tools answer questions about
+      <em>one</em> thing. They are not how you load data.</p>
+
+      <p>You have 1,200 accounts. Reconciling them through <code>get_account</code> would be 1,200
+      subprocess round-trips to produce something you already built in seconds with a dataframe
+      join &mdash; and it would produce it worse, because reconciliation needs to see the whole
+      population at once. The ambiguous-slug analysis in sub-task 9 is impossible one account at a
+      time; you can only know that <code>jacob.miller</code> is ambiguous by looking at every
+      <code>jacob.miller</code>.</p>
+
+      <p>Reconciliation is code, over files, in bulk. Judgment is agents, over MCP, one entity at a
+      time. That line is in your <code>CLAUDE.md</code> from sub-task 7, and this is the sub-task
+      where it stops being a slogan.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Do this</h2>
+    <div class="task">
+      <div class="label">Task 1</div>
+      <h3>Start the server and see the tools</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Read <code>.mcp.json</code> and
+          <code>src/meridian_capstone/mcp_server/server.py</code>.</div>
+          <p class="step-why">Why: the server is about 120 lines and reading it removes all the
+          mystery. Each tool is a plain Python function with a decorator; the decorator is what
+          turns a function into something a model can discover and call. That is the entire
+          mechanism.</p>
+          <label class="done"><input type="checkbox" data-task="s21-read"> Config and server source read</label>
+        </li>
+        <li>
+          <div class="step-do">Get Claude Code to connect to <code>meridian-systems</code> and
+          confirm all seven tools are visible.</div>
+          <p class="step-why">Why: a configured-but-not-connected MCP server behaves exactly like a
+          server with no tools, silently. Confirm the connection before you debug anything else.</p>
+          <div class="code labeled">
+            <span class="kind">the seven tools</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>get_employee(employee_id)                  one HR record
+get_account(account_id)                    every grant on one account
+search_tickets(account_id, app=None)       access requests for an account
+get_prior_review(account_id)               last quarter's decisions
+get_application(app_name)                  tier, roles, privileged roles, owner
+is_approved_service_account(name)          is this a registered service account
+get_sod_matrix()                           the conflict rules and exemptions</pre>
+          </div>
+          <p class="step-why">Six of the seven take an entity identifier. The seventh,
+          <code>get_sod_matrix</code>, returns a small shared reference document. That is the
+          natural shape of a judgment-time tool surface &mdash; mostly lookups, occasionally a rule
+          book.</p>
+          <label class="done"><input type="checkbox" data-task="s21-connect"> All seven tools visible</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong>The server won't start.</strong> The command is bare <code>python</code>, so it
+          resolves against whatever is on <code>PATH</code> when Claude Code launches it &mdash; not
+          necessarily your activated virtualenv. If the module isn't found, that's the cause.</p>
+          <p><strong>It connects but returns nothing.</strong> <code>MERIDIAN_DATA_DIR</code> is
+          relative, so it resolves against the working directory the server was launched from.
+          Launch from the repo root.</p>
+          <p><strong>Do I have to restart to pick up <code>.mcp.json</code>?</strong> Yes &mdash;
+          same watcher behaviour as Skills and agents. Config read at startup, changes need a
+          restart.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 2</div>
+      <h3>Call all seven on one account</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">Run every tool that applies to <strong>A000012</strong> &mdash;
+          <code>gabriel.villa</code>, the account you have been judging since sub-task 13.</div>
+          <p class="step-why">Why: you know this account well, which makes it the right one for
+          seeing what the tools add and what they don't. Call them by hand, one at a time, and read
+          each response before moving on.</p>
+          <div class="code labeled">
+            <span class="kind">expected &mdash; A000012</span>
+            <button class="copy" type="button">Copy</button>
+            <pre>get_account("A000012")              13 grants, incl. Vault / Admin
+get_employee("E00365")              gabriel.villa, Futures trader,
+                                    Procurement, active
+search_tickets("A000012")           [] &mdash; no access request, ever
+get_prior_review("A000012")         5 rows: Badge access, Atlas ERP,
+                                    VPN, Zoom, Active Directory
+get_application("Vault")            tier crown, privileged_roles [Admin],
+                                    owner Information Technology
+is_approved_service_account("gabriel.villa")   False
+get_sod_matrix()                    6 conflicts, 1 exemption (ACP-4.2)</pre>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s21-call"> All seven called; responses read</label>
+        </li>
+        <li>
+          <div class="step-do">Notice what <code>get_prior_review</code> just told you.</div>
+          <p class="step-why">Why: five prior-review rows for this account, and <strong>Vault is
+          not among them</strong>. The one privileged grant on a crown-tier system &mdash; the grant
+          that is actually the finding &mdash; was never reviewed last quarter. Badge access was.
+          Zoom was.</p>
+          <p class="step-why">Then look at the file as a whole: <strong>5,752</strong> prior-review
+          rows, of which <strong>5,749</strong> are <code>approved</code> and 3 are
+          <code>conditional</code>. Nothing was ever rejected. That is a rubber stamp, and it means
+          "approved last quarter" carries almost no information. Anyone building a rule that trusts
+          prior review has just built a rule that always says yes.</p>
+          <p class="step-why">Neither of those facts was in your dossier. Both change how you read
+          this account. That is what tools are for.</p>
+          <label class="done"><input type="checkbox" data-task="s21-prior"> Vault's absence and the 5,749 noticed</label>
+        </li>
+        <li>
+          <div class="step-do">Put the tool responses next to your ledger row for the same
+          account.</div>
+          <p class="step-why">Why: the overlap is the point. <code>get_account</code> returns the
+          same grants your ledger has &mdash; the tool is reading the same export. What it adds is
+          <em>reach</em>: prior review and application metadata were never in your ledger at all,
+          and pulling them for all 1,200 accounts up front would have bloated every dossier for the
+          benefit of the few that need them.</p>
+          <label class="done"><input type="checkbox" data-task="s21-compare"> Overlap and additions identified</label>
+        </li>
+        <li>
+          <div class="step-do">Confirm they are read-only by trying to break something.</div>
+          <p class="step-why">Why: read the tool list again and satisfy yourself there is no
+          <code>revoke_access</code>, no <code>close_ticket</code>, no <code>update_account</code>.
+          The blast radius of this entire server is zero writes. For an observational exercise that
+          is the correct design, and it's worth being able to state it plainly to a client who asks
+          what the agent could do to their production identity system.</p>
+          <label class="done"><input type="checkbox" data-task="s21-readonly"> Confirmed: no mutating tool exists</label>
+        </li>
+      </ol>
+
+      <details class="stuck">
+        <summary>Stuck?</summary>
+        <div class="body">
+          <p><strong><code>get_employee</code> needs an employee_id I don't have.</strong> Correct,
+          and instructive. The exports share no key &mdash; that was Theme B's entire problem. The
+          <code>employee_id</code> comes from <em>your</em> reconciliation, which means these tools
+          depend on work you did earlier, and an unmatched account can't be looked up at all.</p>
+          <p><strong>I noticed A000012 and E00365 share digits.</strong> They do, across almost the
+          whole dataset &mdash; an artefact of how the export was generated, not a property of
+          Meridian's systems. Sub-task 9 flagged it. Don't build on it.</p>
+          <p><strong><code>search_tickets</code> returns an empty list.</strong> That's the answer,
+          not a failure. 85 tickets across 1,200 accounts means most accounts have none, and "no
+          approving ticket" is half the Privileged Access Standard's test.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="task">
+      <div class="label">Task 3</div>
+      <h3>Write down the boundary</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-do">State, in your own words, what belongs in the Ledger and what
+          belongs in MCP.</div>
+          <p class="step-why">Why: you will be asked this by a client, and the answer is the
+          architectural spine of the whole system. Being able to give it in two sentences is worth
+          more than being able to implement it.</p>
+          <div class="worksheet" id="ws-mcp">
+            <div class="label">Ledger versus MCP</div>
+            <p class="hint">Sub-task 25 runs this over 166 accounts. If the boundary is wrong, that
+            is where it becomes expensive.</p>
+            <div class="field">
+              <label>Why reconciliation cannot go through these tools
+                <span class="eg">not just "slow" &mdash; what is structurally impossible?</span>
+              </label>
+              <textarea data-ws="e21-bulk" rows="3" placeholder="1,200 round trips, and ambiguity detection needs the whole population at once because…"></textarea>
+            </div>
+            <div class="field">
+              <label>The facts these tools gave me that my dossier didn't have</label>
+              <textarea data-ws="e21-new" rows="3" placeholder="Prior review (and Vault's absence from it), application tier and privileged roles, service-account registration…"></textarea>
+            </div>
+            <div class="field">
+              <label>What I learned from 5,749 approvals out of 5,752</label>
+              <textarea data-ws="e21-stamp" rows="3" placeholder="Prior review is a rubber stamp, which means a rule that trusts it…"></textarea>
+            </div>
+            <div class="field">
+              <label>What <code>MERIDIAN_DATA_DIR</code> in <code>.mcp.json</code> could do to me</label>
+              <textarea data-ws="e21-env" rows="3" placeholder="It pins the server to one quarter, independently of what my code is pointed at. So if I ever…"></textarea>
+            </div>
+            <div class="wsbar">
+              <button class="wsbtn" type="button" data-copy-ws="ws-mcp">Copy my note</button>
+              <span class="wssaved" data-saved-for="ws-mcp">Saved in this browser</span>
+            </div>
+          </div>
+          <label class="done"><input type="checkbox" data-task="s21-note"> All four answered</label>
+        </li>
+        <li>
+          <div class="step-do">Run the offline suite.</div>
+          <p class="step-why">Why: <code>test_mcp.py</code> exercises the server directly &mdash;
+          it should pass without any work from you, and confirms the server is functional
+          independently of whether Claude Code can see it.</p>
+          <label class="done"><input type="checkbox" data-task="s21-test"> <code>test_mcp.py</code> passes</label>
+        </li>
+      </ol>
+    </div>
+    <div class="outcome">
+      <div class="label">You're done when</div>
+      <ul>
+        <li><code>meridian-systems</code> connected, all seven tools visible</li>
+        <li>All seven called by hand on <strong>A000012</strong>, with the responses read</li>
+        <li>Two things noticed that weren't in your dossier: Vault's absence from prior review, and
+            5,749 approvals out of 5,752</li>
+        <li>The Ledger-versus-MCP boundary written in your own words</li>
+        <li><code>MERIDIAN_DATA_DIR</code> noted as a thing that can point somewhere unexpected</li>
+      </ul>
+      <p style="margin-top:14px">Everything so far has been you calling tools. The agent still gets
+      whatever you decided to put in the dossier and nothing else.</p>
+      <p>Sub-task 22 hands the tools to the agent and lets it decide what it needs to know.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">If you're curious</h2>
+    <div class="panel curious">
+      <ul class="learn">
+        <li><a href="https://modelcontextprotocol.io">Model Context Protocol</a> &mdash; the
+        specification. The transport section explains why stdio is the right default for a local
+        server and what changes when you need HTTP.</li>
+        <li><a href="https://code.claude.com/docs/en/mcp">MCP in Claude Code</a> &mdash; scopes
+        (project vs user vs local), authentication for remote servers, and how
+        <code>.mcp.json</code> is resolved.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="navrow bottom">
+    <a class="navbtn" href="subtask-20.html"><span class="arr">&larr;</span> Sub-task 20</a>
+    <a class="navbtn next" href="subtask-22.html">Sub-task 22 &middot; Let the agent look things up <span class="arr">&rarr;</span></a>
+  </div>
+
+</main>
+
+<footer class="end">
+  Claude Certified Architect &middot; Theme E &middot; Sub-task 2 of 3
+</footer>
+
+<script>
+  // ---- Progress tracking (localStorage, keyed by data-task) ----
+  var STORE = "cca-v2-subtask21-progress";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox][data-task]"));
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {}
+  }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById("doneCount").textContent = done;
+    document.getElementById("totalCount").textContent = boxes.length;
+  }
+  function syncRow(box) {
+    var label = box.closest(".done");
+    if (label) label.classList.toggle("checked", box.checked);
+  }
+
+  var state = loadState();
+  boxes.forEach(function (box) {
+    var id = box.getAttribute("data-task");
+    if (state[id]) box.checked = true;
+    syncRow(box);
+    box.addEventListener("change", function () {
+      state[id] = box.checked;
+      saveState(state);
+      syncRow(box);
+      refreshCounter();
+    });
+  });
+  refreshCounter();
+
+  // ---- Worksheet persistence (textareas keyed by data-ws) ----
+  var WS_STORE = "cca-v2-subtask21-worksheet";
+  function loadWs() {
+    try { return JSON.parse(localStorage.getItem(WS_STORE)) || {}; }
+    catch (e) { return {}; }
+  }
+  var wsState = loadWs();
+  var wsTimer = null;
+
+  document.querySelectorAll("textarea[data-ws]").forEach(function (ta) {
+    var key = ta.getAttribute("data-ws");
+    if (wsState[key]) ta.value = wsState[key];
+    ta.addEventListener("input", function () {
+      wsState[key] = ta.value;
+      clearTimeout(wsTimer);
+      wsTimer = setTimeout(function () {
+        try { localStorage.setItem(WS_STORE, JSON.stringify(wsState)); } catch (e) {}
+        var sheet = ta.closest(".worksheet");
+        if (!sheet) return;
+        var flag = document.querySelector('[data-saved-for="' + sheet.id + '"]');
+        if (!flag) return;
+        flag.textContent = "Saved";
+        setTimeout(function () { flag.textContent = "Saved in this browser"; }, 1200);
+      }, 300);
+    });
+  });
+
+  // ---- Copy a whole worksheet as plain text ----
+  function copyText(text, btn, okLabel) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = okLabel;
+      btn.classList.add("ok");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("ok"); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  document.querySelectorAll("[data-copy-ws]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var sheet = document.getElementById(btn.getAttribute("data-copy-ws"));
+      if (!sheet) return;
+      var title = sheet.querySelector(".label");
+      var lines = [];
+      if (title) lines.push("## " + title.textContent.trim(), "");
+      sheet.querySelectorAll(".field").forEach(function (f) {
+        var lab = f.querySelector("label");
+        var ta = f.querySelector("textarea");
+        if (!lab || !ta) return;
+        var eg = lab.querySelector(".eg");
+        var labelText = lab.textContent;
+        if (eg) labelText = labelText.replace(eg.textContent, "");
+        lines.push(labelText.trim());
+        lines.push((ta.value.trim() || "(not answered yet)"), "");
+      });
+      copyText(lines.join("\n"), btn, "Copied");
+    });
+  });
+
+  // ---- Copy-to-clipboard buttons on code blocks ----
+  document.querySelectorAll(".code .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      if (!pre) return;
+      copyText(pre.innerText, btn, "Copied");
+    });
+  });
+</script>
+
+</body>
+</html>
