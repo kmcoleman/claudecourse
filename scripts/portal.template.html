@@ -324,6 +324,28 @@
   .pwcard .open:hover { background: var(--brand-dk); }
   .pwcard .open svg { width: 14px; height: 14px; }
 
+  /* ---------- Elective — Module 4 ---------- */
+  #elective .section-title .n { color: #8a6d10; }
+  #elective .pwcard { border-top: 3px solid var(--task-br); }
+  #elective .pwcard .open { background: #8a6d10; }
+  #elective .pwcard .open:hover { background: #6f5709; }
+  .electivebar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 20px; font-size: 14.5px; color: var(--muted);
+  }
+  .electivebar .pill {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: #2b2107; background: #e6c14b;
+    border-radius: 999px; padding: 3px 11px;
+  }
+  p.electivenote {
+    background: var(--task-bg); border: 1px solid #ece3c2;
+    border-left: 4px solid var(--task-br);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px; margin: 20px 0 0; font-size: 15px; color: #4a412a;
+  }
+  p.electivenote strong { color: #6f5709; }
+
   /* ---------- The World ---------- */
   .worldlede { font-size: 18px; color: #33414f; max-width: 42em; margin: 0 0 24px; }
   .statrow {
@@ -628,6 +650,7 @@
       <a href="#arc">Building Blocks</a>
       <a href="#world">The World</a>
       <a href="#explore">Explore Data</a>
+      <a href="#elective">Elective</a>
       <a href="#resources">Resources</a>
     </nav>
   </div>
@@ -1085,9 +1108,68 @@
     <div class="panelview" id="view"><div class="loading">Loading…</div></div>
   </section>
 
+  <!-- ================= ELECTIVE — MODULE 4 ================= -->
+  <section id="elective">
+    <h2 class="section-title"><span class="n">05</span>Elective — Module 4 · Reviewer UI</h2>
+    <p class="worldlede">An optional fourth module for people who want the part the client actually
+    sees. The course ends at sub-task 39 with a system that emits a schema-valid
+    <code>findings.json</code> — correct, defensible, and completely unreadable to the compliance
+    manager who has to sign off on it. Module 4 builds the thin layer in between: a dependency-free
+    page that renders the findings, lets a named human approve, deny or defer each one, and exports
+    a decisions log a client can act on. It teaches nothing about agentic architecture — the six
+    building blocks are done — and everything about turning a correct system into a delivered one.
+    Worth doing if your engagements end in a readout rather than a merge.</p>
+
+    <div class="electivebar">
+      <span class="pill">Elective</span>
+      <span>Not one of the six building blocks · 4 sub-tasks · ~3.5 h · no new dependencies</span>
+    </div>
+
+    <div class="pwgrid">
+      <div class="pwcard">
+        <div class="pwtag amber">M4 · 1 — 45 min</div>
+        <h3>Put your findings in front of a human</h3>
+        <p>Render <code>findings.json</code> as a table a non-technical reviewer can read. Why the
+        browser refuses to fetch your own file, both finding scopes, and <code>textContent</code>
+        over <code>innerHTML</code>.</p>
+        <a class="open" href="course/v2/module4-01.html">Open M4 · 1
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="pwcard">
+        <div class="pwtag amber">M4 · 2 — 60 min</div>
+        <h3>Let a human disagree with the model</h3>
+        <p>Approve, deny and defer per finding, persisted in <code>localStorage</code>. The model's
+        recommendation and the human's decision stay two separate fields — which is where your
+        override rate comes from.</p>
+        <a class="open" href="course/v2/module4-02.html">Open M4 · 2
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="pwcard">
+        <div class="pwtag amber">M4 · 3 — 45 min</div>
+        <h3>Export something the client can act on</h3>
+        <p>A quarter-stamped CSV that survives Excel, a print stylesheet instead of a PDF
+        dependency, and the provenance header an auditor will ask for. Includes the one real
+        vulnerability in the module.</p>
+        <a class="open" href="course/v2/module4-03.html">Open M4 · 3
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="pwcard">
+        <div class="pwtag amber">M4 · 4 — 60 min · optional</div>
+        <h3>Close the loop — and see why you wouldn't ship it</h3>
+        <p>A stdlib-only local server so the UI can run the pipeline and append decisions to the
+        audit trail your hooks maintain — plus every reason it stays on <code>127.0.0.1</code>.</p>
+        <a class="open" href="course/v2/module4-04.html">Open M4 · 4
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+
+    <p class="electivenote"><strong>Complete sub-task 39 before starting Module 4.</strong> Every
+    page here assumes a finished system and a real <code>findings.json</code> to render.</p>
+  </section>
+
   <!-- ================= RESOURCES ================= -->
   <section id="resources">
-    <h2 class="section-title"><span class="n">05</span>Resources &amp; for instructors</h2>
+    <h2 class="section-title"><span class="n">06</span>Resources &amp; for instructors</h2>
     <div class="reslist">
       <div class="rescard">
         <h3>This repository</h3>
